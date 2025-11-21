@@ -1,0 +1,19 @@
+{
+  "baseUrl": "http://localhost:8000",
+  "timeout": 10000,
+  "routes": [
+    "/",
+    "/collections",
+    "/about",
+    "/contact",
+    "/cart",
+    "/login",
+    "/register"
+  ],
+  "headers": {
+    "User-Agent": "Link-Checker/1.0"
+  },
+  "slowThreshold": 2000,
+  "retries": 1,
+  "description": "Configuration for link checking. Add new routes to the 'routes' array to include them in checks."
+}

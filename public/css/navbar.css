@@ -1,0 +1,80 @@
+/* Iris Navbar Styles - Non-destructive CSS */
+
+.iris-navbar {
+    font-family: "Futura PT", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Override only specific navbar elements to avoid conflicts */
+.iris-navbar *,
+.iris-navbar *:before,
+.iris-navbar *:after {
+    box-sizing: border-box;
+}
+
+/* Ensure all navbar text uses Futura PT */
+.iris-navbar,
+.iris-navbar a,
+.iris-navbar button,
+.iris-navbar input,
+.iris-navbar h1,
+.iris-navbar h2,
+.iris-navbar h3,
+.iris-navbar h4,
+.iris-navbar h5,
+.iris-navbar h6,
+.iris-navbar p,
+.iris-navbar li {
+    font-family: "Futura PT", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 200;
+}
+
+/* Maroon color for active states */
+:root {
+    --iris-maroon: #8B4513;
+    --iris-hover: rgba(139, 69, 19, 0.1);
+    --iris-border: #f0f0f0;
+}
+
+/* Focus states for accessibility */
+.iris-navbar *:focus {
+    outline: 2px solid var(--iris-maroon);
+    outline-offset: 2px;
+}
+
+/* Ensure proper contrast */
+.iris-navbar .text-muted {
+    color: #6c757d !important;
+}
+
+.iris-navbar .text-dark {
+    color: #000 !important;
+}
+
+/* Active navigation styles */
+.iris-nav-link--active {
+    color: var(--iris-maroon) !important;
+    border-bottom-color: var(--iris-maroon) !important;
+}
+
+/* Button hover effects */
+.iris-icon-button:hover {
+    background-color: var(--iris-hover) !important;
+}
+
+/* Ensure buttons reset browser defaults */
+.iris-navbar button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* Dropdown integration */
+.iris-navbar .dropdown-menu {
+    font-family: "Futura PT", system-ui, sans-serif;
+}
+
+.iris-navbar .dropdown-item {
+    font-weight: 200;
+    letter-spacing: 0.05em;
+}

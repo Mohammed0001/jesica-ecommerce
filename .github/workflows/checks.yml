@@ -1,0 +1,162 @@
+name: CI Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, dom, fileinfo, mysql, gd
+        coverage: none
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Copy environment file
+      run: cp .env.example .env
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+
+    - name: Install NPM dependencies
+      run: npm ci
+
+    - name: Generate application key
+      run: php artisan key:generate
+
+    - name: Set up database
+      run: |
+        php artisan config:cache
+        php artisan migrate --env=testing --database=mysql --no-interaction --force
+      env:
+        DB_CONNECTION: mysql
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_DATABASE: testing
+        DB_USERNAME: root
+        DB_PASSWORD: password
+
+    - name: Build assets
+      run: npm run build
+
+    - name: Create storage directories
+      run: |
+        mkdir -p storage/logs
+        mkdir -p storage/app/public
+        php artisan storage:link
+
+    - name: Run asset checks
+      run: php artisan assets:check --verbose
+
+    - name: Install axios for link checking
+      run: npm install axios
+
+    - name: Run link checks
+      run: |
+        php artisan serve --host=127.0.0.1 --port=8000 &
+        sleep 5
+        node scripts/check-links.js
+      env:
+        APP_URL: http://127.0.0.1:8000
+
+    - name: Run tests
+      run: php artisan test --parallel
+      env:
+        DB_CONNECTION: mysql
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_DATABASE: testing
+        DB_USERNAME: root
+        DB_PASSWORD: password
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: test-results
+        path: |
+          storage/logs/
+          tests/
+
+    - name: Upload link check report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: link-check-report
+        path: storage/logs/link-check-report.json
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, dom, fileinfo
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+
+    - name: Run security audit
+      run: composer audit
+
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, dom, fileinfo
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+
+    - name: Run PHP CS Fixer (if available)
+      run: |
+        if [ -f vendor/bin/php-cs-fixer ]; then
+          vendor/bin/php-cs-fixer fix --dry-run --verbose
+        else
+          echo "PHP CS Fixer not installed, skipping..."
+        fi
+
+    - name: Run PHPStan (if available)
+      run: |
+        if [ -f vendor/bin/phpstan ]; then
+          vendor/bin/phpstan analyse
+        else
+          echo "PHPStan not installed, skipping..."
+        fi
