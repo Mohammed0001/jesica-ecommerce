@@ -78,8 +78,8 @@
                     <div class="product-card">
                         <div class="product-image">
                             <a href="{{ route('products.show', $product->slug) }}">
-                                @if($product->images->count() > 0)
-                                    <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
+                                @if(optional($product->main_image)->url)
+                                    <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
                                          alt="{{ $product->name }}"
                                          class="product-thumbnail"
                                          loading="lazy">
@@ -94,18 +94,18 @@
                                 <span class="sale-badge">Sale</span>
                             @endif
 
-                            <div class="product-overlay">
-                                <button class="btn btn-primary btn-sm add-to-cart"
-                                        data-product-id="{{ $product->id }}">
-                                    Add to Cart
-                                </button>
-                            </div>
+                                <div class="product-overlay">
+                                    <button class="btn btn-primary btn-sm add-to-cart"
+                                            data-product-id="{{ $product->id }}">
+                                        Add to Cart
+                                    </button>
+                                </div>
                         </div>
 
                         <div class="product-info">
                             <div class="product-collection">
                                 <a href="{{ route('collections.show', $product->collection->slug) }}">
-                                    {{ $product->collection->name }}
+                                    {{ $product->collection->title }}
                                 </a>
                             </div>
                             <h3 class="product-name">
@@ -118,10 +118,10 @@
                             </p>
                             <div class="product-price">
                                 @if($product->sale_price)
-                                    <span class="sale-price">${{ number_format($product->sale_price, 2) }}</span>
-                                    <span class="original-price">${{ number_format($product->price, 2) }}</span>
+                                 <span class="sale-price">${{ number_format($product->sale_price, 2) }}</span>
+                                 <span class="original-price">{!! $product->formatted_price !!}</span>
                                 @else
-                                    <span class="current-price">${{ number_format($product->price, 2) }}</span>
+                                 <span class="current-price">{!! $product->formatted_price !!}</span>
                                 @endif
                             </div>
                         </div>
@@ -274,6 +274,8 @@
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
+    border-radius: 8px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.06);
 }
 
 .product-card:hover .product-thumbnail {
@@ -479,16 +481,46 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const productId = this.dataset.productId;
+            const btn = this;
+            const formData = new FormData();
+            formData.append('product_id', productId);
+            formData.append('quantity', 1);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-            // You can implement AJAX add to cart here
-            // For now, just show a simple message
-            this.textContent = 'Added!';
-            this.disabled = true;
+            btn.textContent = 'Adding...';
+            btn.disabled = true;
 
-            setTimeout(() => {
-                this.textContent = 'Add to Cart';
-                this.disabled = false;
-            }, 2000);
+            fetch('{{ route('cart.add') }}', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.textContent = 'Added';
+                    // Update the cart count UI if present
+                    const cartCount = document.querySelector('.cart-count');
+                    if (cartCount && data.cartCount) cartCount.textContent = data.cartCount;
+                } else {
+                    alert(data.message || 'Failed to add to cart');
+                    btn.textContent = 'Add to Cart';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('An error occurred. Please try again.');
+                btn.textContent = 'Add to Cart';
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    btn.textContent = 'Add to Cart';
+                    btn.disabled = false;
+                }, 1200);
+            });
         });
     });
 });

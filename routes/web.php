@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AdminCollectionController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminClientController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AdminPromoCodeController;
 use Illuminate\Support\Facades\Route;
 
 // PUBLIC ROUTES - No authentication required
@@ -89,12 +90,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Product management
-    Route::resource('products', AdminProductController::class);
-    Route::post('products/{product}/toggle-visibility', [AdminProductController::class, 'toggleVisibility'])->name('products.toggle-visibility');
+    Route::resource('products', AdminProductController::class)->parameters([
+        'products' => 'product:slug'
+    ]);
+    Route::post('products/{product:slug}/toggle-visibility', [AdminProductController::class, 'toggleVisibility'])->name('products.toggle-visibility');
 
     // Collection management
-    Route::resource('collections', AdminCollectionController::class);
-    Route::post('collections/{collection}/toggle-visibility', [AdminCollectionController::class, 'toggleVisibility'])->name('collections.toggle-visibility');
+    Route::resource('collections', AdminCollectionController::class)->parameters([
+        'collections' => 'collection:slug'
+    ]);
+    Route::post('collections/{collection:slug}/toggle-visibility', [AdminCollectionController::class, 'toggleVisibility'])->name('collections.toggle-visibility');
 
     // Order management
     Route::resource('orders', AdminOrderController::class)->only(['index', 'show', 'update']);
@@ -107,6 +112,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Client management
     Route::resource('clients', AdminClientController::class)->only(['index', 'show', 'update']);
+
+    // Promo codes management
+    Route::resource('promo-codes', Admin\AdminPromoCodeController::class)->except(['show']);
 
     // Analytics
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');

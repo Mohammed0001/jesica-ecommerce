@@ -46,10 +46,19 @@
                                 @enderror
                             </div>
 
+                            <div class="col-md-6 mb-4">
+                                <label for="release_date" class="form-label">Release Date</label>
+                                <input type="date" class="form-control @error('release_date') is-invalid @enderror"
+                                       id="release_date" name="release_date" value="{{ old('release_date', now()->format('Y-m-d')) }}" required>
+                                @error('release_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <div class="col-12 mb-4">
-                                <label for="image" class="form-label">Collection Image</label>
-                                <input type="file" class="form-control @error('image') is-invalid @enderror"
-                                       id="image" name="image" accept="image/*">
+                                <label for="images" class="form-label">Collection Images</label>
+                                <input type="file" class="form-control @error('images.*') is-invalid @enderror"
+                                       id="images" name="images[]" accept="image/*" multiple>
                                 @error('image')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -57,10 +66,20 @@
                             </div>
 
                             <div class="col-12 mb-4">
+                                <label for="pdf" class="form-label">Collection PDF (optional)</label>
+                                <input type="file" class="form-control @error('pdf') is-invalid @enderror"
+                                       id="pdf" name="pdf" accept="application/pdf">
+                                @error('pdf')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload a PDF lookbook or catalog for the collection. Max size: 10MB</div>
+                            </div>
+
+                            <div class="col-12 mb-4">
                                 <div class="form-check">
                      <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
                          {{ old('visible', true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_visible">
+                                    <label class="form-check-label" for="visible">
                                         Publish this collection (make it visible to customers)
                                     </label>
                                 </div>

@@ -54,7 +54,11 @@
                                     @foreach($collections as $collection)
                                         <tr>
                                             <td>
-                                                @if($collection->image_path)
+                                                @if($collection->images && $collection->images->count() > 0)
+                                                    <img src="{{ optional($collection->images->first())->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
+                                                         alt="{{ $collection->title }}"
+                                                         class="collection-thumbnail">
+                                                @elseif($collection->image_path)
                                                     <img src="{{ asset('storage/' . $collection->image_path) }}"
                                                          alt="{{ $collection->title }}"
                                                          class="collection-thumbnail">

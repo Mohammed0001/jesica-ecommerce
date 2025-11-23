@@ -136,8 +136,8 @@
                                 <tr>
                                     <td>
                                         <div class="product-item">
-                                            @if($product->image)
-                                                <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="product-thumb">
+                                            @if($product->images && $product->images->count() > 0)
+                                                <img src="{{ optional($product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" alt="{{ $product->name }}" class="product-thumb">
                                             @else
                                                 <div class="product-thumb-placeholder">
                                                     <i class="fas fa-image"></i>
@@ -178,22 +178,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($analytics['top_collections'] ?? [] as $collection)
+                                @foreach($analytics['top_collections'] ?? [] as $stat)
                                 <tr>
                                     <td>
                                         <div class="collection-item">
-                                            @if($collection->image_path)
-                                                <img src="{{ Storage::url($collection->image_path) }}" alt="{{ $collection->title }}" class="collection-thumb">
+                                            @if($stat->collection && $stat->collection->images && $stat->collection->images->count() > 0)
+                                                <img src="{{ optional($stat->collection->images->first())->url ?? asset('images/picsum/600x800-1-0.jpg') }}" alt="{{ $stat->collection->title }}" class="collection-thumb">
+                                            @elseif($stat->collection && $stat->collection->image_path)
+                                                <img src="{{ Storage::url($stat->collection->image_path) }}" alt="{{ $stat->collection->title }}" class="collection-thumb">
                                             @else
                                                 <div class="collection-thumb-placeholder">
                                                     <i class="fas fa-images"></i>
                                                 </div>
                                             @endif
-                                            <span>{{ $collection->title }}</span>
+                                            <span>{{ $stat->collection->title ?? 'Unknown' }}</span>
                                         </div>
                                     </td>
-                                    <td>{{ $collection->products_count ?? 0 }}</td>
-                                    <td>{{ $collection->orders_count ?? 0 }}</td>
+                                    <td>{{ $stat->products_count ?? 0 }}</td>
+                                    <td>{{ $stat->orders_count ?? 0 }}</td>
                                 </tr>
                                 @endforeach
                                 @if(empty($analytics['top_collections']))

@@ -3,663 +3,353 @@
 @section('title', $collection->title)
 
 @section('content')
-<main class="collection-page">
-    <!-- Collection Header -->
-    <section class="collection-hero">
+    <main class="collection-pure" style="background:#fff; color:#000; line-height:1.6;">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6 order-lg-2">
-                    <div class="collection-image-container">
-                        @if($collection->image_path)
-                            <img src="{{ asset('images/' . $collection->image_path) }}"
-                                 class="collection-hero-image"
-                                 alt="{{ $collection->title }}"
-                                 loading="lazy">
-                        @else
-                            <div class="collection-placeholder">
-                                <i class="fas fa-images"></i>
-                                <span>{{ $collection->title }}</span>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-                <div class="col-lg-6 order-lg-1">
-                    <div class="collection-info">
-                        <!-- Breadcrumb -->
-                        <nav class="breadcrumb-nav">
-                            <a href="{{ route('home') }}">Home</a>
-                            <span class="separator">→</span>
-                            <a href="{{ route('collections.index') }}">Collections</a>
-                            <span class="separator">→</span>
-                            <span class="current">{{ $collection->title }}</span>
-                        </nav>
 
-                        <h1 class="collection-title">{{ $collection->title }}</h1>
+            <!-- HERO – Maximum breathing room -->
+            <section class="pt-12 pb-12">
+                <div class="row g-8">
 
-                        @if($collection->description)
-                            <p class="collection-description">{{ $collection->description }}</p>
-                        @endif
+                    <!-- Images -->
+                    <div class="col-lg-7">
+                        @php
+                            $images = $collection->images->count()
+                                ? $collection->images
+                                : collect([
+                                    $collection->image_path
+                                        ? (object) ['url' => Storage::url($collection->image_path)]
+                                        : null,
+                                ])->filter();
+                            $first = $images->first()?->url ?? asset('images/placeholder.jpg');
+                        @endphp
 
-                        <div class="collection-meta">
-                            <div class="meta-item">
-                                <span class="meta-count">{{ $products->total() }}</span>
-                                <span class="meta-label">{{ $products->total() === 1 ? 'Piece' : 'Pieces' }}</span>
-                            </div>
-                            @if($collection->release_date)
-                                <div class="meta-item">
-                                    <span class="meta-count">{{ $collection->release_date->format('Y') }}</span>
-                                    <span class="meta-label">Released</span>
+                        <!-- Main Image -->
+                        <div class="mb-8 position-relative">
+                            <img id="mainImg" src="{{ $first }}" alt="{{ $collection->title }}" class="w-100"
+                                style="height:720px; object-fit:cover;">
+                            @if ($images->count() > 1)
+                                <div id="imageCounter"
+                                    class="position-absolute bottom-0 end-0 mb-5 me-5 bg-white px-4 py-2 small fw-medium tracking-widest">
+                                    1 / {{ $images->count() }}
                                 </div>
                             @endif
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Products Section -->
-    <section class="products-section">
-        <div class="container">
-            <!-- Section Header -->
-            <div class="section-header">
-                <h2 class="section-title">Collection Pieces</h2>
-                <div class="section-controls">
-                    <div class="sort-dropdown">
-                        <label for="product-sort">Sort by</label>
-                        <select id="product-sort" class="sort-select" onchange="window.location.href = this.value">
-                            <option value="{{ route('collections.show', [$collection->slug]) }}">Default</option>
-                            <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'name']) }}" {{ request('sort') === 'name' ? 'selected' : '' }}>Name</option>
-                            <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'price_low']) }}" {{ request('sort') === 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
-                            <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'price_high']) }}" {{ request('sort') === 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
-                            <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'newest']) }}" {{ request('sort') === 'newest' ? 'selected' : '' }}>Newest</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Products Grid -->
-            @if($products->count() > 0)
-                <div class="products-grid">
-                    @foreach($products as $product)
-                        <div class="product-card">
-                            <div class="product-image-container">
-                                @if($product->images && $product->images->count() > 0)
-                                    <img src="{{ asset('images/products/' . $product->images->first()->path) }}"
-                                         class="product-image"
-                                         alt="{{ $product->name }}"
-                                         loading="lazy">
-                                @else
-                                    <div class="product-image-placeholder">
-                                        <i class="fas fa-image"></i>
-                                        <span>{{ $product->name }}</span>
+                        <!-- Thumbnails – Clean & Spacious -->
+                        @if ($images->count() > 1)
+                            <div class="d-flex flex-wrap gap-5 justify-content-start">
+                                @foreach ($images as $i => $img)
+                                    <div data-index="{{ $i }}" data-src="{{ $img->url ?? Storage::url($img) }}"
+                                        class="thumbnail cursor-pointer transition-all {{ $i === 0 ? 'active' : '' }}"
+                                        style="width:120px; height:120px; overflow:hidden;">
+                                        <img src="{{ $img->url ?? Storage::url($img) }}"
+                                            class="w-100 h-100 object-fit-cover">
                                     </div>
-                                @endif
-
-                                <!-- Product Badges -->
-                                @if($product->is_one_of_a_kind || $product->quantity <= 5)
-                                    <div class="product-badges">
-                                        @if($product->is_one_of_a_kind)
-                                            <span class="badge unique">One of a Kind</span>
-                                        @endif
-                                        @if($product->quantity <= 5 && $product->quantity > 0)
-                                            <span class="badge limited">Limited Stock</span>
-                                        @elseif($product->quantity <= 0)
-                                            <span class="badge sold-out">Sold Out</span>
-                                        @endif
-                                    </div>
-                                @endif
-
-                                <!-- Product Overlay -->
-                                <div class="product-overlay">
-                                    <a href="{{ route('products.show', $product->slug) }}" class="view-product-btn">
-                                        View Details
-                                    </a>
-                                </div>
+                                @endforeach
                             </div>
+                        @endif
+                    </div>
 
-                            <div class="product-info">
-                                <h3 class="product-title">
-                                    <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
-                                </h3>
+                    <!-- Text Content -->
+                    <div class="col-lg-5 pt-10">
+                        <nav class="small text-uppercase tracking-widest text-muted mb-8">
+                            <a href="{{ route('home') }}" class="text-muted text-decoration-none">Home</a>
+                            <span class="mx-4">·</span>
+                            <a href="{{ route('collections.index') }}"
+                                class="text-muted text-decoration-none">Collections</a>
+                            <span class="mx-4">·</span>
+                            <span class="text-black">{{ $collection->title }}</span>
+                        </nav>
 
-                                @if($product->description)
-                                    <p class="product-description">{{ Str::limit($product->description, 80) }}</p>
-                                @endif
+                        <h1 class="display-2 fw-light mb-10 lh-1">{{ $collection->title }}</h1>
 
-                                <div class="product-pricing">
-                                    <span class="current-price">EGP {{ number_format($product->price, 0) }}</span>
-                                    @if($product->compare_price && $product->compare_price > $product->price)
-                                        <span class="original-price">EGP {{ number_format($product->compare_price, 0) }}</span>
-                                    @endif
-                                </div>
+                        @if ($collection->description)
+                            <p class="lead fw-light text-muted mb-12" style="max-width:88%; font-size:1.2rem;">
+                                {!! nl2br(e($collection->description)) !!}
+                            </p>
+                        @endif
+
+                        <div class="row g-8 mb-12 text-center text-lg-start">
+                            <div class="col-6 col-lg-12">
+                                <div class="display-4 fw-light mb-3">{{ $products->total() }}</div>
+                                <div class="small text-uppercase tracking-widest text-muted">Pieces</div>
                             </div>
+                            @if ($collection->release_date)
+                                <div class="col-6 col-lg-12">
+                                    <div class="display-4 fw-light mb-3">{{ $collection->release_date->format('Y') }}</div>
+                                    <div class="small text-uppercase tracking-widest text-muted">Released</div>
+                                </div>
+                            @endif
                         </div>
-                    @endforeach
+
+                        @if ($collection->pdf_path)
+                            <button id="openLookbook"
+                                class="btn btn-outline-dark px-6 py-4 text-uppercase tracking-widest fw-medium"
+                                style="letter-spacing:0.2em; border:1px solid #000; border-radius: 0; font-size:0.95rem;">
+                                View Lookbook
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </section>
+
+            <!-- PRODUCTS -->
+            <section class="pb-16">
+                <div class="d-flex justify-content-between align-items-center mb-10">
+                    <h2 class="h4 fw-light text-uppercase tracking-widest mb-0">Collection Pieces</h2>
+                    <select class="form-select border-0 bg-transparent text-uppercase tracking-wider small"
+                        onchange="location=this.value">
+                        <option value="{{ route('collections.show', $collection->slug) }}"
+                            {{ !request('sort') ? 'selected' : '' }}>Default</option>
+                        <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'name']) }}"
+                            {{ request('sort') == 'name' ? 'selected' : '' }}>Name</option>
+                        <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'price_low']) }}"
+                            {{ request('sort') == 'price_low' ? 'selected' : '' }}>Price: Low–High</option>
+                        <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'price_high']) }}"
+                            {{ request('sort') == 'price_high' ? 'selected' : '' }}>Price: High–Low</option>
+                        <option value="{{ route('collections.show', [$collection->slug, 'sort' => 'newest']) }}"
+                            {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest</option>
+                    </select>
                 </div>
 
-                <!-- Pagination -->
-                @if($products->hasPages())
-                    <div class="pagination-container">
-                        {{ $products->appends(request()->query())->links() }}
+                @if ($products->count())
+                    <div class="row g-8">
+                        @foreach ($products as $product)
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{{ route('products.show', $product->slug) }}"
+                                    class="text-decoration-none text-black d-block">
+                                    <div class="mb-6 overflow-hidden">
+                                        <img src="{{ $product->main_image?->url ?? asset('images/placeholder.jpg') }}"
+                                            class="w-100" style="height:520px; object-fit:cover;"
+                                            alt="{{ $product->name }}">
+                                    </div>
+                                    <h3 class="h5 fw-medium text-uppercase tracking-wider mb-4">{{ $product->name }}</h3>
+                                    <div class="d-flex justify-content-between align-items-end">
+                                        <div class="fw-bold fs-4">{!! $product->formatted_price !!}</div>
+                                        <span class="small text-uppercase tracking-widest text-muted">View →</span>
+                                    </div>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    @if ($products->hasPages())
+                        <div class="text-center mt-12">
+                            {{ $products->links('vendor.pagination.bootstrap-5') }}
+                        </div>
+                    @endif
+                @else
+                    <div class="text-center py-16">
+                        <h3 class="display-5 fw-light mb-6">Coming Soon</h3>
+                        <p class="lead text-muted">This collection is being curated.</p>
                     </div>
                 @endif
-            @else
-                <div class="empty-collection">
-                    <div class="empty-message">
-                        <h3>No pieces available</h3>
-                        <p>This collection is currently being curated. Check back soon for new pieces.</p>
-                        <a href="{{ route('collections.index') }}" class="btn-back">Browse Other Collections</a>
+            </section>
+        </div>
+    </main>
+
+    <!-- Lookbook Modal -->
+    @if ($collection->pdf_path)
+        <div class="modal fade" id="lookbookModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content border-0 overflow-hidden" style="position:relative;background:transparent;">
+
+                    <!-- Close button -->
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-4 z-3" data-bs-dismiss="modal"
+                        style="font-size: 2rem; filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));">
+                    </button>
+
+                    <!-- PDF Container with Loader -->
+                    <div class="pdf-container">
+                        <!-- Loading Overlay with your logo -->
+                        <div class="pdf-loading-overlay" id="pdfLoading">
+                            <img src="{{ asset('images/signature-logo.png') }}" alt="Jesica Riad Signature"
+                                class="loading-logo" style="filter: invert(1); height: 90px;">
+                            <p class="mt-4 text-muted fs-5">Loading lookbook...</p>
+                        </div>
+
+                        <!-- PDF iFrame -->
+                        <iframe id="pdfIframe" data-src="{{ Storage::url($collection->pdf_path) }}" class="pdf-iframe"
+                            frameborder="0">
+                        </iframe>
                     </div>
                 </div>
-            @endif
+            </div>
         </div>
-    </section>
-</main>
-@push('styles')
-<style>
-.collection-page {
-    font-family: 'futura-pt', sans-serif;
-    color: #333;
-}
-
-/* Collection Hero Section */
-.collection-hero {
-    padding: 4rem 0;
-    background: white;
-}
-
-.collection-image-container {
-    position: relative;
-    margin-bottom: 2rem;
-}
-
-.collection-hero-image {
-    width: 100%;
-    height: 500px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-.collection-placeholder {
-    width: 100%;
-    height: 500px;
-    background: #f8f9fa;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 1.5rem;
-    color: #999;
-    gap: 1rem;
-}
-
-.collection-placeholder i {
-    font-size: 3rem;
-    opacity: 0.5;
-}
-
-.collection-info {
-    padding-left: 3rem;
-}
-
-/* Breadcrumb */
-.breadcrumb-nav {
-    margin-bottom: 2rem;
-    font-size: 0.9rem;
-    font-weight: 300;
-}
-
-.breadcrumb-nav a {
-    color: #666;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.breadcrumb-nav a:hover {
-    color: #000;
-}
-
-.breadcrumb-nav .separator {
-    margin: 0 0.75rem;
-    color: #ccc;
-}
-
-.breadcrumb-nav .current {
-    color: #000;
-}
-
-/* Collection Title & Description */
-.collection-title {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 3rem;
-    color: #000;
-    margin-bottom: 1.5rem;
-    letter-spacing: 0.02em;
-    line-height: 1.2;
-}
-
-.collection-description {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    font-size: 1.125rem;
-    line-height: 1.7;
-    color: #555;
-    margin-bottom: 2rem;
-}
-
-/* Collection Meta */
-.collection-meta {
-    display: flex;
-    gap: 3rem;
-    margin-top: 2rem;
-}
-
-.meta-item {
-    text-align: center;
-}
-
-.meta-count {
-    display: block;
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 2rem;
-    color: #000;
-    line-height: 1;
-}
-
-.meta-label {
-    display: block;
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 0.9rem;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: 0.5rem;
-}
-
-/* Products Section */
-.products-section {
-    padding: 4rem 0;
-    background: #fafafa;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 3rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #eee;
-}
-
-.section-title {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 2rem;
-    color: #000;
-    margin: 0;
-    letter-spacing: 0.02em;
-}
-
-.section-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-/* Sort Dropdown */
-.sort-dropdown {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.sort-dropdown label {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 0.9rem;
-    color: #666;
-    margin: 0;
-}
-
-.sort-select {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    border: 1px solid #ddd;
-    border-radius: 0;
-    padding: 0.5rem 1rem;
-    background: white;
-    color: #333;
-    font-size: 0.9rem;
-    min-width: 200px;
-}
-
-.sort-select:focus {
-    outline: none;
-    border-color: #000;
-}
-
-/* Products Grid */
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-
-.product-card {
-    background: white;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    cursor: pointer;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-}
-
-.product-image-container {
-    position: relative;
-    overflow: hidden;
-    aspect-ratio: 3/4;
-}
-
-.product-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.product-card:hover .product-image {
-    transform: scale(1.05);
-}
-
-.product-image-placeholder {
-    width: 100%;
-    height: 100%;
-    background: #f5f5f5;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    color: #999;
-    text-align: center;
-    padding: 2rem;
-    gap: 1rem;
-}
-
-.product-image-placeholder i {
-    font-size: 2.5rem;
-    opacity: 0.5;
-}
-
-.product-image-placeholder span {
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-/* Product Badges */
-.product-badges {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.badge {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    font-size: 0.75rem;
-    padding: 0.3rem 0.6rem;
-    border-radius: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.badge.unique {
-    background: #000;
-    color: white;
-}
-
-.badge.limited {
-    background: #ff6b35;
-    color: white;
-}
-
-.badge.sold-out {
-    background: #999;
-    color: white;
-}
-
-/* Product Overlay */
-.product-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-    padding: 2rem 1.5rem 1.5rem;
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-}
-
-.product-card:hover .product-overlay {
-    transform: translateY(0);
-}
-
-.view-product-btn {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    color: white;
-    background: transparent;
-    border: 1px solid white;
-    padding: 0.75rem 1.5rem;
-    text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 0.85rem;
-    transition: all 0.3s ease;
-    display: block;
-    text-align: center;
-}
-
-.view-product-btn:hover {
-    background: white;
-    color: #000;
-    text-decoration: none;
-}
-
-/* Product Info */
-.product-info {
-    padding: 1.5rem;
-}
-
-.product-title {
-    margin: 0 0 0.75rem 0;
-}
-
-.product-title a {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    font-size: 1.1rem;
-    color: #000;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.product-title a:hover {
-    color: #666;
-}
-
-.product-description {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 0.9rem;
-    color: #666;
-    line-height: 1.5;
-    margin-bottom: 1rem;
-}
-
-.product-pricing {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.current-price {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 500;
-    font-size: 1.1rem;
-    color: #000;
-}
-
-.original-price {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 0.9rem;
-    color: #999;
-    text-decoration: line-through;
-}
-
-/* Empty Collection */
-.empty-collection {
-    text-align: center;
-    padding: 4rem 2rem;
-}
-
-.empty-message h3 {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 1.5rem;
-    color: #000;
-    margin-bottom: 1rem;
-}
-
-.empty-message p {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    color: #666;
-    margin-bottom: 2rem;
-}
-
-.btn-back {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    color: white;
-    background: #000;
-    border: none;
-    padding: 0.75rem 2rem;
-    text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.btn-back:hover {
-    background: #333;
-    color: white;
-    text-decoration: none;
-}
-
-/* Pagination */
-.pagination-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 3rem;
-}
-
-/* Responsive Design */
-@media (max-width: 992px) {
-    .collection-info {
-        padding-left: 1.5rem;
-    }
-
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    }
-}
-
-@media (max-width: 768px) {
-    .collection-hero {
-        padding: 2rem 0;
-    }
-
-    .collection-info {
-        padding-left: 0;
-        margin-top: 2rem;
-    }
-
-    .collection-title {
-        font-size: 2.5rem;
-    }
-
-    .collection-hero-image,
-    .collection-placeholder {
-        height: 350px;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-        text-align: center;
-    }
-
-    .section-controls {
-        justify-content: center;
-    }
-
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .collection-meta {
-        justify-content: center;
-        gap: 2rem;
-    }
-
-    .breadcrumb-nav {
-        text-align: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .products-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .collection-title {
-        font-size: 2rem;
-    }
-
-    .collection-hero-image,
-    .collection-placeholder {
-        height: 280px;
-    }
-
-    .meta-count {
-        font-size: 1.5rem;
-    }
-
-    .sort-select {
-        min-width: 180px;
-        font-size: 0.85rem;
-    }
-}
-</style>
-@endpush
+    @endif
+
+    @push('styles')
+        <style>
+            *,
+            *::before,
+            *::after {
+                border-radius: 0 !important;
+            }
+
+            img {
+                image-rendering: -webkit-optimize-contrast;
+            }
+
+            .thumbnail {
+                outline: 4px solid transparent;
+                outline-offset: -4px;
+                transition: outline 0.4s ease;
+            }
+
+            .thumbnail.active,
+            .thumbnail:hover {
+                outline: 4px solid #000;
+            }
+
+            .btn:hover {
+                background: #000 !important;
+                color: #fff !important;
+            }
+
+            /* Extra breathing room */
+            .pt-12 {
+                padding-top: 8rem !important;
+            }
+
+            .pb-12 {
+                padding-bottom: 8rem !important;
+            }
+
+            .mb-12 {
+                margin-bottom: 8rem !important;
+            }
+
+            .mb-10 {
+                margin-bottom: 6rem !important;
+            }
+
+            .mb-8 {
+                margin-bottom: 5rem !important;
+            }
+
+            .gap-8 {
+                gap: 5rem !important;
+            }
+
+            .pdf-container {
+                position: relative;
+                width: 90%;
+                height: 90vh;
+                background: #000;
+                margin: auto;
+
+                /* fallback while PDF loads */
+            }
+
+            .pdf-iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                display: block;
+                background: transparent;
+            }
+
+            .pdf-loading-overlay {
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.98);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 2;
+                transition: opacity 0.6s ease;
+            }
+
+            .loading-logo {
+                animation: gentlePulse 2.2s infinite ease-in-out;
+            }
+
+            @keyframes gentlePulse {
+
+                0%,
+                100% {
+                    transform: scale(1);
+                }
+
+                50% {
+                    transform: scale(1.1);
+                }
+            }
+
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                }
+
+                50% {
+                    transform: scale(1.08);
+                }
+
+                100% {
+                    transform: scale(1);
+                }
+            }
+        </style>
+    @endpush
+
+    @push('scripts')
+        <script>
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    const src = this.dataset.src;
+                    const index = parseInt(this.dataset.index) + 1;
+
+                    // Change main image
+                    document.getElementById('mainImg').src = src;
+
+                    // Update counter
+                    const counter = document.getElementById('imageCounter');
+                    if (counter) counter.textContent = index + ' / {{ $images->count() }}';
+
+                    // Update active state
+                    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Open Lookbook
+            document.getElementById('openLookbook')?.addEventListener('click', () => {
+                new bootstrap.Modal('#lookbookModal').show();
+            });
+            document.addEventListener('DOMContentLoaded', function() {
+                const modalEl = document.getElementById('lookbookModal');
+                const iframe = document.getElementById('pdfIframe');
+                const loader = document.getElementById('pdfLoading');
+
+                modalEl.addEventListener('shown.bs.modal', function() {
+                    // Only load the PDF when the modal is actually opened (saves bandwidth)
+                    if (iframe.src === '' || iframe.src === location.href) {
+                        iframe.src = iframe.dataset.src;
+                    }
+
+                    // When iframe finishes loading → hide loader smoothly
+                    iframe.onload = function() {
+                        setTimeout(() => {
+                            loader.style.opacity = '0';
+                            setTimeout(() => loader.style.display = 'none', 600);
+                        }, 200);
+                    };
+
+                    // Fallback: hide loader after 20 seconds max (in case of error)
+                    setTimeout(() => {
+                        loader.style.opacity = '0';
+                        setTimeout(() => loader.style.display = 'none', 600);
+                    }, 20000);
+                });
+
+                // Optional: reset when modal closes (so it shows again next time)
+                modalEl.addEventListener('hidden.bs.modal', function() {
+                    loader.style.opacity = '1';
+                    loader.style.display = 'flex';
+                    iframe.src = ''; // optional: unload PDF to free memory
+                });
+            });
+        </script>
+    @endpush
 @endsection

@@ -9,7 +9,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <h1 class="page-title">{{ $product->name }}</h1>
             <div class="d-flex gap-2">
-                <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-outline-primary">
+                <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-outline-primary">
                     <i class="fas fa-edit me-2"></i>Edit Product
                 </a>
                 <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
@@ -30,8 +30,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="product-image-container">
-                                @if($product->image)
-                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="product-image">
+                                @if($product->images && $product->images->count() > 0)
+                                    <img src="{{ optional($product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" alt="{{ $product->name }}" class="product-image">
                                 @else
                                     <div class="placeholder-image">
                                         <i class="fas fa-image"></i>
@@ -46,13 +46,13 @@
 
                                 <div class="detail-row">
                                     <label>Price:</label>
-                                    <span class="product-price">${{ number_format($product->price, 2) }}</span>
+                                    <span class="product-price">{!! $product->formatted_price !!}</span>
                                 </div>
 
                                 <div class="detail-row">
                                     <label>Collection:</label>
-                                    @if($product->collection)
-                                        <span class="collection-badge">{{ $product->collection->name }}</span>
+                                        @if($product->collection)
+                                        <span class="collection-badge">{{ $product->collection->title }}</span>
                                     @else
                                         <span class="text-muted">No Collection</span>
                                     @endif
@@ -60,7 +60,7 @@
 
                                 <div class="detail-row">
                                     <label>Visibility:</label>
-                                    @if($product->is_visible)
+                                    @if($product->visible)
                                         <span class="status-badge visible">Visible</span>
                                     @else
                                         <span class="status-badge hidden">Hidden</span>
@@ -94,7 +94,7 @@
             </div>
 
             <!-- Special Orders (if applicable) -->
-            @if($product->specialOrders->count() > 0)
+            @if($product->specialOrders && $product->specialOrders->count() > 0)
             <div class="card">
                 <div class="card-header">
                     <h6>Special Orders</h6>
@@ -148,14 +148,14 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-primary">
+                        <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-primary">
                             <i class="fas fa-edit me-2"></i>Edit Product
                         </a>
 
-                        <form method="POST" action="{{ route('admin.products.toggleVisibility', $product->id) }}" class="d-inline">
+                        <form method="POST" action="{{ route('admin.products.toggle-visibility', $product) }}" class="d-inline">
                             @csrf
                             @method('PATCH')
-                            @if($product->is_visible)
+                            @if($product->visible)
                                 <button type="submit" class="btn btn-warning w-100">
                                     <i class="fas fa-eye-slash me-2"></i>Hide Product
                                 </button>
@@ -170,7 +170,7 @@
                             <i class="fas fa-external-link-alt me-2"></i>View on Site
                         </a>
 
-                        <form method="POST" action="{{ route('admin.products.destroy', $product->id) }}"
+                        <form method="POST" action="{{ route('admin.products.destroy', $product) }}"
                               onsubmit="return confirm('Are you sure you want to delete this product?')" class="d-inline">
                             @csrf
                             @method('DELETE')
@@ -189,15 +189,15 @@
                 <div class="card-body">
                     <div class="stat-item">
                         <span class="stat-label">Special Orders:</span>
-                        <span class="stat-value">{{ $product->specialOrders->count() }}</span>
+                        <span class="stat-value">{{ $product->specialOrders ? $product->specialOrders->count() : 0 }}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Pending Orders:</span>
-                        <span class="stat-value">{{ $product->specialOrders->where('status', 'pending')->count() }}</span>
+                        <span class="stat-value">{{ $product->specialOrders ? $product->specialOrders->where('status', 'pending')->count() : 0 }}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Completed Orders:</span>
-                        <span class="stat-value">{{ $product->specialOrders->where('status', 'completed')->count() }}</span>
+                        <span class="stat-value">{{ $product->specialOrders ? $product->specialOrders->where('status', 'completed')->count() : 0 }}</span>
                     </div>
                 </div>
             </div>

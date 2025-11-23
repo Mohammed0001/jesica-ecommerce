@@ -30,8 +30,12 @@
         <div class="collections-grid">
             @foreach($collections as $collection)
                 <div class="collection-card">
-                    @if($collection->image_path)
-                        <img src="{{ asset('images/' . $collection->image_path) }}"
+                    @if($collection->images && $collection->images->count() > 0)
+                        <img src="{{ optional($collection->images->first())->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
+                             class="collection-image"
+                             alt="{{ $collection->title }}">
+                    @elseif($collection->image_path)
+                        <img src="{{ Storage::url($collection->image_path) }}"
                              class="collection-image"
                              alt="{{ $collection->title }}">
                     @else

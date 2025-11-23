@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('images/signature-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/signature-logo.png') }}">
 
     <title>@yield('title', 'Admin Dashboard') - {{ config('app.name', 'Jesica Riad') }}</title>
 
@@ -52,7 +58,12 @@
             font-size: 0.875rem;
         }
 
-        h1, h2, h3, h4, h5, h6 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             font-family: 'futura-pt', sans-serif;
             font-weight: 200;
             letter-spacing: 0.05em;
@@ -64,12 +75,12 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: var(--sidebar-width);
+            width: calc(var(--sidebar-width) + 10px);
             height: 100vh;
             background: linear-gradient(180deg, var(--primary-color) 0%, #2c2c2c 100%);
             z-index: 1000;
-            overflow-y: auto;
-            border-right: 1px solid var(--border-light);
+            overflow-y: none;
+            box-sizing: border-box border-right: 1px solid var(--border-light);
         }
 
         .sidebar .navbar-brand {
@@ -333,18 +344,19 @@
 
     @stack('styles')
 </head>
+
 <body>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-            <i class="fas fa-gem me-2"></i>
-            Jesica Riad Admin
+            {{-- <i class="fas fa-gem me-2"></i> --}}
+            Jesica Riad
         </a>
 
         <ul class="sidebar-nav">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                   href="{{ route('admin.dashboard') }}">
+                    href="{{ route('admin.dashboard') }}">
                     <i class="fas fa-tachometer-alt"></i>
                     Dashboard
                 </a>
@@ -352,7 +364,7 @@
 
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}"
-                   href="{{ route('admin.products.index') }}">
+                    href="{{ route('admin.products.index') }}">
                     <i class="fas fa-shopping-bag"></i>
                     Products
                 </a>
@@ -360,7 +372,7 @@
 
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.collections.*') ? 'active' : '' }}"
-                   href="{{ route('admin.collections.index') }}">
+                    href="{{ route('admin.collections.index') }}">
                     <i class="fas fa-layer-group"></i>
                     Collections
                 </a>
@@ -368,7 +380,7 @@
 
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}"
-                   href="{{ route('admin.orders.index') }}">
+                    href="{{ route('admin.orders.index') }}">
                     <i class="fas fa-clipboard-list"></i>
                     Orders
                 </a>
@@ -376,7 +388,7 @@
 
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.special-orders.*') ? 'active' : '' }}"
-                   href="{{ route('admin.special-orders.index') }}">
+                    href="{{ route('admin.special-orders.index') }}">
                     <i class="fas fa-star"></i>
                     Special Orders
                 </a>
@@ -384,7 +396,7 @@
 
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.clients.*') ? 'active' : '' }}"
-                   href="{{ route('admin.clients.index') }}">
+                    href="{{ route('admin.clients.index') }}">
                     <i class="fas fa-users"></i>
                     Clients
                 </a>
@@ -392,7 +404,7 @@
 
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}"
-                   href="{{ route('admin.analytics.index') }}">
+                    href="{{ route('admin.analytics.index') }}">
                     <i class="fas fa-chart-bar"></i>
                     Analytics
                 </a>
@@ -417,6 +429,7 @@
         </ul>
     </div>
 
+
     <!-- Content Wrapper -->
     <div class="content-wrapper">
         <!-- Topbar -->
@@ -432,13 +445,15 @@
                 <span class="me-3">Welcome, {{ auth()->user()->name }}</span>
                 <div class="dropdown">
                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
+                        data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-user-circle me-1"></i>
                         Account
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -453,7 +468,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Flash Messages -->
-            @if(session('success'))
+            @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle me-2"></i>
                     {{ session('success') }}
@@ -461,7 +476,7 @@
                 </div>
             @endif
 
-            @if(session('error'))
+            @if (session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="fas fa-exclamation-circle me-2"></i>
                     {{ session('error') }}
@@ -469,7 +484,7 @@
                 </div>
             @endif
 
-            @if(session('warning'))
+            @if (session('warning'))
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     {{ session('warning') }}
@@ -477,12 +492,12 @@
                 </div>
             @endif
 
-            @if($errors->any())
+            @if ($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="fas fa-exclamation-circle me-2"></i>
                     <strong>Please fix the following errors:</strong>
                     <ul class="mb-0 mt-2">
-                        @foreach($errors->all() as $error)
+                        @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
@@ -493,6 +508,7 @@
             @yield('content')
         </main>
     </div>
+    @include('layouts.partials.footer')
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -528,4 +544,5 @@
 
     @stack('scripts')
 </body>
+
 </html>

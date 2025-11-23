@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductSize;
+use App\Models\PromoCode;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -13,10 +14,34 @@ class CartController extends Controller
      */
     public function index()
     {
-        $cartItems = $this->getCartItems();
-        $total = $this->calculateTotal($cartItems);
+    $cartItems = $this->getCartItems();
+    $subtotal = $this->calculateTotal($cartItems); // original currency subtotal
+    $displaySubtotal = collect($cartItems)->sum('display_subtotal'); // display currency subtotal
 
-        return view('cart.index', compact('cartItems', 'total'));
+        $appliedPromo = session()->get('applied_promo', null);
+        $discountAmount = 0;
+        if ($appliedPromo) {
+            if ($appliedPromo['type'] === 'percentage') {
+                $discountAmount = ($displaySubtotal * ($appliedPromo['value'] / 100));
+            } else {
+                $discountAmount = $appliedPromo['value'];
+            }
+        }
+        $finalTotal = max(0, $displaySubtotal - $discountAmount);
+
+        // Shipping
+    $shipping = $finalTotal >= 200 ? 0 : 15; // shipping threshold/calculation in display currency
+
+        // Tax (example 14%) - you can make this configurable
+    $tax = round($finalTotal * 0.14, 2);
+
+    $total = round(max(0, $finalTotal + $shipping + $tax), 2);
+
+        $hasDepositItems = collect($cartItems)->contains(function ($item) {
+            return (bool) data_get($item, 'is_deposit');
+        });
+
+    return view('cart.index', compact('cartItems', 'subtotal', 'displaySubtotal', 'tax', 'total', 'appliedPromo', 'discountAmount', 'finalTotal', 'shipping', 'hasDepositItems'));
     }
 
     /**
@@ -33,7 +58,7 @@ class CartController extends Controller
         $product = Product::findOrFail($request->product_id);
 
         // Check if product is available
-        if (!$product->visible || !$product->isAvailable()) {
+        if (!$product->getAttribute('visible') || !$product->isAvailable()) {
             return back()->with('error', 'Product is not available.');
         }
 
@@ -67,7 +92,23 @@ class CartController extends Controller
 
         session()->put('cart', $cart);
 
+        // If it's an AJAX request, return JSON with success and updated cart count
+        if ($request->wantsJson() || $request->ajax()) {
+            $cartCount = array_sum(array_column($cart, 'quantity'));
+            return response()->json([ 'success' => true, 'message' => 'Product added to cart!', 'cartCount' => $cartCount ]);
+        }
+
         return back()->with('success', 'Product added to cart!');
+    }
+
+    /**
+     * Add from product page via product route (uses product param)
+     */
+    public function addFromProductPage(Request $request, Product $product)
+    {
+        // Ensure product_id is set for compatibility and forward to add()
+        $request->merge(['product_id' => $product->id]);
+        return $this->add($request);
     }
 
     /**
@@ -85,6 +126,11 @@ class CartController extends Controller
         if (isset($cart[$request->cart_key])) {
             $cart[$request->cart_key]['quantity'] = $request->quantity;
             session()->put('cart', $cart);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            $cartCount = array_sum(array_column($cart, 'quantity'));
+            return response()->json(['success' => true, 'cart_count' => $cartCount]);
         }
 
         return back()->with('success', 'Cart updated!');
@@ -106,6 +152,11 @@ class CartController extends Controller
             session()->put('cart', $cart);
         }
 
+        if ($request->wantsJson() || $request->ajax()) {
+            $cartCount = array_sum(array_column($cart, 'quantity'));
+            return response()->json(['success' => true, 'cart_count' => $cartCount]);
+        }
+
         return back()->with('success', 'Item removed from cart!');
     }
 
@@ -115,6 +166,10 @@ class CartController extends Controller
     public function clear()
     {
         session()->forget('cart');
+        session()->forget('applied_promo');
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['success' => true]);
+        }
         return back()->with('success', 'Cart cleared!');
     }
 
@@ -132,11 +187,15 @@ class CartController extends Controller
             if ($product) {
                 $cartItems->push([
                     'cart_key' => $key,
+                    'product_id' => $product->id,
                     'product' => $product,
                     'quantity' => $item['quantity'],
                     'size_label' => $item['size_label'],
-                    'price' => $product->price, // Use current price
-                    'subtotal' => $product->price * $item['quantity'],
+                    'price' => $product->price, // original numeric price stored on product
+                    'display_price' => $product->convertToCurrency(session('currency', 'EGP')),
+                    'formatted_price' => $product->formatted_price,
+                    'display_subtotal' => $product->convertToCurrency(session('currency', 'EGP')) * $item['quantity'],
+                    'subtotal' => $product->price * $item['quantity'], // original currency subtotal
                 ]);
             }
         }
@@ -161,5 +220,50 @@ class CartController extends Controller
         $count = array_sum(array_column($cart, 'quantity'));
 
         return response()->json(['count' => $count]);
+    }
+
+    /**
+     * Apply promocode to the cart
+     */
+    public function applyPromo(Request $request)
+    {
+        $request->validate([
+            'promo_code' => 'required|string',
+        ]);
+
+        $promo = PromoCode::where('code', $request->promo_code)->first();
+
+        if (!$promo || !$promo->isUsable()) {
+            return response()->json(['success' => false, 'message' => 'Invalid promo code'], 400);
+        }
+
+        $cartItems = $this->getCartItems();
+        $total = $this->calculateTotal($cartItems);
+
+        $discount = 0;
+        if ($promo->type === 'percentage') {
+            $discount = ($total * ($promo->value / 100));
+        } else {
+            $discount = min($total, $promo->value);
+        }
+
+        session()->put('applied_promo', [
+            'promo_id' => $promo->id,
+            'code' => $promo->code,
+            'type' => $promo->type,
+            'value' => (float) $promo->value,
+            'discount' => (float) $discount,
+        ]);
+
+        // Increment usage count
+        $promo->usage_count = $promo->usage_count + 1;
+        $promo->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Promo applied successfully',
+            'discount' => $discount,
+            'final_total' => max(0, $total - $discount),
+        ]);
     }
 }

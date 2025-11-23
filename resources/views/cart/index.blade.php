@@ -17,14 +17,19 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-0">
                         @foreach($cartItems as $index => $item)
-                            <div class="cart-item p-4 {{ $index > 0 ? 'border-top' : '' }}" data-item-id="{{ $item['product_id'] }}">
+                            @php
+                                // Use data_get to safely handle arrays and objects for product id and cart key
+                                $cartProductId = data_get($item, 'product_id') ?? data_get($item, 'product.id');
+                                $cartKey = data_get($item, 'cart_key');
+                            @endphp
+                            <div class="cart-item p-4 {{ $index > 0 ? 'border-top' : '' }}" data-item-id="{{ $cartKey ?? $cartProductId }}">
                                 <div class="row align-items-center">
                                     <!-- Product Image -->
                                     <div class="col-md-2 col-sm-3">
-                                        @if($item['product']->images && count($item['product']->images) > 0)
-                                            <img src="{{ asset('storage/' . $item['product']->images[0]) }}"
+                                        @if(data_get($item, 'product.main_image.url'))
+                                            <img src="{{ data_get($item, 'product.main_image.url') ?? asset('images/picsum/600x800-1-0.jpg') }}"
                                                  class="img-fluid rounded"
-                                                 alt="{{ $item['product']->name }}"
+                                                 alt="{{ data_get($item, 'product.name') }}"
                                                  style="height: 80px; width: 80px; object-fit: cover;">
                                         @else
                                             <div class="bg-light d-flex align-items-center justify-content-center rounded"
@@ -37,52 +42,52 @@
                                     <!-- Product Details -->
                                     <div class="col-md-4 col-sm-5">
                                         <h6 class="mb-1">
-                                            <a href="{{ route('products.show', $item['product']->slug) }}"
+                                            <a href="{{ route('products.show', data_get($item, 'product.slug')) }}"
                                                class="text-decoration-none text-dark">
-                                                {{ $item['product']->name }}
+                                                {{ data_get($item, 'product.name') }}
                                             </a>
                                         </h6>
                                         <small class="text-muted">
-                                            SKU: {{ $item['product']->sku }}
+                                            SKU: {{ data_get($item, 'product.sku') }}
                                         </small>
-                                        @if(isset($item['size']))
-                                            <br><small class="text-muted">Size: {{ $item['size'] }}</small>
+                                        @if(data_get($item, 'size'))
+                                            <br><small class="text-muted">Size: {{ data_get($item, 'size') }}</small>
                                         @endif
-                                        @if(isset($item['color']))
-                                            <br><small class="text-muted">Color: {{ ucfirst($item['color']) }}</small>
+                                        @if(data_get($item, 'color'))
+                                            <br><small class="text-muted">Color: {{ ucfirst(data_get($item, 'color')) }}</small>
                                         @endif
-                                        @if($item['is_deposit'])
+                                        @if(data_get($item, 'is_deposit'))
                                             <br><span class="badge bg-info">Deposit Payment</span>
                                         @endif
                                     </div>
 
                                     <!-- Quantity Controls -->
-                                    <div class="col-md-2 col-sm-2">
+                                    {{-- <div class="col-md-2 col-sm-2">
                                         <div class="input-group" style="max-width: 120px;">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                    onclick="updateQuantity('{{ $item['product_id'] }}', {{ $item['quantity'] - 1 }})">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                    onclick="updateQuantity('{{ $cartKey ?? $cartProductId }}', {{ (int) data_get($item, 'quantity', 0) - 1 }})">
                                                 -
                                             </button>
-                                            <input type="number" class="form-control form-control-sm text-center"
-                                                   value="{{ $item['quantity'] }}"
+                          <input type="number" class="form-control form-control-sm text-center"
+                              value="{{ data_get($item, 'quantity') }}"
                                                    min="1"
-                                                   max="{{ $item['product']->stock_quantity }}"
-                                                   onchange="updateQuantity('{{ $item['product_id'] }}', this.value)">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                    onclick="updateQuantity('{{ $item['product_id'] }}', {{ $item['quantity'] + 1 }})">
+                              max="{{ data_get($item, 'product.stock_quantity') }}"
+                                                   onchange="updateQuantity('{{ $cartKey ?? $cartProductId }}', this.value)">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                    onclick="updateQuantity('{{ $cartKey ?? $cartProductId }}', {{ (int) data_get($item, 'quantity', 0) + 1 }})">
                                                 +
                                             </button>
                                         </div>
-                                    </div>
+                                    </div> --}}
 
                                     <!-- Price -->
                                     <div class="col-md-2 col-sm-2 text-center">
-                                        <div class="price">
-                                            @if($item['is_deposit'])
-                                                <span class="fw-bold">${{ number_format($item['price'], 2) }}</span>
+                                            <div class="price">
+                                            @if(data_get($item, 'is_deposit'))
+                                                <span class="fw-bold">{!! data_get($item, 'formatted_price') !!}</span>
                                                 <br><small class="text-muted">(30% deposit)</small>
                                             @else
-                                                <span class="fw-bold">${{ number_format($item['price'], 2) }}</span>
+                                                <span class="fw-bold">{!! data_get($item, 'formatted_price') !!}</span>
                                             @endif
                                         </div>
                                     </div>
@@ -90,14 +95,14 @@
                                     <!-- Total -->
                                     <div class="col-md-1 col-sm-2 text-center">
                                         <div class="total fw-bold">
-                                            ${{ number_format($item['price'] * $item['quantity'], 2) }}
+                                            {!! config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') !!} {{ number_format(data_get($item, 'display_subtotal', 0), 2) }}
                                         </div>
                                     </div>
 
                                     <!-- Remove Button -->
                                     <div class="col-md-1 text-end">
-                                        <button type="button" class="btn btn-outline-danger btn-sm"
-                                                onclick="removeFromCart('{{ $item['product_id'] }}')"
+                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                                onclick="removeFromCart('{{ $cartKey ?? $cartProductId }}')"
                                                 title="Remove from cart">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -127,14 +132,14 @@
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-3">
-                            <span>Subtotal ({{ array_sum(array_column($cartItems, 'quantity')) }} items)</span>
-                            <span class="fw-bold">${{ number_format($subtotal, 2) }}</span>
+                            <span>Subtotal ({{ collect($cartItems)->sum('quantity') }} items)</span>
+                            <span class="fw-bold">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($displaySubtotal, 2) }}</span>
                         </div>
 
                         <div class="d-flex justify-content-between mb-3">
                             <span>Shipping</span>
                             <span class="text-muted">
-                                @if($subtotal >= 200)
+                                @if($displaySubtotal >= 200)
                                     <span class="text-success">Free</span>
                                 @else
                                     $15.00
@@ -142,10 +147,10 @@
                             </span>
                         </div>
 
-                        @if($subtotal < 200)
+                        @if($displaySubtotal < 200)
                             <div class="alert alert-info py-2 px-3 small">
                                 <i class="fas fa-truck me-1"></i>
-                                Add ${{ number_format(200 - $subtotal, 2) }} more for free shipping!
+                                Add {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format(200 - $displaySubtotal, 2) }} more for free shipping!
                             </div>
                         @endif
 
@@ -158,7 +163,7 @@
 
                         <div class="d-flex justify-content-between mb-4">
                             <span class="h5">Total</span>
-                            <span class="h5 fw-bold">${{ number_format($total, 2) }}</span>
+                            <span class="h5 fw-bold">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($total, 2) }}</span>
                         </div>
 
                         <!-- Special Notes for Deposit Payments -->
@@ -256,9 +261,9 @@
 </div>
 
 <script>
-function updateQuantity(productId, newQuantity) {
+function updateQuantity(cartKey, newQuantity) {
     if (newQuantity < 1) {
-        removeFromCart(productId);
+        removeFromCart(cartKey);
         return;
     }
 
@@ -269,7 +274,7 @@ function updateQuantity(productId, newQuantity) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
-            product_id: productId,
+            cart_key: cartKey,
             quantity: newQuantity
         })
     })
@@ -287,7 +292,7 @@ function updateQuantity(productId, newQuantity) {
     });
 }
 
-function removeFromCart(productId) {
+function removeFromCart(cartKey) {
     if (!confirm('Are you sure you want to remove this item from your cart?')) {
         return;
     }
@@ -299,14 +304,14 @@ function removeFromCart(productId) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
-            product_id: productId
+            cart_key: cartKey
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             // Remove the cart item from DOM
-            const cartItem = document.querySelector(`[data-item-id="${productId}"]`);
+            const cartItem = document.querySelector(`[data-item-id="${cartKey}"]`);
             if (cartItem) {
                 cartItem.remove();
             }

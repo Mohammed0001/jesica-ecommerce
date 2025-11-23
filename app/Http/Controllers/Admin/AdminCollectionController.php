@@ -38,14 +38,17 @@ class AdminCollectionController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'release_date' => 'required|date',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'pdf' => 'nullable|mimes:pdf|max:10240',
             'visible' => 'boolean',
         ]);
 
         // Only collect attributes we expect to insert
-        $data = $request->only(['title', 'description']);
+    $data = $request->only(['title', 'description', 'release_date']);
         $data['slug'] = Str::slug($request->title);
-        $data['visible'] = $request->boolean('visible', true);
+    $data['visible'] = $request->boolean('visible', true);
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -53,7 +56,24 @@ class AdminCollectionController extends Controller
             $data['image_path'] = $request->file('image')->store('collections', 'public');
         }
 
-    Collection::create($data);
+        $collection = Collection::create($data);
+
+    // Handle images upload (multiple)
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $file) {
+                $path = $file->store('collections', 'public');
+                $collection->images()->create([
+                    'path' => $path,
+                    'order' => $index,
+                ]);
+            }
+        }
+
+        // Handle PDF upload
+        if ($request->hasFile('pdf')) {
+            $path = $request->file('pdf')->store('collections/pdfs', 'public');
+            $collection->update(['pdf_path' => $path]);
+        }
 
         return redirect()->route('admin.collections.index')
             ->with('success', 'Collection created successfully.');
@@ -85,16 +105,19 @@ class AdminCollectionController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'release_date' => 'required|date',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'pdf' => 'nullable|mimes:pdf|max:10240',
             'visible' => 'boolean',
         ]);
 
-        $data = $request->only(['title', 'description']);
+    $data = $request->only(['title', 'description', 'release_date']);
         $data['slug'] = Str::slug($request->title);
     $data['visible'] = $request->boolean('visible', $collection->getAttribute('visible'));
 
         // Handle image upload
-        if ($request->hasFile('image')) {
+    if ($request->hasFile('image')) {
             // Delete old image if exists
             if ($collection->image_path) {
                 Storage::disk('public')->delete($collection->image_path);
@@ -103,6 +126,33 @@ class AdminCollectionController extends Controller
         }
 
         $collection->update($data);
+
+        // Replace collection images (if provided)
+    if ($request->hasFile('images')) {
+            // delete old files
+            foreach ($collection->images as $img) {
+                Storage::disk('public')->delete($img->path);
+            }
+            $collection->images()->delete();
+
+            // store new ones
+            foreach ($request->file('images') as $index => $file) {
+                $path = $file->store('collections', 'public');
+                $collection->images()->create([
+                    'path' => $path,
+                    'order' => $index,
+                ]);
+            }
+        }
+
+        if ($request->hasFile('pdf')) {
+            // delete old pdf first
+            if ($collection->pdf_path) {
+                Storage::disk('public')->delete($collection->pdf_path);
+            }
+            $path = $request->file('pdf')->store('collections/pdfs', 'public');
+            $collection->update(['pdf_path' => $path]);
+        }
 
         return redirect()->route('admin.collections.show', $collection)
             ->with('success', 'Collection updated successfully.');
@@ -119,9 +169,20 @@ class AdminCollectionController extends Controller
                 ->with('error', 'Cannot delete collection with products. Please move or delete products first.');
         }
 
-        // Delete image if exists
+        // Delete image_path file if exists
         if ($collection->image_path) {
             Storage::disk('public')->delete($collection->image_path);
+        }
+
+        // Delete multiple collection images
+        foreach ($collection->images as $img) {
+            Storage::disk('public')->delete($img->path);
+            $img->delete();
+        }
+
+        // Delete collection PDF if exists
+        if ($collection->pdf_path) {
+            Storage::disk('public')->delete($collection->pdf_path);
         }
 
         $collection->delete();

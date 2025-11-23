@@ -19,9 +19,9 @@ class SearchController extends Controller
 
         if (strlen($query) >= 2) {
             // Search products
-            $products = Product::where('is_visible', true)
+                            $products = Product::where('visible', true)
                 ->where(function ($q) use ($query) {
-                    $q->where('name', 'LIKE', "%{$query}%")
+                    $q->where('title', 'LIKE', "%{$query}%")
                       ->orWhere('description', 'LIKE', "%{$query}%");
                 })
                 ->with('collection')
@@ -29,9 +29,9 @@ class SearchController extends Controller
                 ->get();
 
             // Search collections
-            $collections = Collection::where('is_visible', true)
+                            $collections = Collection::where('visible', true)
                 ->where(function ($q) use ($query) {
-                    $q->where('name', 'LIKE', "%{$query}%")
+                    $q->where('title', 'LIKE', "%{$query}%")
                       ->orWhere('description', 'LIKE', "%{$query}%");
                 })
                 ->withCount('products')
@@ -60,17 +60,17 @@ class SearchController extends Controller
 
         if (strlen($query) >= 2) {
             // Get product suggestions
-            $productSuggestions = Product::where('is_visible', true)
-                ->where('name', 'LIKE', "%{$query}%")
+                $productSuggestions = Product::where('visible', true)
+                    ->where('title', 'LIKE', "%{$query}%")
                 ->take(5)
-                ->pluck('name')
+                ->pluck('title')
                 ->toArray();
 
             // Get collection suggestions
-            $collectionSuggestions = Collection::where('is_visible', true)
-                ->where('name', 'LIKE', "%{$query}%")
+                $collectionSuggestions = Collection::where('visible', true)
+                    ->where('title', 'LIKE', "%{$query}%")
                 ->take(3)
-                ->pluck('name')
+                ->pluck('title')
                 ->toArray();
 
             $suggestions = array_merge($productSuggestions, $collectionSuggestions);

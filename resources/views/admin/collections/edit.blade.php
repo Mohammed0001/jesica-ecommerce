@@ -50,10 +50,19 @@
                                 @enderror
                             </div>
 
+                            <div class="col-md-6 mb-4">
+                                <label for="release_date" class="form-label">Release Date</label>
+                                <input type="date" class="form-control @error('release_date') is-invalid @enderror"
+                                       id="release_date" name="release_date" value="{{ old('release_date', optional($collection->release_date)->format('Y-m-d')) }}" required>
+                                @error('release_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <div class="col-12 mb-4">
-                    <label for="image" class="form-label">Collection Image</label>
-                                <input type="file" class="form-control @error('image') is-invalid @enderror"
-                                       id="image" name="image" accept="image/*">
+                    <label for="images" class="form-label">Collection Images</label>
+                                <input type="file" class="form-control @error('images.*') is-invalid @enderror"
+                                       id="images" name="images[]" accept="image/*" multiple>
                                 @error('image')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -74,11 +83,42 @@
                             </div>
                             @endif
 
+                            @if($collection->images && $collection->images->count() > 0)
+                            <div class="col-12 mb-4">
+                                <label class="form-label">Other Images</label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @foreach($collection->images as $img)
+                                        <div class="rounded border p-1 bg-white">
+                                            <img src="{{ $img->url }}" alt="{{ $collection->title }}" style="width: 100px; height: 80px; object-fit: cover;">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endif
+
+                            <div class="col-12 mb-4">
+                                <label for="pdf" class="form-label">Collection PDF (replace)</label>
+                                <input type="file" class="form-control @error('pdf') is-invalid @enderror" id="pdf" name="pdf" accept="application/pdf">
+                                @error('pdf')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Upload a PDF lookbook — uploading will replace any existing PDF for the collection.</div>
+                            </div>
+
+                            @if($collection->pdf_path)
+                                <div class="col-12 mb-4">
+                                    <label class="form-label">Current PDF</label>
+                                    <div>
+                                        <a href="{{ Storage::url($collection->pdf_path) }}" target="_blank">View Current PDF</a>
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="col-12 mb-4">
                                 <div class="form-check">
                      <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
                          {{ old('visible', $collection->visible) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_visible">
+                                    <label class="form-check-label" for="visible">
                                         Publish this collection (make it visible to customers)
                                     </label>
                                 </div>
@@ -165,8 +205,8 @@
                     @foreach($collection->products->take(3) as $product)
                     <div class="recent-product">
                         <div class="product-thumbnail-small">
-                            @if($product->image)
-                                <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}">
+                            @if($product->images && $product->images->count() > 0)
+                                <img src="{{ optional($product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" alt="{{ $product->name }}">
                             @else
                                 <div class="placeholder-small">
                                     <i class="fas fa-image"></i>

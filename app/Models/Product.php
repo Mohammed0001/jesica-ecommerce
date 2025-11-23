@@ -19,6 +19,7 @@ class Product extends Model
         'description',
         'story',
         'price',
+        'currency',
         'sku',
         'quantity',
         'is_one_of_a_kind',
@@ -140,13 +141,29 @@ class Product extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        return number_format($this->price, 2) . ' <span class="currency">EGP</span>';
+        $displayCurrency = session('currency', 'EGP');
+        $converted = $this->convertToCurrency($displayCurrency);
+        $symbol = config('currencies.symbols')[$displayCurrency] ?? $displayCurrency;
+        return $symbol . ' ' . number_format($converted, 2) . " <span class=\"currency\">{$displayCurrency}</span>";
+    }
+
+    /**
+     * Convert price from product currency to target currency
+     */
+    public function convertToCurrency(string $targetCurrency): float
+    {
+        $rates = config('currencies.rates');
+        $sourceRate = $rates[$this->currency] ?? 1;
+        $targetRate = $rates[$targetCurrency] ?? 1;
+        // Convert: price_in_target = price * (targetRate / sourceRate)
+        $converted = $this->price * ($targetRate / $sourceRate);
+        return round($converted, 2);
     }
 
     /**
      * Get available sizes
      */
-    public function getAvailableSizesAttribute(): \Illuminate\Database\Eloquent\Collection
+    public function getAvailableSizesAttribute(): \Illuminate\Support\Collection
     {
         if ($this->is_one_of_a_kind) {
             return collect(['One Size']);

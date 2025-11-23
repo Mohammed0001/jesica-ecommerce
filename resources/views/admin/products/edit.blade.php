@@ -9,7 +9,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <h1 class="page-title">Edit Product</h1>
             <div class="d-flex gap-2">
-                <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-outline-info">
+                <a href="{{ route('admin.products.show', $product) }}" class="btn btn-outline-info">
                     <i class="fas fa-eye me-2"></i>View Product
                 </a>
                 <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
@@ -27,22 +27,22 @@
                     <h6>Product Information</h6>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.products.update', $product->id) }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
                         <div class="row">
                             <div class="col-md-8 mb-4">
-                                <label for="name" class="form-label">Product Name</label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                       id="name" name="name" value="{{ old('name', $product->name) }}" required>
+                    <label for="title" class="form-label">Product Title</label>
+                    <input type="text" class="form-control @error('title') is-invalid @enderror"
+                        id="title" name="title" value="{{ old('title', $product->title) }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            <div class="col-md-4 mb-4">
-                                <label for="price" class="form-label">Price ($)</label>
+                            <div class="col-md-3 mb-4">
+                                <label for="price" class="form-label">Price</label>
                                 <input type="number" class="form-control @error('price') is-invalid @enderror"
                                        id="price" name="price" value="{{ old('price', $product->price) }}"
                                        step="0.01" min="0" required>
@@ -50,7 +50,17 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-
+                            <div class="col-md-1 mb-4">
+                                <label for="currency" class="form-label">Currency</label>
+                                <select id="currency" name="currency" class="form-select @error('currency') is-invalid @enderror">
+                                    @foreach(config('currencies.rates') as $code => $rate)
+                                        <option value="{{ $code }}" {{ old('currency', $product->currency ?? 'EGP') === $code ? 'selected' : '' }}>{{ $code }}</option>
+                                    @endforeach
+                                </select>
+                                @error('currency')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                             <div class="col-12 mb-4">
                                 <label for="description" class="form-label">Description</label>
                                 <textarea class="form-control @error('description') is-invalid @enderror"
@@ -68,7 +78,7 @@
                                     @foreach($collections as $collection)
                                         <option value="{{ $collection->id }}"
                                                 {{ old('collection_id', $product->collection_id) == $collection->id ? 'selected' : '' }}>
-                                            {{ $collection->name }}
+                                            {{ $collection->title }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -77,23 +87,76 @@
                                 @enderror
                             </div>
 
+                            <div class="col-md-3 mb-4">
+                                <label for="sku" class="form-label">SKU</label>
+                                <input type="text" class="form-control @error('sku') is-invalid @enderror"
+                                       id="sku" name="sku" value="{{ old('sku', $product->sku) }}">
+                                @error('sku')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-3 mb-4">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control @error('quantity') is-invalid @enderror"
+                                       id="quantity" name="quantity" value="{{ old('quantity', $product->quantity) }}" min="0">
+                                @error('quantity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <div class="col-md-6 mb-4">
-                                <label for="image" class="form-label">Product Image</label>
-                                <input type="file" class="form-control @error('image') is-invalid @enderror"
-                                       id="image" name="image" accept="image/*">
+                                <label for="size_chart_id" class="form-label">Size Chart</label>
+                                <select class="form-select @error('size_chart_id') is-invalid @enderror"
+                                        id="size_chart_id" name="size_chart_id">
+                                    <option value="">No size chart</option>
+                                    @foreach(\App\Models\SizeChart::all() as $sizeChart)
+                                        <option value="{{ $sizeChart->id }}" {{ old('size_chart_id', $product->size_chart_id) == $sizeChart->id ? 'selected' : '' }}>
+                                            {{ $sizeChart->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('size_chart_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_one_of_a_kind" name="is_one_of_a_kind" value="1"
+                                           {{ old('is_one_of_a_kind', $product->is_one_of_a_kind) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_one_of_a_kind">
+                                        One of a kind product
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mb-4">
+                                <label for="story" class="form-label">Product Story (optional)</label>
+                                <textarea class="form-control @error('story') is-invalid @enderror"
+                                          id="story" name="story" rows="3">{{ old('story', $product->story) }}</textarea>
+                                @error('story')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="images" class="form-label">Product Images</label>
+                                <input type="file" class="form-control @error('images.*') is-invalid @enderror"
+                                       id="images" name="images[]" accept="image/*" multiple>
                                 @error('image')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <div class="form-text">Leave empty to keep current image. Supported formats: JPEG, PNG, JPG, GIF</div>
                             </div>
 
-                            @if($product->image)
+                            @if($product->images && $product->images->count() > 0)
                             <div class="col-12 mb-4">
                                 <label class="form-label">Current Image</label>
                                 <div class="current-image-container">
-                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="current-image">
+                                    <img src="{{ optional($product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" alt="{{ $product->name }}" class="current-image">
                                     <div class="image-actions">
-                                        <a href="{{ Storage::url($product->image) }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <a href="{{ optional($product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" target="_blank" class="btn btn-sm btn-outline-info">
                                             <i class="fas fa-external-link-alt"></i> View Full Size
                                         </a>
                                     </div>
@@ -103,9 +166,9 @@
 
                             <div class="col-12 mb-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_visible" name="is_visible" value="1"
-                                           {{ old('is_visible', $product->is_visible) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_visible">
+                     <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
+                         {{ old('visible', $product->visible) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="visible">
                                         Publish this product (make it visible to customers)
                                     </label>
                                 </div>
@@ -116,7 +179,7 @@
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save me-2"></i>Update Product
                                     </button>
-                                    <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-outline-secondary">
+                                    <a href="{{ route('admin.products.show', $product) }}" class="btn btn-outline-secondary">
                                         Cancel
                                     </a>
                                 </div>
@@ -170,11 +233,11 @@
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Special Orders:</span>
-                        <span class="stat-value">{{ $product->specialOrders->count() }}</span>
+                        <span class="stat-value">{{ $product->specialOrders ? $product->specialOrders->count() : 0 }}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Status:</span>
-                        @if($product->is_visible)
+                        @if($product->visible)
                             <span class="status-badge visible">Visible</span>
                         @else
                             <span class="status-badge hidden">Hidden</span>

@@ -29,7 +29,7 @@ class CollectionController extends Controller
     public function show(Collection $collection, Request $request)
     {
         // Check if collection is visible and released
-        if (!$collection->visible || $collection->release_date > now()) {
+        if (!$collection->getAttribute('visible') || $collection->release_date > now()) {
             abort(404);
         }
 

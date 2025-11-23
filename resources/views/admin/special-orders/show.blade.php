@@ -90,8 +90,8 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="product-image-container">
-                                @if($order->product->image)
-                                    <img src="{{ Storage::url($order->product->image) }}" alt="{{ $order->product->name }}" class="product-image">
+                                @if(optional($order->product->main_image)->url)
+                                    <img src="{{ optional($order->product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" alt="{{ $order->product->name }}" class="product-image">
                                 @else
                                     <div class="placeholder-image">
                                         <i class="fas fa-image"></i>
@@ -104,7 +104,7 @@
                             <h5 class="product-name">{{ $order->product->name }}</h5>
                             <div class="detail-row">
                                 <label>Collection:</label>
-                                <span>{{ $order->product->collection->name ?? 'No Collection' }}</span>
+                                <span>{{ $order->product->collection->title ?? 'No Collection' }}</span>
                             </div>
                             <div class="detail-row">
                                 <label>Base Price:</label>
@@ -115,7 +115,7 @@
                                 <span>{{ $order->product->description }}</span>
                             </div>
                             <div class="mt-3">
-                                <a href="{{ route('admin.products.show', $order->product->id) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ route('admin.products.show', $order->product) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye me-2"></i>View Product Details
                                 </a>
                             </div>
@@ -218,7 +218,7 @@
                         </button>
 
                         @if($order->product)
-                            <a href="{{ route('admin.products.show', $order->product->id) }}" class="btn btn-outline-primary">
+                            <a href="{{ route('admin.products.show', $order->product) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-box me-2"></i>View Product
                             </a>
                         @endif

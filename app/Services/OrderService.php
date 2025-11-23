@@ -175,7 +175,7 @@ class OrderService
                 continue;
             }
 
-            if (!$product->visible) {
+            if (!$product->getAttribute('visible')) {
                 $errors[] = "Product '{$product->title}' is no longer available";
                 continue;
             }

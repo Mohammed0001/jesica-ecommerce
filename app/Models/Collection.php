@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\CollectionImage;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Collection extends Model
@@ -16,6 +18,7 @@ class Collection extends Model
         'release_date',
         'visible',
         'image_path',
+        'pdf_path',
     ];
 
     protected $casts = [
@@ -55,6 +58,14 @@ class Collection extends Model
     }
 
     /**
+     * Get the images associated with this collection
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(CollectionImage::class)->orderBy('order');
+    }
+
+    /**
      * Get visible products in this collection
      */
     public function visibleProducts(): HasMany
@@ -83,7 +94,24 @@ class Collection extends Model
      */
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image_path ? asset('images/' . $this->image_path) : null;
+        if (! $this->image_path) {
+            return null;
+        }
+
+        // Use storage URL for public disk (e.g., /storage/collections/xxx.jpg)
+        return Storage::url($this->image_path);
+    }
+
+    /**
+     * Get PDF URL attribute
+     */
+    public function getPdfUrlAttribute(): ?string
+    {
+        if (! $this->pdf_path) {
+            return null;
+        }
+
+        return Storage::url($this->pdf_path);
     }
 
     /**

@@ -55,8 +55,8 @@
                                     @foreach($products as $product)
                                         <tr>
                                             <td>
-                                                @if($product->image)
-                                                    <img src="{{ asset('storage/' . $product->image) }}"
+                                                    @if($product->images && $product->images->count() > 0)
+                                                        <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
                                                          alt="{{ $product->name }}"
                                                          class="product-thumbnail">
                                                 @else
@@ -72,20 +72,20 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="collection-badge">{{ $product->collection->name ?? 'No Collection' }}</span>
+                                                <span class="collection-badge">{{ $product->collection->title ?? 'No Collection' }}</span>
                                             </td>
                                             <td>
-                                                <span class="price-value">${{ number_format($product->price, 2) }}</span>
+                                                <span class="price-value">{!! $product->formatted_price !!}</span>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <span class="badge bg-{{ $product->is_visible ? 'success' : 'secondary' }}">
-                                                        {{ $product->is_visible ? 'Published' : 'Draft' }}
+                                                    <span class="badge bg-{{ $product->visible ? 'success' : 'secondary' }}">
+                                                        {{ $product->visible ? 'Published' : 'Draft' }}
                                                     </span>
                                                     <form method="POST" action="{{ route('admin.products.toggle-visibility', $product) }}" class="d-inline">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-link p-0" title="Toggle visibility">
-                                                            <i class="fas fa-{{ $product->is_visible ? 'eye-slash' : 'eye' }}"></i>
+                                                            <i class="fas fa-{{ $product->visible ? 'eye-slash' : 'eye' }}"></i>
                                                         </button>
                                                     </form>
                                                 </div>

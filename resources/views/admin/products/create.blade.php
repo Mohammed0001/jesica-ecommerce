@@ -29,9 +29,9 @@
 
                         <div class="row">
                             <div class="col-12 mb-4">
-                                <label for="name" class="form-label">Product Name</label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                       id="name" name="name" value="{{ old('name') }}" required>
+                    <label for="title" class="form-label">Product Title</label>
+                    <input type="text" class="form-control @error('title') is-invalid @enderror"
+                        id="title" name="title" value="{{ old('title') }}" required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -46,11 +46,27 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-6 mb-4">
-                                <label for="price" class="form-label">Price ($)</label>
+                            <div class="col-md-4 mb-4">
+                                <label for="price" class="form-label">Price</label>
                                 <input type="number" step="0.01" min="0"
                                        class="form-control @error('price') is-invalid @enderror"
                                        id="price" name="price" value="{{ old('price') }}" required>
+                                @error('price')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-2 mb-4">
+                                <label for="currency" class="form-label">Currency</label>
+                                <select id="currency" name="currency" class="form-select @error('currency') is-invalid @enderror">
+                                    @foreach(config('currencies.rates') as $code => $rate)
+                                        <option value="{{ $code }}" {{ old('currency', 'EGP') === $code ? 'selected' : '' }}>{{ $code }}</option>
+                                    @endforeach
+                                </select>
+                                @error('currency')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                                 @error('price')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -62,8 +78,8 @@
                                         id="collection_id" name="collection_id" required>
                                     <option value="">Select a collection</option>
                                     @foreach($collections as $collection)
-                                        <option value="{{ $collection->id }}" {{ old('collection_id') == $collection->id ? 'selected' : '' }}>
-                                            {{ $collection->name }}
+                        <option value="{{ $collection->id }}" {{ old('collection_id') == $collection->id ? 'selected' : '' }}>
+                            {{ $collection->title }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -72,10 +88,63 @@
                                 @enderror
                             </div>
 
+                            <div class="col-md-3 mb-4">
+                                <label for="sku" class="form-label">SKU</label>
+                                <input type="text" class="form-control @error('sku') is-invalid @enderror"
+                                       id="sku" name="sku" value="{{ old('sku') }}">
+                                @error('sku')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-3 mb-4">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control @error('quantity') is-invalid @enderror"
+                                       id="quantity" name="quantity" value="{{ old('quantity', 1) }}" min="0">
+                                @error('quantity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="size_chart_id" class="form-label">Size Chart</label>
+                                <select class="form-select @error('size_chart_id') is-invalid @enderror"
+                                        id="size_chart_id" name="size_chart_id">
+                                    <option value="">No size chart</option>
+                                    @foreach(\App\Models\SizeChart::all() as $sizeChart)
+                                        <option value="{{ $sizeChart->id }}" {{ old('size_chart_id') == $sizeChart->id ? 'selected' : '' }}>
+                                            {{ $sizeChart->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('size_chart_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_one_of_a_kind" name="is_one_of_a_kind" value="1"
+                                           {{ old('is_one_of_a_kind') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_one_of_a_kind">
+                                        One of a kind product
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="col-12 mb-4">
-                                <label for="image" class="form-label">Product Image</label>
-                                <input type="file" class="form-control @error('image') is-invalid @enderror"
-                                       id="image" name="image" accept="image/*">
+                                <label for="story" class="form-label">Product Story (optional)</label>
+                                <textarea class="form-control @error('story') is-invalid @enderror"
+                                          id="story" name="story" rows="3">{{ old('story') }}</textarea>
+                                @error('story')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-12 mb-4">
+                                <label for="images" class="form-label">Product Images</label>
+                                <input type="file" class="form-control @error('images.*') is-invalid @enderror"
+                                       id="images" name="images[]" accept="image/*" multiple>
                                 @error('image')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -84,9 +153,9 @@
 
                             <div class="col-12 mb-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_visible" name="is_visible" value="1"
-                                           {{ old('is_visible', true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_visible">
+                     <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
+                         {{ old('visible', true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="visible">
                                         Publish this product (make it visible to customers)
                                     </label>
                                 </div>

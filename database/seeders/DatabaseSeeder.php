@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CollectionSeeder::class,
             ProductSeeder::class,
+            PromoCodeSeeder::class,
         ]);
 
         // Create addresses for some users

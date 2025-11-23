@@ -67,7 +67,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         // Check if product is visible
-        if (!$product->visible || ($product->collection && !$product->collection->visible)) {
+        if (!$product->getAttribute('visible') || ($product->collection && !$product->collection->getAttribute('visible'))) {
             abort(404);
         }
 

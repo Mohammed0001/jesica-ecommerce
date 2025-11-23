@@ -3,460 +3,301 @@
 @section('title', $collection->title)
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid py-4">
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header mb-5">
         <div class="d-flex justify-content-between align-items-center">
-            <h1 class="page-title">{{ $collection->title }}</h1>
-            <div class="d-flex gap-2">
-                <a href="{{ route('admin.collections.edit', $collection->id) }}" class="btn btn-outline-primary">
+            <h1 class="page-title fw-light display-5 mb-0">{{ $collection->title }}</h1>
+            <div class="d-flex gap-3">
+                <a href="{{ route('admin.collections.edit', $collection) }}" class="btn btn-outline-dark">
                     <i class="fas fa-edit me-2"></i>Edit Collection
                 </a>
                 <a href="{{ route('admin.collections.index') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Collections
+                    <i class="fas fa-arrow-left me-2"></i>Back
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Collection Details -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6>Collection Information</h6>
+    <div class="row g-5">
+        <!-- Left: Image Gallery -->
+        <div class="col-lg-7">
+            <div class="sticky-top" style="top: 2rem;">
+                @php
+                    $images = $collection->images && $collection->images->count() > 0
+                        ? $collection->images
+                        : collect([$collection->image_path ? (object)['url' => Storage::url($collection->image_path)] : null])
+                             ->filter();
+
+                    $firstImage = $images->first()?->url ?? asset('images/placeholder-collection.jpg');
+                @endphp
+
+                <!-- Main Image -->
+                <div class="main-collection-image-container mb-4 rounded-3 overflow-hidden shadow-lg">
+                    <img id="mainCollectionImage" src="{{ $firstImage }}" class="img-fluid w-100"
+                         alt="{{ $collection->title }}" style="height: 500px; object-fit: cover;">
+                    @if($images->count() > 1)
+                        <div class="image-counter">
+                            1 / {{ $images->count() }}
+                        </div>
+                    @endif
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="collection-image-container">
-                                @if($collection->image_path)
-                                    <img src="{{ asset('images/' . $collection->image_path) }}" alt="{{ $collection->title }}" class="collection-image">
-                                @else
-                                    <div class="placeholder-image">
-                                        <i class="fas fa-images"></i>
-                                        <span>No Image</span>
-                                    </div>
-                                @endif
+
+                <!-- Horizontal Thumbnails -->
+                @if($images->count() > 1)
+                    <div class="thumbnails-horizontal d-flex gap-3 overflow-x-auto pb-3">
+                        @foreach($images as $index => $image)
+                            <div class="thumbnail-item flex-shrink-0 {{ $index === 0 ? 'active' : '' }} border"
+                                 onclick="changeCollectionImage('{{ $image->url ?? Storage::url($image) }}', this, {{ $index }})"
+                                 role="button">
+                                <img src="{{ $image->url ?? Storage::url($image) }}"
+                                     class="img-fluid rounded" style="width: 110px; height: 110px; object-fit: cover;">
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="collection-details">
-                                <h4 class="collection-name">{{ $collection->title }}</h4>
-
-                                <div class="detail-row">
-                                    <label>Products:</label>
-                                    <span class="product-count">{{ $collection->products->count() }} items</span>
-                                </div>
-
-                                <div class="detail-row">
-                                    <label>Visibility:</label>
-                                    @if($collection->visible)
-                                        <span class="status-badge visible">Visible</span>
-                                    @else
-                                        <span class="status-badge hidden">Hidden</span>
-                                    @endif
-                                </div>
-
-                                <div class="detail-row">
-                                    <label>Created:</label>
-                                    <span>{{ $collection->created_at->format('M d, Y at h:i A') }}</span>
-                                </div>
-
-                                <div class="detail-row">
-                                    <label>Last Updated:</label>
-                                    <span>{{ $collection->updated_at->format('M d, Y at h:i A') }}</span>
-                                </div>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
-
-                    @if($collection->description)
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <label>Description:</label>
-                            <div class="collection-description">
-                                {{ $collection->description }}
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Products in this Collection -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h6>Products in this Collection</h6>
-                    @if($collection->products->count() > 0)
-                        <span class="badge bg-primary">{{ $collection->products->count() }} products</span>
-                    @endif
-                </div>
-                <div class="card-body">
-                    @if($collection->products->count() > 0)
-                        <div class="row">
-                            @foreach($collection->products as $product)
-                            <div class="col-md-6 col-lg-4 mb-3">
-                                <div class="product-card">
-                                    <div class="product-image-wrapper">
-                                        @if($product->image)
-                                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="product-thumbnail">
-                                        @else
-                                            <div class="product-placeholder">
-                                                <i class="fas fa-image"></i>
-                                            </div>
-                                        @endif
-                                        @if(!$product->visible)
-                                            <div class="product-overlay">
-                                                <span class="hidden-badge">Hidden</span>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="product-info">
-                                        <h6 class="product-title">{{ $product->name }}</h6>
-                                        <p class="product-price">${{ number_format($product->price, 2) }}</p>
-                                        <div class="product-actions">
-                                            <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
-                                            <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-sm btn-outline-secondary">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="empty-state">
-                            <i class="fas fa-box-open"></i>
-                            <h5>No Products Yet</h5>
-                            <p>This collection doesn't have any products assigned to it yet.</p>
-                            <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>Add First Product
-                            </a>
-                        </div>
-                    @endif
-                </div>
+                @endif
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6>Quick Actions</h6>
+        <!-- Right: Collection Info & Actions -->
+        <div class="col-lg-5">
+            <div class="collection-info">
+
+                <!-- Badges -->
+                <div class="d-flex gap-2 mb-4">
+                    <span class="badge premium-badge {{ $collection->visible ? 'visible' : 'hidden' }} px-4 py-2">
+                        {{ $collection->visible ? 'Published' : 'Hidden' }}
+                    </span>
+                    <span class="badge bg-light text-dark border px-4 py-2">
+                        {{ $collection->products->count() }} Products
+                    </span>
                 </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('admin.collections.edit', $collection->id) }}" class="btn btn-primary">
+
+                <!-- Description -->
+                @if($collection->description)
+                    <div class="collection-description bg-light p-4 rounded mb-4">
+                        <p class="mb-0 text-muted">{!! nl2br(e($collection->description)) !!}</p>
+                    </div>
+                @endif
+
+                <!-- Stats -->
+                <div class="stats-grid mb-5">
+                    <div class="stat-item">
+                        <span class="label">Created</span>
+                        <span class="value font-monospace">{{ $collection->created_at->format('M d, Y') }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Last Updated</span>
+                        <span class="value font-monospace">{{ $collection->updated_at->diffForHumans() }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Visible Products</span>
+                        <span class="value">{{ $collection->products->where('visible', true)->count() }} / {{ $collection->products->count() }}</span>
+                    </div>
+                    @if($collection->products->count() > 0)
+                    <div class="stat-item">
+                        <span class="label">Price Range</span>
+                        <span class="value">
+                            EGP {{ number_format($collection->products->min('price')) }} –
+                            EGP {{ number_format($collection->products->max('price')) }}
+                        </span>
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h6 class="fw-semibold mb-3 text-uppercase tracking-wider text-muted small">Quick Actions</h6>
+                    <div class="d-grid gap-3">
+                        <a href="{{ route('admin.collections.edit', $collection) }}" class="btn btn-dark btn-lg">
                             <i class="fas fa-edit me-2"></i>Edit Collection
                         </a>
 
-                        <form method="POST" action="{{ route('admin.collections.toggleVisibility', $collection->id) }}" class="d-inline">
-                            @csrf
-                            @method('PATCH')
-                            @if($collection->visible)
-                                <button type="submit" class="btn btn-warning w-100">
-                                    <i class="fas fa-eye-slash me-2"></i>Hide Collection
-                                </button>
-                            @else
-                                <button type="submit" class="btn btn-success w-100">
-                                    <i class="fas fa-eye me-2"></i>Show Collection
-                                </button>
-                            @endif
+                        <form method="POST" action="{{ route('admin.collections.toggle-visibility', $collection) }}">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="btn {{ $collection->visible ? 'btn-warning' : 'btn-success' }} btn-lg">
+                                <i class="fas fa-eye{{ $collection->visible ? '-slash' : '' }} me-2"></i>
+                                {{ $collection->visible ? 'Hide from Site' : 'Publish to Site' }}
+                            </button>
                         </form>
 
-                        <a href="{{ route('collections.show', $collection->slug) }}" target="_blank" class="btn btn-outline-info">
-                            <i class="fas fa-external-link-alt me-2"></i>View on Site
+                        <a href="{{ route('collections.show', $collection->slug) }}" target="_blank"
+                           class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-external-link-alt me-2"></i>View Live
                         </a>
 
-                        <form method="POST" action="{{ route('admin.collections.destroy', $collection->id) }}"
-                              onsubmit="return confirm('Are you sure you want to delete this collection? Products will not be deleted.')" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-outline-danger w-100">
+                        <form method="(OnSubmit" action="{{ route('admin.collections.destroy', $collection) }}"
+                              onsubmit="return confirm('Delete this collection permanently? Products will remain.')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-lg">
                                 <i class="fas fa-trash me-2"></i>Delete Collection
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
-
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6>Collection Statistics</h6>
-                </div>
-                <div class="card-body">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Products:</span>
-                        <span class="stat-value">{{ $collection->products->count() }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Visible Products:</span>
-                        <span class="stat-value">{{ $collection->products->where('visible', true)->count() }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Price Range:</span>
-                        @if($collection->products->count() > 0)
-                            <span class="stat-value">
-                                ${{ number_format($collection->products->min('price'), 2) }} -
-                                ${{ number_format($collection->products->max('price'), 2) }}
-                            </span>
-                        @else
-                            <span class="stat-value text-muted">N/A</span>
-                        @endif
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Average Price:</span>
-                        @if($collection->products->count() > 0)
-                            <span class="stat-value">${{ number_format($collection->products->avg('price'), 2) }}</span>
-                        @else
-                            <span class="stat-value text-muted">N/A</span>
-                        @endif
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
+
+    <!-- Separator -->
+    <div class="my-6">
+        <hr class="border-2 opacity-25">
+    </div>
+
+    <!-- Products in Collection -->
+    <div class="products-section">
+        <h2 class="h3 fw-light mb-5 text-center">Products in "{{ $collection->title }}"</h2>
+
+        @if($collection->products->count() > 0)
+            <div class="row g-4">
+                @foreach($collection->products as $product)
+                    <div class="col-md-6 col-lg-4 col-xl-3">
+                        <div class="product-admin-card rounded overflow-hidden shadow-sm hover-lift">
+                            <div class="position-relative">
+                                <img src="{{ $product->main_image?->url ?? asset('images/placeholder-product.jpg') }}"
+                                     class="img-fluid w-100" alt="{{ $product->name }}"
+                                     style="height: 280px; object-fit: cover;">
+                                @if(!$product->visible)
+                                    <div class="overlay-badge bg-dark bg-opacity-75 text-white">
+                                        Hidden
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="p-4 bg-white">
+                                <h6 class="fw-medium mb-2 text-truncate">{{ $product->name }}</h6>
+                                <p class="text-primary fw-bold mb-3">
+                                    {!! $product->formatted_price !!}
+                                </p>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('admin.products.show', $product) }}"
+                                       class="btn btn-sm btn-outline-dark flex-fill">View</a>
+                                    <a href="{{ route('admin.products.edit', $product) }}"
+                                       class="btn btn-sm btn-dark flex-fill">Edit</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-6 bg-light rounded-3">
+                <i class="fas fa-box-open fa-3x text-muted mb-4"></i>
+                <h5 class="fw-light">No products in this collection yet</h5>
+                <p class="text-muted">Start adding products to showcase them here.</p>
+                <a href="{{ route('admin.products.create') }}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Add First Product
+                </a>
+            </div>
+        @endif
+    </div>
 </div>
+@endsection
 
 @push('styles')
 <style>
-.collection-image-container {
-    position: relative;
-    background: #f8f9fa;
-    border-radius: 4px;
-    overflow: hidden;
-    aspect-ratio: 16/9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+    .main-collection-image-container {
+        position: relative;
+        background: #000;
+        transition: all 0.4s ease;
+    }
+    .main-collection-image-container:hover img {
+        opacity: 0.95;
+    }
 
-.collection-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+    .image-counter {
+        position: absolute;
+        bottom: 1rem; right: 1rem;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.9rem;
+        backdrop-filter: blur(10px);
+        font-weight: 500;
+    }
 
-.placeholder-image {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 200;
-}
+    .thumbnails-horizontal::-webkit-scrollbar {
+        height: 6px;
+    }
+    .thumbnails-horizontal::-webkit-scrollbar-thumb {
+        background: #999;
+        border-radius: 10px;
+    }
 
-.placeholder-image i {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-}
+    .thumbnail-item {
+        width: 110px; height: 110px;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+        border: 3px solid transparent !important;
+    }
+    .thumbnail-item:hover,
+    .thumbnail-item.active {
+        opacity: 1;
+        border-color: #000 !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
 
-.collection-details {
-    padding-left: 1rem;
-}
+    .premium-badge {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 50px;
+    }
+    .premium-badge.visible { background: #d4edda; color: #155724; }
+    .premium-badge.hidden { background: #f8d7da; color: #721c24; }
 
-.collection-name {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    color: var(--primary-color);
-    margin-bottom: 1.5rem;
-}
+    .stats-grid {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 4px solid #333;
+    }
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    .stat-item:last-child { border-bottom: none; }
+    .stat-item .label { color: #666; font-weight: 500; }
+    .stat-item .value { font-weight: 600; }
 
-.detail-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-}
+    .product-admin-card {
+        transition: all 0.4s ease;
+        border: none !important;
+    }
+    .hover-lift:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important;
+    }
 
-.detail-row label {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 0.875rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--primary-color);
-    width: 120px;
-    margin-bottom: 0;
-}
-
-.product-count {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    color: var(--primary-color);
-}
-
-.status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 2px;
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 200;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.status-badge.visible {
-    background: #28a745;
-    color: white;
-}
-
-.status-badge.hidden {
-    background: #dc3545;
-    color: white;
-}
-
-.collection-description {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 200;
-    line-height: 1.6;
-    color: var(--text-muted);
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 4px;
-    margin-top: 0.5rem;
-}
-
-.product-card {
-    border: 1px solid var(--border-light);
-    border-radius: 4px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.product-image-wrapper {
-    position: relative;
-    aspect-ratio: 1;
-    overflow: hidden;
-}
-
-.product-thumbnail {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.product-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-    color: var(--text-muted);
-}
-
-.product-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hidden-badge {
-    background: #dc3545;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 2px;
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 200;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.product-info {
-    padding: 1rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-title {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.product-price {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-    flex: 1;
-}
-
-.product-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-muted);
-}
-
-.empty-state i {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    color: var(--border-light);
-}
-
-.empty-state h5 {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 200;
-    margin-bottom: 1.5rem;
-}
-
-.stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.stat-item:last-child {
-    border-bottom: none;
-}
-
-.stat-label {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 300;
-    font-size: 0.875rem;
-    color: var(--primary-color);
-}
-
-.stat-value {
-    font-family: 'futura-pt', sans-serif;
-    font-weight: 400;
-    color: var(--primary-color);
-}
+    .overlay-badge {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
 </style>
 @endpush
-@endsection
+
+@push('scripts')
+<script>
+    function changeCollectionImage(src, element, index) {
+        const mainImg = document.getElementById('mainCollectionImage');
+        const counter = document.querySelector('.image-counter');
+
+        mainImg.style.opacity = 0.6;
+        setTimeout(() => {
+            mainImg.src = src;
+            mainImg.style.opacity = 1;
+            if(counter) counter.textContent = (index + 1) + ' / ' + {{ $images->count() }};
+
+            document.querySelectorAll('.thumbnail-item').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+        }, 200);
+    }
+</script>
+@endpush

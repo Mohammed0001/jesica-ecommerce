@@ -60,12 +60,12 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6>Special Orders</h6>
-            @if($orders->count() > 0)
-                <span class="badge bg-primary">{{ $orders->total() }} total orders</span>
+            @if($specialOrders->count() > 0)
+                <span class="badge bg-primary">{{ $specialOrders->total() }} total orders</span>
             @endif
         </div>
         <div class="card-body">
-            @if($orders->count() > 0)
+            @if($specialOrders->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -80,7 +80,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($orders as $order)
+                            @foreach($specialOrders as $order)
                             <tr>
                                 <td>
                                     <a href="{{ route('admin.special-orders.show', $order->id) }}" class="order-link">
@@ -97,7 +97,7 @@
                                     <div class="product-info">
                                         @if($order->product)
                                             <div class="product-name">{{ $order->product->name }}</div>
-                                            <div class="product-collection">{{ $order->product->collection->name ?? 'No Collection' }}</div>
+                                            <div class="product-collection">{{ $order->product->collection->title ?? 'No Collection' }}</div>
                                         @else
                                             <span class="text-muted">General Inquiry</span>
                                         @endif
@@ -154,7 +154,7 @@
 
                 <!-- Pagination -->
                 <div class="d-flex justify-content-center mt-4">
-                    {{ $orders->links() }}
+                    {{ $specialOrders->links() }}
                 </div>
             @else
                 <div class="empty-state">
