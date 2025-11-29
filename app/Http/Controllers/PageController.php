@@ -25,6 +25,62 @@ class PageController extends Controller
     }
 
     /**
+     * Customer Services
+     */
+    public function customerServices()
+    {
+        return view('pages.customer-services');
+    }
+
+    /**
+     * FAQs
+     */
+    public function faqs()
+    {
+        return view('pages.faqs');
+    }
+
+    /**
+     * Track Order
+     */
+    public function trackOrder()
+    {
+        return view('pages.track-order');
+    }
+
+    /**
+     * Request Return
+     */
+    public function requestReturn()
+    {
+        return view('pages.request-return');
+    }
+
+    /**
+     * The Legacy
+     */
+    public function legacy()
+    {
+        return view('pages.legacy');
+    }
+
+    /**
+     * Legal Area
+     */
+    public function legal()
+    {
+        return view('pages.legal');
+    }
+
+    /**
+     * Privacy & Cookies
+     */
+    public function privacy()
+    {
+        return view('pages.privacy');
+    }
+
+    /**
      * Handle contact form submission.
      */
     public function contactSubmit(Request $request)

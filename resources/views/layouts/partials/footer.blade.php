@@ -6,9 +6,9 @@
                 <div class="footer-card">
                     <h6 class="footer-heading">CUSTOMER SERVICES</h6>
                     <ul class="list-unstyled footer-links">
-                        <li><a href="#">FAQs</a></li>
-                        <li><a href="#">Track my order</a></li>
-                        <li><a href="#">Request Return</a></li>
+                        <li><a href="{{ route('pages.faqs') }}">FAQs</a></li>
+                        <li><a href="{{ route('pages.track-order') }}">Track my order</a></li>
+                        <li><a href="{{ route('pages.request-return') }}">Request Return</a></li>
                         {{-- <li><a href="#">Store Locator</a></li> --}}
                         {{-- <li><a href="#">Request an appointment</a></li> --}}
                     </ul>
@@ -20,8 +20,8 @@
                 <div class="footer-card">
                     <h6 class="footer-heading">THE LEGACY</h6>
                     <ul class="list-unstyled footer-links">
-                        <li><a href="#">Legal Area</a></li>
-                        <li><a href="#">Privacy Policy & Cookies</a></li>
+                        <li><a href="{{ route('pages.legal') }}">Legal Area</a></li>
+                        <li><a href="{{ route('pages.privacy') }}">Privacy Policy & Cookies</a></li>
                     </ul>
                 </div>
             </div>

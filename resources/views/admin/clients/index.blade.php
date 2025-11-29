@@ -118,7 +118,7 @@
 
                         <!-- Pagination -->
                         <div class="card-footer">
-                            {{ $clients->links() }}
+                            {{ $clients->links('vendor.pagination.bootstrap-5') }}
                         </div>
                     @else
                         <div class="empty-state">

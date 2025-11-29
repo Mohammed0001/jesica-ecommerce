@@ -28,6 +28,14 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Static pages - Public access
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+// Additional static pages
+Route::get('/customer-services', [PageController::class, 'customerServices'])->name('pages.customer-services');
+Route::get('/faqs', [PageController::class, 'faqs'])->name('pages.faqs');
+Route::get('/track-order', [PageController::class, 'trackOrder'])->name('pages.track-order');
+Route::get('/request-return', [PageController::class, 'requestReturn'])->name('pages.request-return');
+Route::get('/the-legacy', [PageController::class, 'legacy'])->name('pages.legacy');
+Route::get('/legal', [PageController::class, 'legal'])->name('pages.legal');
+Route::get('/privacy', [PageController::class, 'privacy'])->name('pages.privacy');
 Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
 
 // Search - Public access

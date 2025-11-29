@@ -154,8 +154,11 @@
 
                 <!-- Pagination -->
                 <div class="d-flex justify-content-center mt-4">
-                    {{ $specialOrders->links() }}
-                </div>
+                    {{ $specialOrders->links('vendor.pagination.bootstrap-5') }}
+                    </div>
+                    <div class="d-flex justify-content-center mt-4">
+                        {{ $specialOrders->links('vendor.pagination.bootstrap-5') }}
+                    </div>
             @else
                 <div class="empty-state">
                     <i class="fas fa-clipboard-list"></i>

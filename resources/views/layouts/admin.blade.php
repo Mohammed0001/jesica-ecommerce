@@ -362,6 +362,41 @@
             }
         }
     </style>
+    <style>
+        /* Normalize pagination icon sizes and spacing in admin pages */
+        .pagination .page-link i,
+        .pagination .page-link .fa,
+        .pagination .page-link svg {
+            font-size: 0.95rem; /* slightly smaller than body text for balance */
+            width: auto;
+            height: auto;
+            line-height: 1;
+            vertical-align: -0.08em;
+        }
+
+        .pagination .page-link {
+            padding: 0.45rem 0.7rem;
+            min-width: 2.2rem;
+            text-align: center;
+        }
+
+        /* Tighter padding for first/last (prev/next) links when they contain icons */
+        .pagination .page-item:first-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            padding: 0.35rem 0.6rem;
+        }
+
+        /* Ensure small-screen pagination remains usable */
+        @media (max-width: 576px) {
+            .pagination .page-link {
+                padding: 0.35rem 0.5rem;
+            }
+            .pagination .page-link i,
+            .pagination .page-link svg {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
