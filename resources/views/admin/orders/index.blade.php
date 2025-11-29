@@ -44,7 +44,7 @@
                 </div>
                 <div class="card-body p-0">
                     @if($orders->count() > 0)
-                        <div class="table-responsive">
+                        <div class="table-responsive" style="overflow-x:auto; overflow-y:hidden;">
                             <table class="table activity-table">
                                 <thead>
                                     <tr>
