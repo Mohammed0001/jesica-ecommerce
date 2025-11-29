@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Gateways\MockGateway;
+use App\Services\Gateways\PaymobGateway;
 use App\Services\Gateways\PaymentGatewayInterface;
 use Exception;
 
@@ -14,18 +15,42 @@ class PaymentService
 
     public function __construct()
     {
-        // For now, we'll use MockGateway. Later can be swapped with Stripe, PayPal, etc.
-        $this->gateway = new MockGateway();
+        // Choose gateway implementation based on configuration (PAYMENT_PROVIDER)
+        $provider = env('PAYMENT_PROVIDER', 'mock');
+
+        switch (strtolower($provider)) {
+            case 'paymob':
+                $this->gateway = new PaymobGateway();
+                break;
+            case 'mock':
+            default:
+                $this->gateway = new MockGateway();
+                break;
+        }
     }
 
     /**
-     * Calculate deposit amount for an order
+     * Calculate deposit amount for an order or an object/array containing a total_amount key/property.
+     * Accepts an `Order` model, a stdClass/object with `total_amount`, or an array with `total_amount`.
+     *
+     * @param  Order|object|array  $order
      */
-    public function calculateDeposit(Order $order, float|int $depositPercentageOrFixed): float
+    public function calculateDeposit($order, float|int $depositPercentageOrFixed): float
     {
+        // Extract total amount from different possible input types
+        if ($order instanceof Order) {
+            $total = $order->total_amount;
+        } elseif (is_object($order) && property_exists($order, 'total_amount')) {
+            $total = $order->total_amount;
+        } elseif (is_array($order) && array_key_exists('total_amount', $order)) {
+            $total = $order['total_amount'];
+        } else {
+            throw new \InvalidArgumentException('Order must be an Order instance or contain a total_amount value.');
+        }
+
         // If the value is less than 1, treat it as a percentage
         if ($depositPercentageOrFixed < 1) {
-            return round($order->total_amount * $depositPercentageOrFixed, 2);
+            return round($total * $depositPercentageOrFixed, 2);
         }
 
         // If greater than or equal to 1, treat as fixed amount
@@ -67,19 +92,25 @@ class PaymentService
             $result = $this->gateway->processPayment($payment);
 
             if ($result['success']) {
+                $status = $result['status'] ?? 'succeeded';
+
                 $payment->update([
-                    'status' => 'succeeded',
-                    'provider_transaction_id' => $result['transaction_id'],
+                    'status' => $status,
+                    'provider_transaction_id' => $result['transaction_id'] ?? null,
                     'meta' => array_merge($payment->meta ?? [], $result['meta'] ?? [])
                 ]);
 
-                // Update order status
-                $order->update(['status' => 'paid_deposit']);
+                // Only mark order paid when gateway reports final success
+                if ($status === 'succeeded') {
+                    $order->update(['status' => 'paid_deposit']);
+                }
 
                 return [
                     'success' => true,
                     'payment' => $payment,
-                    'message' => 'Deposit payment processed successfully'
+                    'message' => $result['message'] ?? 'Deposit payment processed',
+                    'status' => $status,
+                    'meta' => $result['meta'] ?? []
                 ];
             } else {
                 $payment->update([
@@ -114,19 +145,25 @@ class PaymentService
             $result = $this->gateway->processPayment($payment);
 
             if ($result['success']) {
+                $status = $result['status'] ?? 'succeeded';
+
                 $payment->update([
-                    'status' => 'succeeded',
-                    'provider_transaction_id' => $result['transaction_id'],
+                    'status' => $status,
+                    'provider_transaction_id' => $result['transaction_id'] ?? null,
                     'meta' => array_merge($payment->meta ?? [], $result['meta'] ?? [])
                 ]);
 
-                // Update order status
-                $order->update(['status' => 'paid_full']);
+                // Only mark order paid when gateway reports final success
+                if ($status === 'succeeded') {
+                    $order->update(['status' => 'paid_full']);
+                }
 
                 return [
                     'success' => true,
                     'payment' => $payment,
-                    'message' => 'Full payment processed successfully'
+                    'message' => $result['message'] ?? 'Full payment processed',
+                    'status' => $status,
+                    'meta' => $result['meta'] ?? []
                 ];
             } else {
                 $payment->update([
@@ -170,19 +207,25 @@ class PaymentService
             $result = $this->gateway->processPayment($payment);
 
             if ($result['success']) {
+                $status = $result['status'] ?? 'succeeded';
+
                 $payment->update([
-                    'status' => 'succeeded',
-                    'provider_transaction_id' => $result['transaction_id'],
+                    'status' => $status,
+                    'provider_transaction_id' => $result['transaction_id'] ?? null,
                     'meta' => array_merge($payment->meta ?? [], $result['meta'] ?? [])
                 ]);
 
-                // Update order status
-                $order->update(['status' => 'paid_full']);
+                // Only mark order paid when gateway reports final success
+                if ($status === 'succeeded') {
+                    $order->update(['status' => 'paid_full']);
+                }
 
                 return [
                     'success' => true,
                     'payment' => $payment,
-                    'message' => 'Remaining balance captured successfully'
+                    'message' => $result['message'] ?? 'Remaining balance captured',
+                    'status' => $status,
+                    'meta' => $result['meta'] ?? []
                 ];
             } else {
                 $payment->update([

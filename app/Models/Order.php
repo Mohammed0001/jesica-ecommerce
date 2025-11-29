@@ -19,6 +19,7 @@ class Order extends Model
         'shipped_at',
         'completed_at',
         'notes',
+        'stock_decremented',
     ];
 
     protected $casts = [
@@ -26,6 +27,7 @@ class Order extends Model
         'shipping_address_snapshot' => 'array',
         'shipped_at' => 'datetime',
         'completed_at' => 'datetime',
+        'stock_decremented' => 'boolean',
     ];
 
     protected static function booted(): void

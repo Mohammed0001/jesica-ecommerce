@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdminClientController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AdminPromoCodeController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PaymentWebhookController;
 
 // PUBLIC ROUTES - No authentication required
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -131,3 +132,13 @@ Route::get('/dashboard', function () {
 
 // Auth routes
 require __DIR__.'/auth.php';
+
+// Payment webhooks (Paymob)
+Route::post('/payments/webhook/paymob', [PaymentWebhookController::class, 'handlePaymob'])
+    ->name('payments.webhook.paymob')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+// Payment status polling (authenticated) - used by iframe/polling UI
+Route::get('/payments/status/{order}', [PaymentWebhookController::class, 'checkStatus'])
+    ->name('payments.status')
+    ->middleware(['auth']);

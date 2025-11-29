@@ -50,6 +50,14 @@ class CheckoutController extends Controller
     }
 
     /**
+     * Backwards-compatible alias for show()
+     */
+    public function index()
+    {
+        return $this->show();
+    }
+
+    /**
      * Process checkout
      */
     public function process(Request $request)
@@ -57,7 +65,20 @@ class CheckoutController extends Controller
         $request->validate([
             'payment_type' => 'required|in:full,deposit',
             'payment_method' => 'required|string',
-            'shipping_address_id' => 'required|exists:addresses,id',
+            // Allow either an existing shipping_address_id or full address fields
+            'shipping_address_id' => 'nullable|exists:addresses,id',
+
+            // Address fields required when shipping_address_id is not provided
+            'first_name' => 'required_without:shipping_address_id|string|max:100',
+            'last_name' => 'required_without:shipping_address_id|string|max:100',
+            'company' => 'nullable|string|max:255',
+            'address_line_1' => 'required_without:shipping_address_id|string|max:255',
+            'address_line_2' => 'nullable|string|max:255',
+            'city' => 'required_without:shipping_address_id|string|max:100',
+            'state_province' => 'required_without:shipping_address_id|string|max:100',
+            'postal_code' => 'required_without:shipping_address_id|string|max:20',
+            'country' => 'required_without:shipping_address_id|string|max:100',
+            'save_address' => 'sometimes|boolean',
         ]);
 
         $cartItems = $this->getCartItems();
@@ -66,28 +87,61 @@ class CheckoutController extends Controller
             return redirect()->route('cart.show')->with('error', 'Your cart is empty.');
         }
 
-        // Validate that the address belongs to the user
-        $address = Address::where('id', $request->shipping_address_id)
-            ->where('user_id', Auth::id())
-            ->first();
+        // Determine shipping address: either existing (belongs to user) or inline data
+        $shippingAddressId = null;
+        $addressSnapshot = null;
 
-        if (!$address) {
-            return back()->with('error', 'Invalid shipping address.');
+        if ($request->filled('shipping_address_id')) {
+            // Validate that the address belongs to the user
+            $address = Address::where('id', $request->shipping_address_id)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if (!$address) {
+                return back()->with('error', 'Invalid shipping address.');
+            }
+
+            $shippingAddressId = $address->id;
+            $addressSnapshot = $address->toArray();
+        } else {
+            // Build snapshot from provided fields
+            $addressData = [
+                'type' => 'shipping',
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'company' => $request->company,
+                'address_line_1' => $request->address_line_1,
+                'address_line_2' => $request->address_line_2,
+                'city' => $request->city,
+                'state_province' => $request->state_province,
+                'postal_code' => $request->postal_code,
+                'country' => $request->country,
+                'is_default' => false,
+            ];
+
+            // Optionally save address to user's profile
+            if ($request->boolean('save_address')) {
+                $created = Address::create(array_merge($addressData, ['user_id' => Auth::id()]));
+                $shippingAddressId = $created->id;
+                $addressSnapshot = $created->toArray();
+            } else {
+                $addressSnapshot = $addressData;
+            }
         }
 
         DB::beginTransaction();
 
         try {
-            // Create order
+            // Create order using the resolved shipping address id (may be null)
             $order = $this->orderService->createOrder(
                 Auth::user(),
                 $cartItems,
-                $request->shipping_address_id
+                $shippingAddressId
             );
 
-            // Store address snapshot
+            // Store address snapshot (either saved model or inline data)
             $order->update([
-                'shipping_address_snapshot' => $address->toArray()
+                'shipping_address_snapshot' => $addressSnapshot
             ]);
 
             // Process payment
@@ -102,16 +156,30 @@ class CheckoutController extends Controller
             }
 
             if ($result['success']) {
-                // Decrement stock
-                $this->orderService->decrementStock($order);
+                $status = $result['status'] ?? 'succeeded';
 
-                // Clear cart
-                session()->forget('cart');
+                if ($status === 'succeeded') {
+                    // Final success: decrement stock and clear cart
+                    $this->orderService->decrementStock($order);
+                    session()->forget('cart');
 
+                    DB::commit();
+
+                    return redirect()->route('orders.show', $order)
+                        ->with('success', $result['message'] ?? 'Payment completed');
+                }
+
+                // Pending (redirect) - commit order but do not decrement stock yet
                 DB::commit();
 
+                // If gateway returned an iframe/redirect URL, send the user there
+                if (!empty($result['meta']['iframe_url'])) {
+                    $iframeUrl = $result['meta']['iframe_url'];
+                    return view('checkout.iframe', compact('order', 'iframeUrl'));
+                }
+
                 return redirect()->route('orders.show', $order)
-                    ->with('success', $result['message']);
+                    ->with('info', $result['message'] ?? 'Payment pending');
             } else {
                 DB::rollBack();
                 return back()->with('error', $result['message']);

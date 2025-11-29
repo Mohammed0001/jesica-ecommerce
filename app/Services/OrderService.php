@@ -108,8 +108,9 @@ class OrderService
             'notes' => $reason ? "Cancelled: {$reason}" : 'Order cancelled',
         ]);
 
-        // Restore product quantities
-        foreach ($order->items as $item) {
+        // Restore product quantities only if they were decremented previously
+        if ($order->stock_decremented) {
+            foreach ($order->items as $item) {
             $product = $item->product;
             if ($product) {
                 if ($product->is_one_of_a_kind) {
@@ -125,6 +126,10 @@ class OrderService
                     }
                 }
             }
+            }
+
+            // mark that stock was restored
+            $order->update(['stock_decremented' => false]);
         }
 
         // TODO: Process refunds if needed
@@ -138,6 +143,11 @@ class OrderService
      */
     public function decrementStock(Order $order): void
     {
+        // Prevent double-decrementing stock for the same order
+        if ($order->stock_decremented) {
+            return;
+        }
+
         foreach ($order->items as $item) {
             $product = $item->product;
             if (!$product) {
@@ -158,6 +168,9 @@ class OrderService
                 }
             }
         }
+
+        // Mark that stock has been decremented for this order
+        $order->update(['stock_decremented' => true]);
     }
 
     /**

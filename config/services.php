@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    // Paymob payment gateway configuration
+    'paymob' => [
+        'api_key' => env('PAYMOB_API_KEY'),
+        'integration_id' => env('PAYMOB_INTEGRATION_ID'),
+        'iframe_id' => env('PAYMOB_IFRAME_ID'),
+        'base_url' => env('PAYMOB_BASE_URL', 'https://accept.paymob.com'),
+        'webhook_secret' => env('PAYMOB_WEBHOOK_SECRET'),
+    ],
+
+
 ];
