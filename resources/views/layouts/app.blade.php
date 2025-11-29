@@ -52,7 +52,7 @@
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box !important;
             outline: none !important;
         }
 
@@ -471,7 +471,7 @@
     <div id="app">
         <x-navbar />
 
-        <main>
+        <main style="margin-top: 80px;">
             <!-- Global Loading Screen -->
             <div id="global-loader"
                 style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;">

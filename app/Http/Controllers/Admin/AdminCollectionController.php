@@ -39,9 +39,9 @@ class AdminCollectionController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'release_date' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'pdf' => 'nullable|mimes:pdf|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'pdf' => 'nullable|mimes:pdf|max:51200',
             'visible' => 'boolean',
         ]);
 
@@ -106,9 +106,9 @@ class AdminCollectionController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'release_date' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'pdf' => 'nullable|mimes:pdf|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'pdf' => 'nullable|mimes:pdf|max:51200',
             'visible' => 'boolean',
         ]);
 

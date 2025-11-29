@@ -18,7 +18,7 @@
                         Discover exquisite fashion pieces that blend contemporary design with timeless elegance.
                         Each creation embodies sophistication and artistic vision.
                     </p>
-                    <a href="{{ route('collections.index') }}" class="btn-primary">
+                    <a href="{{ route('collections.index') }}" class="btn-primary" style="display: inline-block;">
                         Explore Collections
                     </a>
                 </div>
@@ -129,7 +129,5 @@
             /* color: white; */
             /* text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); */
         }
-
-
     </style>
 @endpush

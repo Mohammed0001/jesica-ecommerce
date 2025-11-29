@@ -50,8 +50,8 @@ class AdminProductController extends Controller
             'is_one_of_a_kind' => 'boolean',
             'size_chart_id' => 'nullable|exists:size_charts,id',
             'story' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
             'visible' => 'boolean',
         ]);
 
@@ -113,7 +113,7 @@ class AdminProductController extends Controller
             'price' => 'required|numeric|min:0',
             'collection_id' => 'required|exists:collections,id',
             'currency' => "required|string|in:$currencies",
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
             'visible' => 'boolean',
             'sku' => 'nullable|string|max:255',
             'quantity' => 'nullable|integer|min:0',
