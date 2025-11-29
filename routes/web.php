@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminClientController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AdminPromoCodeController;
+use App\Http\Controllers\Admin\AdminSizeChartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\NewsletterController;
@@ -146,7 +147,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('clients', AdminClientController::class)->only(['index', 'show', 'update']);
 
     // Promo codes management
-    Route::resource('promo-codes', Admin\AdminPromoCodeController::class)->except(['show']);
+    Route::resource('promo-codes', AdminPromoCodeController::class)->except(['show']);
+
+    // Size charts management
+    Route::resource('size-charts', AdminSizeChartController::class)->except(['show', 'edit', 'update']);
 
     // Analytics
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');

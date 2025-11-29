@@ -491,6 +491,22 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.promo-codes.*') ? 'active' : '' }}"
+                    href="{{ route('admin.promo-codes.index') }}">
+                    <i class="fas fa-tag"></i>
+                    Promo Codes
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.size-charts.*') ? 'active' : '' }}"
+                    href="{{ route('admin.size-charts.index') }}">
+                    <i class="fas fa-ruler"></i>
+                    Size Charts
+                </a>
+            </li>
+
             <li class="nav-item mt-4">
                 <a class="nav-link" href="{{ route('home') }}" target="_blank">
                     <i class="fas fa-external-link-alt"></i>

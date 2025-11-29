@@ -37,8 +37,10 @@
                     <input type="date" name="expires_at" class="form-control">
                 </div>
                 <div class="mb-3 form-check">
-                    <input type="checkbox" name="active" class="form-check-input" checked>
-                    <label class="form-check-label">Active</label>
+                    <input type="hidden" name="active" value="0">
+                    <input type="checkbox" name="active" value="1" class="form-check-input" id="active"
+                        {{ old('active', true) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="active">Active</label>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-primary">Create Promo</button>

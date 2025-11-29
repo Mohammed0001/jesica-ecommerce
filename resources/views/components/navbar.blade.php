@@ -98,7 +98,7 @@
         position: fixed;
         width: 100%;
         top: 0;
-        z-index: 1000;
+        z-index: 9999999999999999999999999;
         /* Smooth transition for background color */
         transition: all 0.5s ease-in;
         /* Add subtle shadow when scrolled */

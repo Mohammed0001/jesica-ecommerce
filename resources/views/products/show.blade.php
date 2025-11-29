@@ -134,6 +134,11 @@
                                            class="text-decoration-underline small text-muted">Size Guide</a>
                                     </div>
                                 </div>
+                            @elseif($product->sizeChart)
+                                <div class="mb-4">
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#sizeGuideModal"
+                                       class="text-decoration-underline small text-muted">Size Guide</a>
+                                </div>
                             @endif
 
                             <!-- Add to Cart -->
@@ -224,9 +229,116 @@
         @endif
     </main>
 
-    <!-- Size Guide Modal (unchanged) -->
-    @if($product->sizes && $product->sizes->count() > 0)
-        <!-- [Your existing Size Guide Modal code here - unchanged for brevity] -->
+    <!-- Size Guide / Size Chart Modal -->
+    @if($product->sizeChart)
+        <div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-labelledby="sizeGuideModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="sizeGuideModalLabel">Size Guide</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if($product->sizeChart)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    @if($product->sizeChart->image_url)
+                                        <img src="{{ $product->sizeChart->image_url }}" alt="{{ $product->sizeChart->name }}" class="img-fluid mb-3" />
+                                    @endif
+                                    @if($product->sizeChart->name)
+                                        <h6 class="mb-2">{{ $product->sizeChart->name }}</h6>
+                                    @endif
+                                    @if(!empty($product->sizeChart->measurements))
+                                        <p class="small text-muted mb-2">Measurements (size → key/value)</p>
+                                    @endif
+                                </div>
+
+                                <div class="col-md-6">
+                                    @php
+                                        $measurements = $product->sizeChart->measurements ?? [];
+                                    @endphp
+
+                                    @if(is_array($measurements) && count($measurements) > 0)
+                                        @php
+                                            // Determine if measurements are keyed by size (associative) or list of objects
+                                            $isAssoc = array_keys($measurements) !== range(0, count($measurements) - 1);
+                                        @endphp
+
+                                        @if($isAssoc)
+                                            @php
+                                                // Collect all measurement keys
+                                                $allKeys = [];
+                                                foreach($measurements as $sizeLabel => $vals) {
+                                                    if(is_array($vals)) {
+                                                        $allKeys = array_unique(array_merge($allKeys, array_keys($vals)));
+                                                    }
+                                                }
+                                            @endphp
+
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Size</th>
+                                                            @foreach($allKeys as $k)
+                                                                <th class="text-uppercase small">{{ $k }}</th>
+                                                            @endforeach
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($measurements as $sizeLabel => $vals)
+                                                            <tr>
+                                                                <td class="align-middle">{{ $sizeLabel }}</td>
+                                                                @foreach($allKeys as $k)
+                                                                    <td>{{ isset($vals[$k]) ? $vals[$k] : '—' }}</td>
+                                                                @endforeach
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        @else
+                                            {{-- measurements are a list (array) of objects with size/keys --}}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            @php
+                                                                $first = $measurements[0];
+                                                                $keys = is_array($first) ? array_keys($first) : [];
+                                                            @endphp
+                                                            @foreach($keys as $k)
+                                                                <th class="text-uppercase small">{{ $k }}</th>
+                                                            @endforeach
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($measurements as $row)
+                                                            <tr>
+                                                                @foreach($keys as $k)
+                                                                    <td>{{ $row[$k] ?? '—' }}</td>
+                                                                @endforeach
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        @endif
+                                    @else
+                                        <p class="text-muted">No measurements available for this size chart.</p>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <p class="text-muted">Size guide is not available for this product.</p>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 @endsection
 
@@ -347,7 +459,6 @@
             mainImg.src = src;
             mainImg.style.opacity = 1;
             if(counter) counter.textContent = (index + 1) + ' / ' + {{ $images->count() }};
- obliter
             document.querySelectorAll('.thumbnail-item').forEach(t => t.classList.remove('active'));
             element.classList.add('active');
         }, 200);

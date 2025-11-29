@@ -20,14 +20,34 @@ class AdminPromoCodeController extends Controller
         return view('admin.promo_codes.create');
     }
 
-    public function store(PromoCode $promoCode)
+    public function store(Request $request)
     {
-
-        $promoCode->validate([
+        $data = $request->validate([
             'code' => 'required|string|unique:promo_codes,code',
             'description' => 'nullable|string',
             'type' => 'required|in:percentage,fixed',
+            'value' => 'required|numeric|min:0',
+            'max_uses' => 'nullable|integer|min:1',
+            'expires_at' => 'nullable|date',
+            'active' => 'boolean',
+        ]);
 
+        $data['active'] = $request->boolean('active', true);
+        $data['expires_at'] = $data['expires_at'] ? Carbon::parse($data['expires_at']) : null;
+
+        PromoCode::create($data);
+
+        return redirect()->route('admin.promo-codes.index')->with('success', 'Promocode created.');
+    }
+
+    public function edit(PromoCode $promoCode)
+    {
+        return view('admin.promo_codes.edit', compact('promoCode'));
+    }
+
+    public function update(Request $request, PromoCode $promoCode)
+    {
+        $data = $request->validate([
             'code' => 'required|string|unique:promo_codes,code,' . $promoCode->id,
             'description' => 'nullable|string',
             'type' => 'required|in:percentage,fixed',
@@ -37,9 +57,8 @@ class AdminPromoCodeController extends Controller
             'active' => 'boolean',
         ]);
 
-        $data = $promoCode->only(['code', 'description', 'type', 'value', 'max_uses']);
-        $data['active'] = $promoCode->boolean('active', true);
-        $data['expires_at'] = $promoCode->expires_at ? Carbon::parse($promoCode->expires_at) : null;
+        $data['active'] = $request->boolean('active', true);
+        $data['expires_at'] = $data['expires_at'] ? Carbon::parse($data['expires_at']) : null;
 
         $promoCode->update($data);
 
