@@ -17,7 +17,7 @@
                 @csrf
                 <div class="mb-3">
                     <label class="form-label">Subject</label>
-                    <input name="subject" class="form-control" required value="{{ old('subject') }}">
+                    <input name="subject" class="form-control" required value="{{ old('subject', 'Jesica Riad - ' . now()->format('F') . '\'s Newsletter') }}">
                 </div>
 
                 <div class="mb-3">

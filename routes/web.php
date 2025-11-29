@@ -158,6 +158,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Admin newsletter send
     Route::get('newsletter/send', [NewsletterController::class, 'showSendForm'])->name('newsletter.send.form');
     Route::post('newsletter/send', [NewsletterController::class, 'send'])->name('newsletter.send');
+    // Admin newsletter logs viewer
+    Route::get('newsletter/logs', [\App\Http\Controllers\Admin\AdminNewsletterController::class, 'showLogs'])->name('newsletter.logs');
 });
 
 // Laravel Breeze Dashboard (keep for compatibility)

@@ -107,7 +107,10 @@
                             </div>
 
                             <div class="col-md-6 mb-4">
-                                <label for="size_chart_id" class="form-label">Size Chart</label>
+                                <div class="d-flex align-items-center">
+                                    <label for="size_chart_id" class="form-label mb-0">Size Chart</label>
+                                    <a href="{{ Route::has('admin.size-charts.index') ? route('admin.size-charts.index') : url('/admin/size-charts') }}" class="btn btn-sm btn-outline-secondary ms-2" style="height:28px; padding:0 .6rem; line-height:28px;">Manage</a>
+                                </div>
                                 <select class="form-select @error('size_chart_id') is-invalid @enderror"
                                         id="size_chart_id" name="size_chart_id">
                                     <option value="">No size chart</option>

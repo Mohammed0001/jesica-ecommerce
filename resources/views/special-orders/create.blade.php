@@ -54,6 +54,11 @@
             <textarea name="message" class="form-control" rows="3">{{ old('message') }}</textarea>
         </div>
 
+        <div class="mb-3">
+            <label class="form-label">Customer Notes (optional)</label>
+            <textarea name="customer_notes" class="form-control" rows="3" placeholder="Internal notes about the customer or request">{{ old('customer_notes') }}</textarea>
+        </div>
+
         <div class="d-grid">
             <button class="btn btn-primary">Submit Special Order</button>
         </div>

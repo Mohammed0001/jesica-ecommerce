@@ -54,12 +54,64 @@ class NewsletterController extends Controller
 
         $subs = NewsletterSubscriber::where('is_subscribed', true)->get();
 
+        // Log start of newsletter send (use newsletter channel if available)
+        $hasNewsletterChannel = is_array(config('logging.channels')) && array_key_exists('newsletter', config('logging.channels'));
+        if ($hasNewsletterChannel) {
+            \Illuminate\Support\Facades\Log::channel('newsletter')->info('Starting newsletter dispatch', [
+                'subject' => $request->subject,
+                'subscribers' => $subs->count(),
+            ]);
+        } else {
+            \Illuminate\Support\Facades\Log::info('Starting newsletter dispatch', [
+                'subject' => $request->subject,
+                'subscribers' => $subs->count(),
+            ]);
+        }
+
         foreach ($subs as $sub) {
             try {
-                \Illuminate\Support\Facades\Mail::to($sub->email)->queue(new \App\Mail\NewsletterMailable($request->subject, $request->body, $sub));
+                // Dispatch a lightweight job which loads the subscriber inside the job and sends the mail.
+                \App\Jobs\SendNewsletterToSubscriber::dispatch($sub->id, $request->subject, $request->body);
+
+                if ($hasNewsletterChannel) {
+                    \Illuminate\Support\Facades\Log::channel('newsletter')->info('Dispatched newsletter job', [
+                        'subscriber_id' => $sub->id,
+                        'email' => $sub->email,
+                    ]);
+                } else {
+                    \Illuminate\Support\Facades\Log::info('Dispatched newsletter job', [
+                        'subscriber_id' => $sub->id,
+                        'email' => $sub->email,
+                    ]);
+                }
             } catch (\Exception $e) {
-                Log::error('Failed to queue newsletter to ' . $sub->email . ': ' . $e->getMessage());
+                Log::error('Failed to dispatch newsletter job for ' . $sub->email . ': ' . $e->getMessage());
+                if ($hasNewsletterChannel) {
+                    \Illuminate\Support\Facades\Log::channel('newsletter')->error('Failed to dispatch newsletter job', [
+                        'subscriber_id' => $sub->id ?? null,
+                        'email' => $sub->email ?? null,
+                        'error' => $e->getMessage(),
+                    ]);
+                } else {
+                    \Illuminate\Support\Facades\Log::error('Failed to dispatch newsletter job', [
+                        'subscriber_id' => $sub->id ?? null,
+                        'email' => $sub->email ?? null,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
+        }
+
+        if ($hasNewsletterChannel) {
+            \Illuminate\Support\Facades\Log::channel('newsletter')->info('Completed dispatching newsletter jobs', [
+                'subject' => $request->subject,
+                'subscribers' => $subs->count(),
+            ]);
+        } else {
+            \Illuminate\Support\Facades\Log::info('Completed dispatching newsletter jobs', [
+                'subject' => $request->subject,
+                'subscribers' => $subs->count(),
+            ]);
         }
 
         return Redirect::back()->with('success', 'Newsletter queued to subscribers');

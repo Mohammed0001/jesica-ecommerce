@@ -79,8 +79,11 @@
             height: 100vh;
             background: linear-gradient(180deg, var(--primary-color) 0%, #2c2c2c 100%);
             z-index: 1000;
-            overflow-y: none;
-            box-sizing: border-box border-right: 1px solid var(--border-light);
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
+
+            border-right: 1px solid var(--border-light);
         }
 
         .sidebar .navbar-brand {
@@ -477,6 +480,14 @@
                     href="{{ route('admin.newsletter.send.form') }}">
                     <i class="fas fa-newspaper"></i>
                     Newsletter
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.newsletter.logs') ? 'active' : '' }}"
+                    href="{{ route('admin.newsletter.logs') }}">
+                    <i class="fas fa-file-lines"></i>
+                    Newsletter Logs
                 </a>
             </li>
 
