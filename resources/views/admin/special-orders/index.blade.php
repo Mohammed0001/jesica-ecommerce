@@ -105,7 +105,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('admin.special-orders.updateStatus', $order->id) }}" class="status-form">
+                                    <form method="POST" action="{{ route('admin.special-orders.update-status', $order->id) }}" class="status-form">
                                         @csrf
                                         @method('PATCH')
                                         @php $specialStatuses = \App\Models\SpecialOrder::STATUSES; @endphp

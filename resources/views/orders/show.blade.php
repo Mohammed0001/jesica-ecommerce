@@ -60,11 +60,11 @@
                                     @endif
                                     <div class="item-meta">
                                         <span class="item-quantity">Quantity: {{ $item->quantity }}</span>
-                                        <span class="item-price">Unit Price: EGP{{ number_format($item->price, 2) }}</span>
+                                        <span class="item-price">Unit Price: {{ $item->formattedPrice }}</span>
                                     </div>
                                 </div>
                                 <div class="item-total">
-                                    <span class="total-amount">EGP{{ number_format($item->quantity * $item->price, 2) }}</span>
+                                    <span class="total-amount">{{ $item->formattedSubtotal }}</span>
                                 </div>
                             </div>
                             @endforeach
@@ -164,24 +164,34 @@
                         <div class="summary-details">
                             <div class="summary-row">
                                 <span class="summary-label">Subtotal:</span>
-                                <span class="summary-value">EGP{{ number_format($order->items->sum(function($item) { return $item->quantity * $item->price; }), 2) }}</span>
+                                <span class="summary-value">{{ $order->formattedSubtotal }}</span>
+                            </div>
+
+                            <div class="summary-row">
+                                <span class="summary-label">Discount:</span>
+                                <span class="summary-value">- {{ $order->formattedDiscount }}</span>
+                            </div>
+
+                            <div class="summary-row">
+                                <span class="summary-label">Service:</span>
+                                <span class="summary-value">{{ $order->formattedServiceFee }}</span>
                             </div>
 
                             <div class="summary-row">
                                 <span class="summary-label">Shipping:</span>
-                                <span class="summary-value">Free</span>
+                                <span class="summary-value">{{ ($order->shipping_amount ?? 0) <= 0 ? 'Free' : $order->formattedShipping }}</span>
                             </div>
 
                             <div class="summary-row">
                                 <span class="summary-label">Tax:</span>
-                                <span class="summary-value">EGP0.00</span>
+                                <span class="summary-value">{{ $order->formattedTax }}</span>
                             </div>
 
                             <hr class="summary-divider">
 
                             <div class="summary-row total-row">
                                 <span class="summary-label">Total:</span>
-                                <span class="summary-value">EGP{{ number_format($order->total_amount, 2) }}</span>
+                                <span class="summary-value">{{ $order->formattedTotal }}</span>
                             </div>
                         </div>
 
@@ -201,11 +211,11 @@
 
                         <!-- Order Actions -->
                         <div class="order-actions">
-                            @if($order->status === 'pending')
+                            {{-- @if($order->status === 'pending')
                                 <button class="btn btn-danger btn-block" onclick="cancelOrder({{ $order->id }})">
                                     Cancel Order
                                 </button>
-                            @endif
+                            @endif --}}
 
                             @if($order->status === 'completed')
                                 <a href="{{ route('orders.reorder', $order) }}" class="btn btn-primary btn-block">

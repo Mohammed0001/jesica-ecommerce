@@ -60,9 +60,9 @@
                         <tr>
                             <td>{{ data_get($item->product_snapshot, 'sku') }}</td>
                             <td>{{ data_get($item->product_snapshot, 'title') }}</td>
-                            <td class="text-end">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($item->price, 2) }}</td>
+                            <td class="text-end">{{ $item->formattedPrice }}</td>
                             <td class="text-center">{{ $item->quantity }}</td>
-                            <td class="text-end">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($item->subtotal, 2) }}</td>
+                            <td class="text-end">{{ $item->formattedSubtotal }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -71,13 +71,13 @@
             <div class="row">
                 <div class="col-md-6"></div>
                 <div class="col-md-6">
-                    <div class="d-flex justify-content-between"><span>Subtotal</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($order->subtotal ?? $order->total_amount, 2) }}</span></div>
-                    <div class="d-flex justify-content-between"><span>Discount</span><span>- {{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($order->discount_amount ?? 0, 2) }}</span></div>
-                    <div class="d-flex justify-content-between"><span>Service Fee</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($order->service_fee ?? 0, 2) }}</span></div>
-                    <div class="d-flex justify-content-between"><span>Shipping</span><span>{{ $order->shipping_amount <= 0 ? 'Free' : (config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP') . ' ' . number_format($order->shipping_amount ?? 0, 2) }}</span></div>
-                    <div class="d-flex justify-content-between"><span>Tax</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($order->tax_amount ?? 0, 2) }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Subtotal</span><span>{{ $order->formattedSubtotal }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Discount</span><span>- {{ $order->formattedDiscount }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Service Fee</span><span>{{ $order->formattedServiceFee }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Shipping</span><span>{{ ($order->shipping_amount ?? 0) <= 0 ? 'Free' : $order->formattedShipping }}</span></div>
+                    <div class="d-flex justify-content-between"><span>Tax</span><span>{{ $order->formattedTax }}</span></div>
                     <hr />
-                    <div class="d-flex justify-content-between"><strong>Total</strong><strong>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($order->total_amount, 2) }}</strong></div>
+                    <div class="d-flex justify-content-between"><strong>Total</strong><strong>{{ $order->formattedTotal }}</strong></div>
                 </div>
             </div>
         </div>

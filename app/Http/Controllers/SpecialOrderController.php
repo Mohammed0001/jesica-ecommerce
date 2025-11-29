@@ -27,7 +27,8 @@ class SpecialOrderController extends Controller
     public function create()
     {
         // Provide a lightweight product list for optional association
-        $products = Product::visible()->select(['id', 'name'])->limit(50)->get();
+        // select 'title' (DB column) — `name` is an accessor on the model
+        $products = Product::visible()->select(['id', 'title'])->limit(50)->get();
 
         return view('special-orders.create', compact('products'));
     }

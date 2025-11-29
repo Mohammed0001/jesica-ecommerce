@@ -99,19 +99,26 @@
             <div class="row align-items-center">
                 <div class="col-lg-6">
                     <h2 class="section-title text-start">About Jesica Riad</h2>
-                    <p class="text-large">
-                        Jesica Riad represents the pinnacle of luxury fashion, where innovative design meets
-                        exceptional craftsmanship. Each piece is meticulously crafted to create wearable art
-                        that transcends traditional fashion boundaries.
+                    <p>
+                        Jessica Riad is a visual artist and fashion designer who transforms emotion, memory, and
+                        culture into wearable art. Her creations merge craftsmanship with storytelling, blending
+                        recycled materials, bold textures, and heritage influences into collectible fashion
+                        pieces. Each design carries a fragment of identity — a story shaped by feeling and
+                        detail. Rooted in Cairo and inspired by global artistry, Jessica’s work redefines cool
+                        luxury as something soulful, personal, and timeless.
                     </p>
                     <p>
-                        Our collections celebrate the intersection of technology, nature, and human creativity,
-                        offering unique pieces that tell a story and evoke emotion.
+                        For those who seek meaning beyond fashion, Jessica Riad invites you to carry art, not
+                        trend.
                     </p>
+                    <span
+                        style="font-family: 'Dancing Script', 'Brush Script MT', cursive; font-size: 1.4em; font-weight: 400; color: #2c3e50; letter-spacing: 1px; display: inline-block; margin: 10px 0; position: relative; z-index: 1;"
+                        title="Hand-signed quote">art you carry – emotion you own</span>
                 </div>
                 <div class="col-lg-6">
                     <div class="about-image">
-                        <img src="https://picsum.photos/500/400?random=999" alt="Jesica Riad Studio" class="img-fluid">
+                        <img src="{{ asset('images/about-hero.jpg') }}" alt="Jesica Riad at work" class="img-fluid">
+
                     </div>
                 </div>
             </div>

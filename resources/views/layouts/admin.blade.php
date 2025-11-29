@@ -343,6 +343,25 @@
     </style>
 
     @stack('styles')
+    <style>
+        /* Hide admin navigation and sidebar when printing */
+        @media print {
+            .sidebar,
+            .topbar,
+            .mobile-sidebar-toggle {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+
+            /* Use full-width content for printouts */
+            .content-wrapper {
+                margin-left: 0 !important;
+                background: #fff !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -459,6 +478,7 @@
 
             <div class="d-flex align-items-center">
                 <span class="me-3">Welcome, {{ auth()->user()->name }}</span>
+
                 <div class="dropdown">
                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
                         data-bs-toggle="dropdown" aria-expanded="false">

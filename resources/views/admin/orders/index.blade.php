@@ -73,7 +73,16 @@
                                                 <span class="items-count">{{ $order->order_items_count ?? $order->orderItems->count() }} items</span>
                                             </td>
                                             <td>
-                                                <span class="order-total">EGP{{ number_format($order->total_amount, 2) }}</span>
+                                                <div>
+                                                    <div class="order-total">{{ $order->formattedTotal }}</div>
+                                                    {{-- <div class="small text-muted mt-1">
+                                                        <div>Subtotal: {{ $order->formattedSubtotal }}</div>
+                                                        <div>Discount: - {{ config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP' }} {{ number_format($order->discount_amount ?? 0, 2) }}</div>
+                                                        <div>Service: {{ $order->formattedServiceFee }}</div>
+                                                        <div>Shipping: {{ ($order->shipping_amount ?? 0) <= 0 ? 'Free' : $order->formattedShipping }}</div>
+                                                        <div>Tax: {{ $order->formattedTax }}</div>
+                                                    </div> --}}
+                                                </div>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">

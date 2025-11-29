@@ -85,7 +85,11 @@ class AdminOrderController extends Controller
     {
         $specialOrder->load(['user']);
 
-        return view('admin.special-orders.show', compact('specialOrder'));
+        // Pass an `order` alias for backward compatibility with views that expect $order
+        return view('admin.special-orders.show', [
+            'specialOrder' => $specialOrder,
+            'order' => $specialOrder,
+        ]);
     }
 
     /**
@@ -94,12 +98,17 @@ class AdminOrderController extends Controller
     public function updateSpecialOrderStatus(Request $request, SpecialOrder $specialOrder)
     {
         $request->validate([
-            'status' => ['required', \Illuminate\Validation\Rule::in(\App\Models\SpecialOrder::STATUSES)],
+            // make status optional so admin notes can be saved without resubmitting status
+            'status' => ['sometimes', \Illuminate\Validation\Rule::in(\App\Models\SpecialOrder::STATUSES)],
             'quoted_price' => 'nullable|numeric|min:0',
             'admin_notes' => 'nullable|string',
         ]);
 
-        $data = ['status' => $request->status];
+        $data = [];
+
+        if ($request->filled('status')) {
+            $data['status'] = $request->status;
+        }
 
         if ($request->filled('quoted_price')) {
             $data['quoted_price'] = $request->quoted_price;
@@ -109,10 +118,23 @@ class AdminOrderController extends Controller
             $data['admin_notes'] = $request->admin_notes;
         }
 
-        $specialOrder->update($data);
+        if (!empty($data)) {
+            $specialOrder->update($data);
+        }
 
         return redirect()->back()
             ->with('success', 'Special order updated successfully.');
+    }
+
+    /**
+     * Delete the specified special order
+     */
+    public function destroySpecialOrder(SpecialOrder $specialOrder)
+    {
+        $specialOrder->delete();
+
+        return redirect()->route('admin.special-orders.index')
+            ->with('success', 'Special order deleted successfully.');
     }
 
     /**

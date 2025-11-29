@@ -127,7 +127,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Special order management
     Route::get('special-orders', [AdminOrderController::class, 'specialOrders'])->name('special-orders.index');
     Route::get('special-orders/{specialOrder}', [AdminOrderController::class, 'showSpecialOrder'])->name('special-orders.show');
-    Route::post('special-orders/{specialOrder}/update-status', [AdminOrderController::class, 'updateSpecialOrderStatus'])->name('special-orders.update-status');
+    // Accept both POST and PATCH for status updates (some views use method spoofing)
+    Route::match(['post', 'patch'], 'special-orders/{specialOrder}/update-status', [AdminOrderController::class, 'updateSpecialOrderStatus'])->name('special-orders.update-status');
+    // Backwards-compatible route name used by some admin views (camelCase)
+    Route::patch('special-orders/{specialOrder}/update-notes', [AdminOrderController::class, 'updateSpecialOrderStatus'])->name('special-orders.updateNotes');
+    // Allow admins to delete special orders
+    Route::delete('special-orders/{specialOrder}', [AdminOrderController::class, 'destroySpecialOrder'])->name('special-orders.destroy');
 
     // Client management
     Route::resource('clients', AdminClientController::class)->only(['index', 'show', 'update']);

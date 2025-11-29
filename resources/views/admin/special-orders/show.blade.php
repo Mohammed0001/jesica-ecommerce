@@ -124,6 +124,99 @@
                 </div>
             </div>
             @endif
+            <!-- Special Order Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6>Special Order Details</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <label>Title:</label>
+                                <span>{{ $order->title }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Description:</label>
+                                <span>{{ $order->description }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Measurements:</label>
+                                <span>
+                                    @if($order->measurements)
+                                        <pre style="white-space:pre-wrap;margin:0">{{ json_encode($order->measurements, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>
+                                    @else
+                                        <em>—</em>
+                                    @endif
+                                </span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Customer Notes:</label>
+                                <span>{{ $order->notes ?? $order->message ?? '—' }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Estimated Price:</label>
+                                <span>{{ $order->estimated_price ? 'EGP' . number_format($order->estimated_price, 2) : '—' }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Deposit Amount:</label>
+                                <span>{{ $order->deposit_amount ? 'EGP' . number_format($order->deposit_amount, 2) : '—' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <label>Desired Delivery:</label>
+                                <span>{{ $order->desired_delivery_date ? $order->desired_delivery_date->format('M d, Y') : '—' }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Quoted Price:</label>
+                                <span>{{ data_get($order, 'quoted_price') ? 'EGP' . number_format(data_get($order, 'quoted_price'), 2) : '—' }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Status:</label>
+                                <span><strong>{{ ucfirst(str_replace('_', ' ', $order->status)) }}</strong></span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Admin Notes:</label>
+                                <span>{{ $order->admin_notes ?? '—' }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Created:</label>
+                                <span>{{ $order->created_at->format('M d, Y h:i A') }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <label>Last Updated:</label>
+                                <span>{{ $order->updated_at->format('M d, Y h:i A') }}</span>
+                            </div>
+
+                            @if($order->user)
+                                <div class="detail-row">
+                                    <label>Customer:</label>
+                                    <span><a href="{{ route('admin.clients.show', $order->user) }}">{{ $order->user->name }} ({{ $order->user->email }})</a></span>
+                                </div>
+                            @endif
+
+                            @if($order->product)
+                                <div class="detail-row">
+                                    <label>Associated Product:</label>
+                                    <span><a href="{{ route('admin.products.show', $order->product) }}">{{ $order->product->title ?? $order->product->name ?? 'Product #' . $order->product->id }}</a></span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Customer Message -->
             <div class="card mb-4">
@@ -165,7 +258,7 @@
                     <h6>Order Status</h6>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.special-orders.updateStatus', $order->id) }}">
+                    <form method="POST" action="{{ route('admin.special-orders.update-status', $order->id) }}">
                         @csrf
                         @method('PATCH')
                         <div class="mb-3">

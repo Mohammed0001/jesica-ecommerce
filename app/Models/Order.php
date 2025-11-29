@@ -198,6 +198,15 @@ class Order extends Model
     }
 
     /**
+     * Get formatted discount attribute
+     */
+    public function getFormattedDiscountAttribute(): string
+    {
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->discount_amount ?? 0, 2);
+    }
+
+    /**
      * Get status badge class
      */
     public function getStatusBadgeClassAttribute(): string

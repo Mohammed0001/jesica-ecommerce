@@ -24,6 +24,14 @@
                     </svg>
                 </a>
 
+                @auth
+                <a href="{{ route('special-orders.index') }}" class="iris-icon-btn" aria-label="Request Special Order" title="Request Special Order">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
+                    </svg>
+                </a>
+                @endauth
+
                 <a href="{{ route('cart.index') }}" class="iris-icon-btn" aria-label="Cart">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
@@ -58,6 +66,7 @@
                         @if (Auth::user()->role->name === 'ADMIN')
                             <x-nav-link :href="route('admin.dashboard')">Admin</x-nav-link>
                         @endif
+                            <x-nav-link :href="route('special-orders.index')">Special Orders</x-nav-link>
                         <x-nav-link :href="route('orders.index')">Orders</x-nav-link>
                         <x-nav-link :href="route('cart.index')">Cart</x-nav-link>
                         <form method="POST" action="{{ route('logout') }}" style="width: 100%;">
@@ -289,6 +298,19 @@
         }
     }
 </style>
+
+    <!-- Hide navbars when printing -->
+    <style>
+        @media print {
+            .iris-navbar,
+            .iris-fullscreen-nav {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+        }
+    </style>
 
 <!-- Add home page class to navbar container -->
 @if (request()->routeIs('home'))

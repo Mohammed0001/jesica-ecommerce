@@ -44,7 +44,8 @@ class OrderItem extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        return '$' . number_format($this->price, 2);
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->price, 2);
     }
 
     /**
@@ -52,6 +53,7 @@ class OrderItem extends Model
      */
     public function getFormattedSubtotalAttribute(): string
     {
-        return '$' . number_format($this->subtotal, 2);
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->subtotal, 2);
     }
 }

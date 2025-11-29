@@ -78,27 +78,27 @@
                                 @endif
                             </td>
                             <td>{{ $item->quantity }}</td>
-                            <td>EGP{{ number_format($item->price, 2) }}</td>
-                            <td>EGP{{ number_format($item->quantity * $item->price, 2) }}</td>
+                            <td>{{ $item->formattedPrice }}</td>
+                            <td>{{ $item->formattedSubtotal }}</td>
                         </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="subtotal-row">
                             <td colspan="3" class="text-right"><strong>Subtotal:</strong></td>
-                            <td><strong>EGP{{ number_format($order->items->sum(function($item) { return $item->quantity * $item->price; }), 2) }}</strong></td>
+                            <td><strong>{{ $order->formattedSubtotal }}</strong></td>
                         </tr>
                         <tr class="shipping-row">
                             <td colspan="3" class="text-right">Shipping:</td>
-                            <td>Free</td>
+                            <td>{{ ($order->shipping_amount ?? 0) <= 0 ? 'Free' : $order->formattedShipping }}</td>
                         </tr>
                         <tr class="tax-row">
                             <td colspan="3" class="text-right">Tax:</td>
-                            <td>EGP0.00</td>
+                            <td>{{ $order->formattedTax }}</td>
                         </tr>
                         <tr class="total-row">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                            <td><strong>EGP{{ number_format($order->total_amount, 2) }}</strong></td>
+                            <td><strong>{{ $order->formattedTotal }}</strong></td>
                         </tr>
                     </tfoot>
                 </table>

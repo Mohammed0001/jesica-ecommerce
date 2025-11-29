@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Product;
 
 class SpecialOrder extends Model
 {
@@ -43,6 +44,48 @@ class SpecialOrder extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Optional product association (some views expect a product)
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Backwards-compatible customer name/email/phone accessors used by admin views
+     */
+    public function getCustomerNameAttribute(): ?string
+    {
+        return $this->user?->name ?? $this->attributes['customer_name'] ?? null;
+    }
+
+    public function getCustomerEmailAttribute(): ?string
+    {
+        return $this->user?->email ?? $this->attributes['customer_email'] ?? null;
+    }
+
+    public function getCustomerPhoneAttribute(): ?string
+    {
+        return $this->user?->phone ?? $this->attributes['customer_phone'] ?? null;
+    }
+
+    public function getMessageAttribute(): ?string
+    {
+        // some code writes customer message into `notes`
+        return $this->attributes['message'] ?? $this->attributes['notes'] ?? null;
+    }
+
+    public function getBudgetAttribute(): ?float
+    {
+        return $this->estimated_price ?? null;
+    }
+
+    public function getDeadlineAttribute()
+    {
+        return $this->desired_delivery_date ?? null;
     }
 
     /**
