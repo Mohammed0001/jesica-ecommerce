@@ -8,6 +8,7 @@ use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -38,7 +39,35 @@ class CheckoutController extends Controller
             return redirect()->route('cart.show')->with('error', implode(', ', $errors));
         }
 
-        $total = $this->orderService->calculateTotal($cartItems);
+        // Calculate totals in display currency for checkout view
+        $subtotalOriginal = $this->orderService->calculateTotal($cartItems);
+        // Use display_subtotal from product snapshot when available
+        $displaySubtotal = collect($cartItems)->sum(function ($it) {
+            return (float) (data_get($it, 'product.display_subtotal') ?? (data_get($it, 'display_subtotal') ?? 0));
+        });
+
+        // Use SiteSetting for fees like in CartController
+        $deliveryFee = (float) \App\Models\SiteSetting::get('delivery_fee', 15);
+        $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
+        $taxPercentage = (float) \App\Models\SiteSetting::get('tax_percentage', 14);
+        $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);
+
+        $appliedPromo = session()->get('applied_promo', null);
+        $discountAmount = 0;
+        if ($appliedPromo) {
+            if ($appliedPromo['type'] === 'percentage') {
+                $discountAmount = ($displaySubtotal * ($appliedPromo['value'] / 100));
+            } else {
+                $discountAmount = $appliedPromo['value'];
+            }
+        }
+
+        $finalTotal = max(0, $displaySubtotal - $discountAmount);
+        $shipping = $finalTotal >= $deliveryThreshold ? 0 : $deliveryFee;
+        $serviceFee = round($finalTotal * ($serviceFeePercentage / 100), 2);
+        $tax = round(($finalTotal + $serviceFee + $shipping) * ($taxPercentage / 100), 2);
+        $total = round(max(0, $finalTotal + $serviceFee + $shipping + $tax), 2);
+
         $depositAmount = $this->paymentService->calculateDeposit(
             (object)['total_amount' => $total],
             $this->paymentService->getDefaultDepositPercentage()
@@ -46,7 +75,7 @@ class CheckoutController extends Controller
 
         $addresses = Auth::user()->addresses;
 
-        return view('checkout.show', compact('cartItems', 'total', 'depositAmount', 'addresses'));
+        return view('checkout.show', compact('cartItems', 'total', 'depositAmount', 'addresses', 'displaySubtotal', 'shipping', 'serviceFee', 'tax', 'discountAmount', 'finalTotal'));
     }
 
     /**
@@ -62,24 +91,50 @@ class CheckoutController extends Controller
      */
     public function process(Request $request)
     {
-        $request->validate([
+        // Normalize common address fields in case the client submitted arrays (e.g., duplicate inputs)
+        $addressFields = ['company','address_line_1','address_line_2','city','state_province','postal_code','country','save_address','is_default'];
+        foreach ($addressFields as $f) {
+            if ($request->has($f) && is_array($request->input($f))) {
+                // Collapse to first element to allow string validation to proceed
+                $val = $request->input($f);
+                $request->merge([$f => is_array($val) ? ($val[0] ?? null) : $val]);
+            }
+        }
+
+        // Build conditional rules: require address fields only when shipping_address_id not provided
+        $rules = [
             'payment_type' => 'required|in:full,deposit',
             'payment_method' => 'required|string',
             // Allow either an existing shipping_address_id or full address fields
             'shipping_address_id' => 'nullable|exists:addresses,id',
-
-            // Address fields required when shipping_address_id is not provided
-            'first_name' => 'required_without:shipping_address_id|string|max:100',
-            'last_name' => 'required_without:shipping_address_id|string|max:100',
-            'company' => 'nullable|string|max:255',
-            'address_line_1' => 'required_without:shipping_address_id|string|max:255',
-            'address_line_2' => 'nullable|string|max:255',
-            'city' => 'required_without:shipping_address_id|string|max:100',
-            'state_province' => 'required_without:shipping_address_id|string|max:100',
-            'postal_code' => 'required_without:shipping_address_id|string|max:20',
-            'country' => 'required_without:shipping_address_id|string|max:100',
             'save_address' => 'sometimes|boolean',
-        ]);
+        ];
+
+        if ($request->filled('shipping_address_id')) {
+            // If user selected an existing address, address inputs are optional
+            $rules = array_merge($rules, [
+                'company' => 'nullable|string|max:255',
+                'address_line_1' => 'nullable|string|max:255',
+                'address_line_2' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:100',
+                'state_province' => 'nullable|string|max:100',
+                'postal_code' => 'nullable|string|max:20',
+                'country' => 'nullable|string|max:100',
+            ]);
+        } else {
+            // Require address fields when no existing address id provided
+            $rules = array_merge($rules, [
+                'company' => 'nullable|string|max:255',
+                'address_line_1' => 'required|string|max:255',
+                'address_line_2' => 'nullable|string|max:255',
+                'city' => 'required|string|max:100',
+                'state_province' => 'required|string|max:100',
+                'postal_code' => 'required|string|max:20',
+                'country' => 'required|string|max:100',
+            ]);
+        }
+
+        $request->validate($rules);
 
         $cartItems = $this->getCartItems();
 
@@ -104,11 +159,9 @@ class CheckoutController extends Controller
             $shippingAddressId = $address->id;
             $addressSnapshot = $address->toArray();
         } else {
-            // Build snapshot from provided fields
+            // Build snapshot from provided fields (no first/last name fields)
             $addressData = [
                 'type' => 'shipping',
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
                 'company' => $request->company,
                 'address_line_1' => $request->address_line_1,
                 'address_line_2' => $request->address_line_2,
@@ -121,7 +174,12 @@ class CheckoutController extends Controller
 
             // Optionally save address to user's profile
             if ($request->boolean('save_address')) {
-                $created = Address::create(array_merge($addressData, ['user_id' => Auth::id()]));
+                // If marked as default, clear other defaults first
+                if ($request->boolean('is_default')) {
+                    Address::where('user_id', Auth::id())->update(['is_default' => false]);
+                }
+
+                $created = Address::create(array_merge($addressData, ['user_id' => Auth::id(), 'is_default' => $request->boolean('is_default')]));
                 $shippingAddressId = $created->id;
                 $addressSnapshot = $created->toArray();
             } else {
@@ -187,6 +245,8 @@ class CheckoutController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log exception for debugging
+            Log::error('Checkout process failed: ' . $e->getMessage(), ['exception' => $e]);
             return back()->with('error', 'An error occurred during checkout. Please try again.');
         }
     }
@@ -200,10 +260,32 @@ class CheckoutController extends Controller
         $cartItems = collect();
 
         foreach ($cart as $item) {
+            $product = \App\Models\Product::with('images')->find($item['product_id']);
+
+            $productData = null;
+            if ($product) {
+                $mainImage = $product->main_image;
+                $displayPrice = $product->convertToCurrency(session('currency', $product->currency));
+                $productData = [
+                    'id' => $product->id,
+                    'sku' => $product->sku,
+                    'title' => $product->title,
+                    'description' => $product->description,
+                    'price' => (float) $product->price,
+                    'currency' => $product->currency,
+                    'is_one_of_a_kind' => (bool) $product->is_one_of_a_kind,
+                    'quantity_available' => $product->quantity,
+                    'main_image_url' => $mainImage?->url,
+                    'display_price' => $displayPrice,
+                    'display_subtotal' => round($displayPrice * $item['quantity'], 2),
+                ];
+            }
+
             $cartItems->push([
                 'product_id' => $item['product_id'],
                 'quantity' => $item['quantity'],
                 'size_label' => $item['size_label'] ?? null,
+                'product' => $productData,
             ]);
         }
 

@@ -60,11 +60,11 @@
                                     @endif
                                     <div class="item-meta">
                                         <span class="item-quantity">Quantity: {{ $item->quantity }}</span>
-                                        <span class="item-price">Unit Price: ${{ number_format($item->price, 2) }}</span>
+                                        <span class="item-price">Unit Price: EGP{{ number_format($item->price, 2) }}</span>
                                     </div>
                                 </div>
                                 <div class="item-total">
-                                    <span class="total-amount">${{ number_format($item->quantity * $item->price, 2) }}</span>
+                                    <span class="total-amount">EGP{{ number_format($item->quantity * $item->price, 2) }}</span>
                                 </div>
                             </div>
                             @endforeach
@@ -164,7 +164,7 @@
                         <div class="summary-details">
                             <div class="summary-row">
                                 <span class="summary-label">Subtotal:</span>
-                                <span class="summary-value">${{ number_format($order->items->sum(function($item) { return $item->quantity * $item->price; }), 2) }}</span>
+                                <span class="summary-value">EGP{{ number_format($order->items->sum(function($item) { return $item->quantity * $item->price; }), 2) }}</span>
                             </div>
 
                             <div class="summary-row">
@@ -174,14 +174,14 @@
 
                             <div class="summary-row">
                                 <span class="summary-label">Tax:</span>
-                                <span class="summary-value">$0.00</span>
+                                <span class="summary-value">EGP0.00</span>
                             </div>
 
                             <hr class="summary-divider">
 
                             <div class="summary-row total-row">
                                 <span class="summary-label">Total:</span>
-                                <span class="summary-value">${{ number_format($order->total_amount, 2) }}</span>
+                                <span class="summary-value">EGP{{ number_format($order->total_amount, 2) }}</span>
                             </div>
                         </div>
 
@@ -193,7 +193,7 @@
                             <div class="payment-item">
                                 <div class="payment-method">{{ ucfirst($payment->method) }}</div>
                                 <div class="payment-status">{{ ucfirst($payment->status) }}</div>
-                                <div class="payment-amount">${{ number_format($payment->amount, 2) }}</div>
+                                <div class="payment-amount">EGP{{ number_format($payment->amount, 2) }}</div>
                             </div>
                             @endforeach
                         </div>

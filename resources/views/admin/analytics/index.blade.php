@@ -34,7 +34,7 @@
                     <p class="metric-label">Total Orders</p>
                     <div class="metric-change positive">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+12% from last period</span>
+                        {{-- <span>+12% from last period</span> --}}
                     </div>
                 </div>
             </div>
@@ -46,11 +46,11 @@
                     <i class="fas fa-dollar-sign"></i>
                 </div>
                 <div class="metric-content">
-                    <h3 class="metric-value">${{ number_format($analytics['total_revenue'] ?? 0, 2) }}</h3>
+                    <h3 class="metric-value">EGP{{ number_format($analytics['total_revenue'] ?? 0, 2) }}</h3>
                     <p class="metric-label">Total Revenue</p>
                     <div class="metric-change positive">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+8% from last period</span>
+                        {{-- <span>+8% from last period</span> --}}
                     </div>
                 </div>
             </div>
@@ -147,7 +147,7 @@
                                         </div>
                                     </td>
                                     <td>{{ $product->orders_count ?? 0 }}</td>
-                                    <td>${{ number_format($product->total_revenue ?? 0, 2) }}</td>
+                                    <td>EGP{{ number_format($product->total_revenue ?? 0, 2) }}</td>
                                 </tr>
                                 @endforeach
                                 @if(empty($analytics['top_products']))
@@ -260,7 +260,7 @@
                     <div class="performance-metrics">
                         <div class="performance-item">
                             <div class="performance-label">Average Order Value</div>
-                            <div class="performance-value">${{ number_format($analytics['avg_order_value'] ?? 0, 2) }}</div>
+                            <div class="performance-value">EGP{{ number_format($analytics['avg_order_value'] ?? 0, 2) }}</div>
                         </div>
 
                         <div class="performance-item">
@@ -592,8 +592,9 @@ const revenueChart = new Chart(revenueCtx, {
                 beginAtZero: true,
                 ticks: {
                     callback: function(value) {
-                        return '$' + value.toLocaleString();
-                    }
+                            const currencySymbol = '{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }}';
+                            return currencySymbol + ' ' + value.toLocaleString();
+                        }
                 }
             }
         }

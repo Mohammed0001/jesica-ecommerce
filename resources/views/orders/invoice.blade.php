@@ -78,15 +78,15 @@
                                 @endif
                             </td>
                             <td>{{ $item->quantity }}</td>
-                            <td>${{ number_format($item->price, 2) }}</td>
-                            <td>${{ number_format($item->quantity * $item->price, 2) }}</td>
+                            <td>EGP{{ number_format($item->price, 2) }}</td>
+                            <td>EGP{{ number_format($item->quantity * $item->price, 2) }}</td>
                         </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="subtotal-row">
                             <td colspan="3" class="text-right"><strong>Subtotal:</strong></td>
-                            <td><strong>${{ number_format($order->items->sum(function($item) { return $item->quantity * $item->price; }), 2) }}</strong></td>
+                            <td><strong>EGP{{ number_format($order->items->sum(function($item) { return $item->quantity * $item->price; }), 2) }}</strong></td>
                         </tr>
                         <tr class="shipping-row">
                             <td colspan="3" class="text-right">Shipping:</td>
@@ -94,11 +94,11 @@
                         </tr>
                         <tr class="tax-row">
                             <td colspan="3" class="text-right">Tax:</td>
-                            <td>$0.00</td>
+                            <td>EGP0.00</td>
                         </tr>
                         <tr class="total-row">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                            <td><strong>${{ number_format($order->total_amount, 2) }}</strong></td>
+                            <td><strong>EGP{{ number_format($order->total_amount, 2) }}</strong></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -111,7 +111,7 @@
                 <div class="payment-item">
                     <span class="payment-method">{{ ucfirst($payment->method) }}</span>
                     <span class="payment-status">{{ ucfirst($payment->status) }}</span>
-                    <span class="payment-amount">${{ number_format($payment->amount, 2) }}</span>
+                    <span class="payment-amount">EGP{{ number_format($payment->amount, 2) }}</span>
                 </div>
                 @endforeach
             </div>

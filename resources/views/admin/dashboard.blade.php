@@ -98,11 +98,11 @@
                     <div class="row">
                         <div class="col-6 text-center">
                             <div class="revenue-label">This Month</div>
-                            <div class="revenue-value">${{ number_format($stats['revenue_this_month'], 2) }}</div>
+                            <div class="revenue-value">EGP{{ number_format($stats['revenue_this_month'], 2) }}</div>
                         </div>
                         <div class="col-6 text-center">
                             <div class="revenue-label">Last Month</div>
-                            <div class="revenue-value">${{ number_format($stats['revenue_last_month'], 2) }}</div>
+                            <div class="revenue-value">EGP{{ number_format($stats['revenue_last_month'], 2) }}</div>
                         </div>
                     </div>
                     @php
@@ -195,7 +195,7 @@
                                                 </a>
                                             </td>
                                             <td>{{ $order->user->name ?? 'Guest' }}</td>
-                                            <td>${{ number_format($order->total_amount, 2) }}</td>
+                                            <td>EGP{{ number_format($order->total_amount, 2) }}</td>
                                             <td>
                                                 <span class="badge bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'secondary') }}">
                                                     {{ ucfirst($order->status) }}

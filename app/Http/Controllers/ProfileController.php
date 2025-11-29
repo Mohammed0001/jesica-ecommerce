@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
+use App\Models\Address;
+
 class ProfileController extends Controller
 {
     /**
@@ -56,5 +58,55 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    /**
+     * Store a new address for the user.
+     */
+    public function storeAddress(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'type' => 'nullable|string|in:shipping,billing',
+            'company' => 'nullable|string|max:255',
+            'address_line_1' => 'required|string|max:255',
+            'address_line_2' => 'nullable|string|max:255',
+            'city' => 'required|string|max:100',
+            'state_province' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'country' => 'required|string|max:100',
+            'is_default' => 'sometimes|boolean',
+        ]);
+
+        $user = $request->user();
+
+        // If is_default is set, clear other defaults
+        if ($request->boolean('is_default')) {
+            Address::where('user_id', $user->id)->update(['is_default' => false]);
+        }
+
+        $address = Address::create(array_merge($request->only([
+            'type','company','address_line_1','address_line_2','city','state_province','postal_code','country'
+        ]), [
+            'user_id' => $user->id,
+            'is_default' => $request->boolean('is_default'),
+        ]));
+
+        return Redirect::route('profile.edit')->with('status', 'address-added');
+    }
+
+    /**
+     * Delete an address belonging to the user.
+     */
+    public function destroyAddress(Request $request, Address $address): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($address->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $address->delete();
+
+        return Redirect::route('profile.edit')->with('status', 'address-deleted');
     }
 }

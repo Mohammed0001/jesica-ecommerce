@@ -410,6 +410,22 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}"
+                    href="{{ route('admin.settings.edit') }}">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.newsletter.*') ? 'active' : '' }}"
+                    href="{{ route('admin.newsletter.send.form') }}">
+                    <i class="fas fa-newspaper"></i>
+                    Newsletter
+                </a>
+            </li>
+
             <li class="nav-item mt-4">
                 <a class="nav-link" href="{{ route('home') }}" target="_blank">
                     <i class="fas fa-external-link-alt"></i>

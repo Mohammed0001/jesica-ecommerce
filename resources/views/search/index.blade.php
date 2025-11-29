@@ -46,9 +46,10 @@
                         @php
                             $isCollection = $item instanceof \App\Models\Collection;
                             $title = $isCollection ? $item->title : $item->name;
+                            $currencySymbol = config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP');
                             $subtitle = $isCollection
                                 ? $item->products_count . ' items'
-                                : '$' . number_format($item->price, 2);
+                                : $currencySymbol . ' ' . number_format($item->price, 2);
                             $image = $isCollection
                                 ? $item->images->first()?->url ?? null
                                 : $item->main_image?->url ?? null;

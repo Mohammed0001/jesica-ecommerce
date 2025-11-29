@@ -66,7 +66,7 @@
                             @if($order->budget)
                             <div class="detail-row">
                                 <label>Budget:</label>
-                                <span class="budget-amount">${{ number_format($order->budget, 2) }}</span>
+                                <span class="budget-amount">EGP{{ number_format($order->budget, 2) }}</span>
                             </div>
                             @endif
                             @if($order->deadline)
@@ -108,7 +108,7 @@
                             </div>
                             <div class="detail-row">
                                 <label>Base Price:</label>
-                                <span class="product-price">${{ number_format($order->product->price, 2) }}</span>
+                                <span class="product-price">EGP{{ number_format($order->product->price, 2) }}</span>
                             </div>
                             <div class="detail-row">
                                 <label>Description:</label>
@@ -170,12 +170,11 @@
                         @method('PATCH')
                         <div class="mb-3">
                             <label class="form-label">Current Status</label>
+                            @php $specialStatuses = \App\Models\SpecialOrder::STATUSES; @endphp
                             <select name="status" class="form-select" id="status-select">
-                                <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="confirmed" {{ $order->status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                                <option value="in_progress" {{ $order->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Completed</option>
-                                <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                @foreach($specialStatuses as $s)
+                                    <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $s)) }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
@@ -524,11 +523,11 @@ document.addEventListener('DOMContentLoaded', function() {
         statusSelect.addEventListener('change', function() {
             const newStatus = this.value;
 
-            // Confirm for certain status changes
-            if (newStatus === 'cancelled' || newStatus === 'completed') {
-                const confirmMessage = newStatus === 'cancelled'
-                    ? 'Are you sure you want to cancel this order?'
-                    : 'Are you sure this order is completed?';
+            // Confirm for terminal status changes
+            if (newStatus === 'completed' || newStatus === 'rejected') {
+                const confirmMessage = newStatus === 'rejected'
+                    ? 'Are you sure you want to reject this special order?'
+                    : 'Are you sure this special order is completed?';
 
                 if (!confirm(confirmMessage)) {
                     this.value = "{{ $order->status }}";

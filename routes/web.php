@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SpecialOrderController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AdminPromoCodeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\NewsletterController;
 
 // PUBLIC ROUTES - No authentication required
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -52,6 +54,13 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('/apply-promo', [CartController::class, 'applyPromo'])->name('apply-promo');
 });
 
+// Admin settings
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    // newsletter send form (admin-only routes are registered in the admin group below)
+});
+
 // AUTHENTICATED USER ROUTES
 Route::middleware('auth')->group(function () {
     // Checkout routes - Require authentication
@@ -83,7 +92,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Address management on profile
+    Route::post('/profile/address', [ProfileController::class, 'storeAddress'])->name('profile.address.store');
+    Route::delete('/profile/address/{address}', [ProfileController::class, 'destroyAddress'])->name('profile.address.destroy');
 });
+
+// Public newsletter routes
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+Route::get('/newsletter/unsubscribe/{id}/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
 // ADMIN ROUTES - Require admin authentication
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -104,6 +120,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Order management
     Route::resource('orders', AdminOrderController::class)->only(['index', 'show', 'update']);
+    // Printable order invoice
+    Route::get('orders/{order}/print', [\App\Http\Controllers\Admin\AdminOrderController::class, 'print'])->name('orders.print');
     Route::post('orders/{order}/update-status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
 
     // Special order management
@@ -123,6 +141,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('analytics/products', [AnalyticsController::class, 'products'])->name('analytics.products');
     Route::get('analytics/clients', [AnalyticsController::class, 'clients'])->name('analytics.clients');
     Route::get('analytics/ordering-frequency', [AnalyticsController::class, 'orderingFrequency'])->name('analytics.ordering-frequency');
+
+    // Admin newsletter send
+    Route::get('newsletter/send', [NewsletterController::class, 'showSendForm'])->name('newsletter.send.form');
+    Route::post('newsletter/send', [NewsletterController::class, 'send'])->name('newsletter.send');
 });
 
 // Laravel Breeze Dashboard (keep for compatibility)

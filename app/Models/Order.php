@@ -9,10 +9,29 @@ use Illuminate\Support\Str;
 
 class Order extends Model
 {
+    // Centralized list of valid order statuses — keep in sync with DB enum
+    public const STATUSES = [
+        'draft',
+        'pending_deposit',
+        'pending',
+        'processing',
+        'paid_deposit',
+        'paid_full',
+        'shipped',
+        'delivered',
+        'completed',
+        'cancelled',
+    ];
+
     protected $fillable = [
         'order_number',
         'user_id',
         'total_amount',
+        'subtotal',
+        'discount_amount',
+        'shipping_amount',
+        'service_fee',
+        'tax_amount',
         'status',
         'shipping_address_id',
         'shipping_address_snapshot',
@@ -24,6 +43,11 @@ class Order extends Model
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'shipping_amount' => 'decimal:2',
+        'service_fee' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
         'shipping_address_snapshot' => 'array',
         'shipped_at' => 'datetime',
         'completed_at' => 'datetime',
@@ -59,6 +83,14 @@ class Order extends Model
      * Get the order items
      */
     public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Compatibility alias for older code that expects `orderItems` relationship name
+     */
+    public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
@@ -116,7 +148,8 @@ class Order extends Model
      */
     public function getFormattedTotalAttribute(): string
     {
-        return '$' . number_format($this->total_amount, 2);
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->total_amount, 2);
     }
 
     /**
@@ -124,7 +157,8 @@ class Order extends Model
      */
     public function getFormattedTotalPaidAttribute(): string
     {
-        return '$' . number_format($this->total_paid, 2);
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->total_paid, 2);
     }
 
     /**
@@ -132,7 +166,35 @@ class Order extends Model
      */
     public function getFormattedRemainingBalanceAttribute(): string
     {
-        return '$' . number_format($this->remaining_balance, 2);
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->remaining_balance, 2);
+    }
+
+    /**
+     * Get formatted subtotal attribute
+     */
+    public function getFormattedSubtotalAttribute(): string
+    {
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->subtotal ?? 0, 2);
+    }
+
+    public function getFormattedShippingAttribute(): string
+    {
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->shipping_amount ?? 0, 2);
+    }
+
+    public function getFormattedServiceFeeAttribute(): string
+    {
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->service_fee ?? 0, 2);
+    }
+
+    public function getFormattedTaxAttribute(): string
+    {
+        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
+        return $symbol . ' ' . number_format($this->tax_amount ?? 0, 2);
     }
 
     /**

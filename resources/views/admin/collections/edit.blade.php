@@ -215,7 +215,7 @@
                         </div>
                         <div class="product-info-small">
                             <h6>{{ $product->name }}</h6>
-                            <p>${{ number_format($product->price, 2) }}</p>
+                            <p>EGP{{ number_format($product->price, 2) }}</p>
                         </div>
                         <div class="product-actions-small">
                             <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-sm btn-outline-primary">

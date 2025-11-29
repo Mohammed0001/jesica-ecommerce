@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SpecialOrder extends Model
 {
+    // Centralized list of valid special order statuses (matches DB enum)
+    public const STATUSES = [
+        'requested',
+        'under_review',
+        'accepted',
+        'in_progress',
+        'completed',
+        'rejected',
+    ];
+
     protected $fillable = [
         'user_id',
         'title',

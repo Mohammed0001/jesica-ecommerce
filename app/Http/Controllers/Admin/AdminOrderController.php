@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Illuminate\Validation\Rule;
 use App\Models\SpecialOrder;
 use Illuminate\Http\Request;
 
@@ -37,7 +38,7 @@ class AdminOrderController extends Controller
     public function update(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            'status' => ['required', Rule::in(Order::STATUSES)],
             'notes' => 'nullable|string',
         ]);
 
@@ -56,7 +57,7 @@ class AdminOrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            'status' => ['required', Rule::in(Order::STATUSES)],
         ]);
 
         $order->update(['status' => $request->status]);
@@ -93,7 +94,7 @@ class AdminOrderController extends Controller
     public function updateSpecialOrderStatus(Request $request, SpecialOrder $specialOrder)
     {
         $request->validate([
-            'status' => 'required|in:pending,in_review,quoted,approved,in_production,completed,cancelled',
+            'status' => ['required', \Illuminate\Validation\Rule::in(\App\Models\SpecialOrder::STATUSES)],
             'quoted_price' => 'nullable|numeric|min:0',
             'admin_notes' => 'nullable|string',
         ]);
@@ -112,5 +113,15 @@ class AdminOrderController extends Controller
 
         return redirect()->back()
             ->with('success', 'Special order updated successfully.');
+    }
+
+    /**
+     * Print a printable order invoice
+     */
+    public function print(Order $order)
+    {
+        $order->load(['user', 'orderItems.product']);
+
+        return view('admin.orders.print', compact('order'));
     }
 }

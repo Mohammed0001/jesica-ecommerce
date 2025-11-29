@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderStatusUpdated as OrderStatusUpdatedMail;
 use Illuminate\Support\Collection;
 
 class OrderService
@@ -15,10 +17,39 @@ class OrderService
      */
     public function createOrder(User $user, Collection $cartItems, ?int $shippingAddressId = null): Order
     {
-        $totalAmount = $this->calculateTotal($cartItems);
+        // Calculate subtotal from product prices
+        $subtotal = $this->calculateTotal($cartItems);
+
+        // Promo/discount from session if present
+        $appliedPromo = session()->get('applied_promo', null);
+        $discountAmount = 0;
+        if ($appliedPromo) {
+            if ($appliedPromo['type'] === 'percentage') {
+                $discountAmount = ($subtotal * ($appliedPromo['value'] / 100));
+            } else {
+                $discountAmount = $appliedPromo['value'];
+            }
+        }
+
+        // Site settings
+        $deliveryFee = (float) \App\Models\SiteSetting::get('delivery_fee', 15);
+        $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
+        $taxPercentage = (float) \App\Models\SiteSetting::get('tax_percentage', 14);
+        $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);
+
+        $finalAfterDiscount = max(0, $subtotal - $discountAmount);
+        $shippingAmount = $finalAfterDiscount >= $deliveryThreshold ? 0 : $deliveryFee;
+        $serviceFee = round($finalAfterDiscount * ($serviceFeePercentage / 100), 2);
+        $taxAmount = round(($finalAfterDiscount + $serviceFee + $shippingAmount) * ($taxPercentage / 100), 2);
+        $totalAmount = round(max(0, $finalAfterDiscount + $serviceFee + $shippingAmount + $taxAmount), 2);
 
         $order = Order::create([
             'user_id' => $user->id,
+            'subtotal' => $subtotal,
+            'discount_amount' => $discountAmount,
+            'shipping_amount' => $shippingAmount,
+            'service_fee' => $serviceFee,
+            'tax_amount' => $taxAmount,
             'total_amount' => $totalAmount,
             'status' => 'draft',
             'shipping_address_id' => $shippingAddressId,
@@ -26,18 +57,32 @@ class OrderService
 
         // Create order items
         foreach ($cartItems as $item) {
-            $product = Product::find($item['product_id']);
+            // Allow cart item to carry fetched product data to avoid duplicate queries
+            $product = null;
+            if (!empty($item['product']) && is_array($item['product'])) {
+                // we still want the Eloquent model when possible for relations
+                $product = Product::find($item['product']['id']);
+            } else {
+                $product = Product::find($item['product_id']);
+            }
 
             if (!$product) {
                 continue;
             }
 
-            // Store product snapshot for historical reference
+            $mainImage = $product->main_image;
+
+            // Store full product snapshot for historical reference
             $productSnapshot = [
+                'id' => $product->id,
+                'sku' => $product->sku,
                 'title' => $product->title,
                 'description' => $product->description,
-                'sku' => $product->sku,
+                'price' => (float) $product->price,
+                'currency' => $product->currency,
                 'collection_title' => $product->collection->title ?? null,
+                'is_one_of_a_kind' => (bool) $product->is_one_of_a_kind,
+                'main_image_url' => $mainImage?->url,
             ];
 
             OrderItem::create([
@@ -76,7 +121,18 @@ class OrderService
      */
     public function updateOrderStatus(Order $order, string $status): Order
     {
+        $previous = $order->status;
         $order->update(['status' => $status]);
+
+        // Queue an email to the customer notifying about status change
+        try {
+            if ($order->user && $order->user->email) {
+                Mail::to($order->user->email)->queue(new OrderStatusUpdatedMail($order, $previous));
+            }
+        } catch (\Exception $e) {
+            // swallow to avoid breaking status updates; log if necessary
+            \Log::error('Failed to queue order status email for order ' . $order->id . ': ' . $e->getMessage());
+        }
 
         // Handle status-specific actions
         switch ($status) {

@@ -51,6 +51,80 @@
                             @include('profile.partials.delete-user-form')
                         </div>
                     </div>
+
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h2 class="card-title">Addresses</h2>
+                            <p class="card-subtitle">Manage your shipping and billing addresses.</p>
+                        </div>
+                        <div class="card-body">
+                            @if($user->addresses->isEmpty())
+                                <p class="text-muted">No saved addresses yet.</p>
+                            @else
+                                <ul class="list-group mb-3">
+                                    @foreach($user->addresses as $addr)
+                                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>{{ $addr->full_name }}</strong>
+                                                <div class="text-muted">{{ $addr->formatted_address }}</div>
+                                            </div>
+                                            <div>
+                                                @if($addr->is_default)
+                                                    <span class="badge bg-primary me-2">Default</span>
+                                                @endif
+                                                <form method="POST" action="{{ route('profile.address.destroy', $addr) }}" style="display:inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            <h5>Add New Address</h5>
+                            <form method="POST" action="{{ route('profile.address.store') }}">
+                                @csrf
+                                {{-- First/Last name removed from address form; profile name will be used as fallback --}}
+                                <div class="mb-2">
+                                    <label class="form-label">Company (optional)</label>
+                                    <input name="company" class="form-control" value="{{ old('company') }}">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Address line 1</label>
+                                    <input name="address_line_1" class="form-control" required value="{{ old('address_line_1') }}">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Address line 2 (optional)</label>
+                                    <input name="address_line_2" class="form-control" value="{{ old('address_line_2') }}">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">City</label>
+                                        <input name="city" class="form-control" required value="{{ old('city') }}">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">State / Province</label>
+                                        <input name="state_province" class="form-control" required value="{{ old('state_province') }}">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">Postal code</label>
+                                        <input name="postal_code" class="form-control" required value="{{ old('postal_code') }}">
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Country</label>
+                                    <input name="country" class="form-control" required value="{{ old('country', 'Egypt') }}">
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" name="is_default" id="is_default" class="form-check-input" {{ old('is_default') ? 'checked' : '' }}>
+                                    <label for="is_default" class="form-check-label">Set as default address</label>
+                                </div>
+                                <button class="btn btn-primary">Save address</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -21,13 +21,18 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6>All Orders</h6>
                     <div class="d-flex gap-2">
+                        @php
+                            // Use the centralized Order::STATUSES but show only admin-facing statuses
+                            $adminStatuses = array_values(array_intersect(
+                                \App\Models\Order::STATUSES,
+                                ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+                            ));
+                        @endphp
                         <select class="form-select form-select-sm" style="width: auto;">
-                            <option>All Status</option>
-                            <option>Pending</option>
-                            <option>Processing</option>
-                            <option>Shipped</option>
-                            <option>Delivered</option>
-                            <option>Cancelled</option>
+                            <option value="">All Status</option>
+                            @foreach($adminStatuses as $s)
+                                <option value="{{ $s }}">{{ ucfirst($s) }}</option>
+                            @endforeach
                         </select>
                         <div class="input-group" style="width: 250px;">
                             <input type="text" class="form-control form-control-sm" placeholder="Search orders...">
@@ -68,7 +73,7 @@
                                                 <span class="items-count">{{ $order->order_items_count ?? $order->orderItems->count() }} items</span>
                                             </td>
                                             <td>
-                                                <span class="order-total">${{ number_format($order->total_amount, 2) }}</span>
+                                                <span class="order-total">EGP{{ number_format($order->total_amount, 2) }}</span>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">
@@ -84,12 +89,20 @@
                                                             <i class="fas fa-ellipsis-v"></i>
                                                         </button>
                                                         <ul class="dropdown-menu dropdown-menu-end">
-                                                            <li><button class="dropdown-item" onclick="updateOrderStatus({{ $order->id }}, 'pending')">Pending</button></li>
-                                                            <li><button class="dropdown-item" onclick="updateOrderStatus({{ $order->id }}, 'processing')">Processing</button></li>
-                                                            <li><button class="dropdown-item" onclick="updateOrderStatus({{ $order->id }}, 'shipped')">Shipped</button></li>
-                                                            <li><button class="dropdown-item" onclick="updateOrderStatus({{ $order->id }}, 'delivered')">Delivered</button></li>
+                                                            @php
+                                                                $statusOptions = array_diff($adminStatuses, ['cancelled']);
+                                                            @endphp
+                                                            @foreach($statusOptions as $s)
+                                                                <li>
+                                                                    <button class="dropdown-item" onclick="updateOrderStatus({{ $order->id }}, '{{ $s }}')">{{ ucfirst($s) }}</button>
+                                                                </li>
+                                                            @endforeach
                                                             <li><hr class="dropdown-divider"></li>
-                                                            <li><button class="dropdown-item text-danger" onclick="updateOrderStatus({{ $order->id }}, 'cancelled')">Cancel</button></li>
+                                                            @if(in_array('cancelled', $adminStatuses))
+                                                                <li>
+                                                                    <button class="dropdown-item text-danger" onclick="updateOrderStatus({{ $order->id }}, 'cancelled')">Cancel</button>
+                                                                </li>
+                                                            @endif
                                                         </ul>
                                                     </div>
                                                 </div>

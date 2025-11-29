@@ -46,12 +46,49 @@
             <div class="col-6 col-md-3">
                 <div class="footer-card">
                     <h6 class="footer-heading">SUBSCRIBE TO THE NEWSLETTER</h6>
-                    <form id="footerSubscribeForm" class="subscribe-form"
-                        onsubmit="event.preventDefault(); alert('Thank you for subscribing!');">
-                        <input type="email" class="form-control" placeholder="Your email"
+                    <form id="footerSubscribeForm" class="subscribe-form" method="post" action="{{ route('newsletter.subscribe') }}">
+                        @csrf
+                        <input type="email" name="email" id="footerSubscribeEmail" class="form-control" placeholder="Your email"
                             required aria-label="Email" />
-                        <button type="submit" class="btn btn-subscribe">Subscribe</button>
+                        <button type="submit" class="btn btn-subscribe" id="footerSubscribeButton">Subscribe</button>
+                        <div id="footerSubscribeMessage" role="status" aria-live="polite" class="mt-2 text-white" style="display:none"></div>
                     </form>
+
+                    <script>
+                        (function(){
+                            const form = document.getElementById('footerSubscribeForm');
+                            if(!form) return;
+                            const btn = document.getElementById('footerSubscribeButton');
+                            const msg = document.getElementById('footerSubscribeMessage');
+                            form.addEventListener('submit', function(e){
+                                e.preventDefault();
+                                btn.disabled = true;
+                                msg.style.display = 'none';
+                                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                                fetch(form.action, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': token
+                                    },
+                                    body: new URLSearchParams(new FormData(form))
+                                }).then(res=>{
+                                    if(res.ok) return res.json().catch(()=>({success:true}));
+                                    return res.json().then(data=>Promise.reject(data));
+                                }).then(data=>{
+                                    msg.textContent = data.message || 'Thank you for subscribing!';
+                                    msg.style.display = 'block';
+                                    msg.style.color = '#fff';
+                                    form.reset();
+                                }).catch(err=>{
+                                    const message = err?.message || (err?.errors ? Object.values(err.errors).flat().join(' ') : 'Subscription failed');
+                                    msg.textContent = message;
+                                    msg.style.display = 'block';
+                                    msg.style.color = '#ffdddd';
+                                }).finally(()=>{ btn.disabled = false; });
+                            });
+                        })();
+                    </script>
                     <div class="shipping-info">
                         {{-- <div class="shipping-label">Shipping to:</div>
                         <div class="shipping-location">United Kingdom • EN</div> --}}

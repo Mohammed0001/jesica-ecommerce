@@ -7,6 +7,16 @@
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <h4>Items</h4>
     @if($cartItems->isEmpty())
@@ -14,36 +24,52 @@
     @else
         <ul class="list-group mb-3">
             @foreach($cartItems as $item)
-                <li class="list-group-item">
-                    Product ID: {{ $item['product_id'] }} — Quantity: {{ $item['quantity'] }}
-                    @if(!empty($item['size_label']))
-                        — Size: {{ $item['size_label'] }}
-                    @endif
+                <li class="list-group-item d-flex align-items-center">
+                    <div class="me-3" style="width:80px;height:100px;flex:0 0 80px;">
+                        @if(!empty($item['product']['main_image_url']))
+                            <img src="{{ $item['product']['main_image_url'] }}" alt="{{ $item['product']['title'] }}" class="img-fluid" style="max-height:100px;object-fit:cover;">
+                        @else
+                            <div class="bg-light" style="width:80px;height:100px;"></div>
+                        @endif
+                    </div>
+                    <div class="flex-grow-1">
+                        <div><strong>{{ $item['product']['title'] ?? 'Product #' . $item['product_id'] }}</strong></div>
+                        <div class="text-muted">SKU: {{ $item['product']['sku'] ?? 'N/A' }} — Quantity: {{ $item['quantity'] }}</div>
+                        @if(!empty($item['size_label']))
+                            <div>Size: {{ $item['size_label'] }}</div>
+                        @endif
+                    </div>
+                    <div class="text-end" style="min-width:120px;">
+                        <div><strong>Subtotal</strong></div>
+                        <div>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($item['product']['display_subtotal'] ?? $item['display_subtotal'] ?? 0, 2) }}</div>
+                    </div>
                 </li>
             @endforeach
         </ul>
 
-        <p><strong>Total:</strong> <span id="total-amount">{{ number_format($total, 2) }}</span></p>
-        <p><strong>Deposit amount:</strong> <span id="deposit-amount">{{ number_format($depositAmount, 2) }}</span></p>
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($displaySubtotal, 2) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Discount</span><span>- {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($discountAmount ?? 0, 2) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Service fee</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($serviceFee ?? 0, 2) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><span>{{ $shipping <= 0 ? 'Free' : (config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP')) . ' ' . number_format($shipping, 2) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Tax (est.)</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($tax ?? 0, 2) }}</span></div>
+                <hr />
+                <div class="d-flex justify-content-between mb-0"><strong>Total</strong><strong>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($total, 2) }}</strong></div>
+            </div>
+        </div>
+
+        <p><strong>Deposit amount:</strong> <span id="deposit-amount">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($depositAmount, 2) }}</span></p>
 
         <h5>Shipping Address</h5>
-        <form method="POST" action="{{ route('checkout.process') }}">
+        <form id="checkoutForm" method="POST" action="{{ route('checkout.process') }}">
             @csrf
 
             <div class="mb-3">
                 @if($addresses->isEmpty())
                     <p><strong>No saved addresses.</strong> Please provide a shipping address below.</p>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <label for="first_name">First name</label>
-                            <input type="text" name="first_name" id="first_name" class="form-control" value="{{ old('first_name') }}" required>
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            <label for="last_name">Last name</label>
-                            <input type="text" name="last_name" id="last_name" class="form-control" value="{{ old('last_name') }}" required>
-                        </div>
-                    </div>
+                    {{-- Name fields removed: use profile name for recipient --}}
 
                     <div class="mb-2">
                         <label for="company">Company (optional)</label>
@@ -77,12 +103,16 @@
 
                     <div class="mb-2">
                         <label for="country">Country</label>
-                        <input type="text" name="country" id="country" class="form-control" value="{{ old('country', 'Morocco') }}" required>
+                        <input type="text" name="country" id="country" class="form-control" value="{{ old('country', 'Egypt') }}" required>
                     </div>
 
                     <div class="form-check mb-2">
                         <input type="checkbox" name="save_address" id="save_address" class="form-check-input" {{ old('save_address') ? 'checked' : '' }}>
                         <label for="save_address" class="form-check-label">Save this address to my profile</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="is_default" id="is_default" class="form-check-input" {{ old('is_default') ? 'checked' : '' }}>
+                        <label for="is_default" class="form-check-label">Set as my default shipping address</label>
                     </div>
 
                 @else
@@ -101,17 +131,7 @@
 
                     {{-- if user chooses different address, they can fill below - we still include the fields so backend can validate them when shipping_address_id is empty --}}
                     <div class="collapse" id="new-address-fields" style="display:none;">
-                        <!-- New address inputs (same as above) -->
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label for="first_name">First name</label>
-                                <input type="text" name="first_name" id="first_name" class="form-control" value="{{ old('first_name') }}">
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <label for="last_name">Last name</label>
-                                <input type="text" name="last_name" id="last_name" class="form-control" value="{{ old('last_name') }}">
-                            </div>
-                        </div>
+                        <!-- New address inputs (name fields removed) -->
                         <div class="mb-2">
                             <label for="company">Company (optional)</label>
                             <input type="text" name="company" id="company" class="form-control" value="{{ old('company') }}">
@@ -140,11 +160,15 @@
                         </div>
                         <div class="mb-2">
                             <label for="country">Country</label>
-                            <input type="text" name="country" id="country" class="form-control" value="{{ old('country', 'Morocco') }}">
+                            <input type="text" name="country" id="country" class="form-control" value="{{ old('country', 'Egypt') }}">
                         </div>
                         <div class="form-check mb-2">
                             <input type="checkbox" name="save_address" id="save_address" class="form-check-input" {{ old('save_address') ? 'checked' : '' }}>
                             <label for="save_address" class="form-check-label">Save this address to my profile</label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" name="is_default" id="is_default" class="form-check-input" {{ old('is_default') ? 'checked' : '' }}>
+                            <label for="is_default" class="form-check-label">Set as my default shipping address</label>
                         </div>
                     </div>
                 @endif
@@ -169,10 +193,12 @@
             </div>
 
             <div class="mb-3">
-                <p><strong>Amount to charge:</strong> <span id="charge-amount">{{ number_format($depositAmount, 2) }}</span></p>
+                <p><strong>Amount to charge:</strong> <span id="charge-amount">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($depositAmount, 2) }}</span></p>
             </div>
 
-            <button class="btn btn-primary">Pay / Place Order</button>
+            <button type="submit" id="placeOrderButton" class="btn btn-primary">
+                <span id="placeOrderLabel">Pay / Place Order</span>
+            </button>
         </form>
     @endif
 </div>
@@ -201,6 +227,39 @@
             paymentTypeEl.addEventListener('change', updateCharge);
             // initialize
             updateCharge();
+        }
+
+        // Toggle new-address fields when user selects 'Use a different address'
+        const addressRadios = document.querySelectorAll('input[name="shipping_address_id"]');
+        const useNewRadio = document.getElementById('use_new_address');
+        const newAddressBlock = document.getElementById('new-address-fields');
+
+        function toggleNewAddressBlock() {
+            if (!newAddressBlock) return;
+            const selected = document.querySelector('input[name="shipping_address_id"]:checked');
+            if (selected && selected.id === 'use_new_address') {
+                newAddressBlock.style.display = '';
+            } else {
+                newAddressBlock.style.display = 'none';
+            }
+        }
+
+        if (addressRadios.length) {
+            addressRadios.forEach(r => r.addEventListener('change', toggleNewAddressBlock));
+            // initialize
+            toggleNewAddressBlock();
+        }
+
+        // Prevent multiple submits and provide feedback
+        const checkoutForm = document.getElementById('checkoutForm');
+        const placeBtn = document.getElementById('placeOrderButton');
+        const placeLabel = document.getElementById('placeOrderLabel');
+        if (checkoutForm && placeBtn) {
+            checkoutForm.addEventListener('submit', function(e){
+                // Let the form submit normally, but disable the button to avoid double submits
+                placeBtn.disabled = true;
+                placeLabel.textContent = 'Processing...';
+            });
         }
     })();
 </script>

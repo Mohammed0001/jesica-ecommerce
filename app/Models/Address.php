@@ -50,7 +50,13 @@ class Address extends Model
      */
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . $this->last_name);
+        $name = trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        if (!empty($name)) {
+            return $name;
+        }
+
+        // Fallback to the user's name if no explicit first/last name saved
+        return $this->user?->name ?? '';
     }
 
     /**

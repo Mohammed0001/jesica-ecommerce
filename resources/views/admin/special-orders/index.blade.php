@@ -20,15 +20,16 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('admin.special-orders.index') }}" class="row g-3">
-                <div class="col-md-3">
+                    <div class="col-md-3">
                     <label class="form-label">Status</label>
+                    @php
+                        $specialStatuses = \App\Models\SpecialOrder::STATUSES;
+                    @endphp
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
-                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="confirmed" {{ request('status') === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                        <option value="in_progress" {{ request('status') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                        <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
-                        <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        @foreach($specialStatuses as $s)
+                            <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $s)) }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -107,13 +108,12 @@
                                     <form method="POST" action="{{ route('admin.special-orders.updateStatus', $order->id) }}" class="status-form">
                                         @csrf
                                         @method('PATCH')
+                                        @php $specialStatuses = \App\Models\SpecialOrder::STATUSES; @endphp
                                         <select name="status" class="form-select form-select-sm status-select"
                                                 onchange="this.form.submit()" data-order-id="{{ $order->id }}">
-                                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                            <option value="confirmed" {{ $order->status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                                            <option value="in_progress" {{ $order->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                            <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Completed</option>
-                                            <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                            @foreach($specialStatuses as $s)
+                                                <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $s)) }}</option>
+                                            @endforeach
                                         </select>
                                     </form>
                                 </td>
@@ -125,7 +125,7 @@
                                 </td>
                                 <td>
                                     @if($order->budget)
-                                        <span class="budget-amount">${{ number_format($order->budget, 2) }}</span>
+                                        <span class="budget-amount">EGP{{ number_format($order->budget, 2) }}</span>
                                     @else
                                         <span class="text-muted">Not specified</span>
                                     @endif
@@ -329,7 +329,7 @@ function refreshPage() {
     window.location.reload();
 }
 
-// Auto-submit status changes with confirmation for important statuses
+            // Auto-submit status changes with confirmation for important statuses
 document.addEventListener('DOMContentLoaded', function() {
     const statusSelects = document.querySelectorAll('.status-select');
 
@@ -340,18 +340,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const newStatus = this.value;
             const orderId = this.dataset.orderId;
 
-            // Confirm for certain status changes
-            if (newStatus === 'cancelled' || newStatus === 'completed') {
-                const confirmMessage = newStatus === 'cancelled'
-                    ? 'Are you sure you want to cancel this order?'
-                    : 'Are you sure this order is completed?';
+                        // Confirm for terminal status changes (completed/rejected)
+                        if (newStatus === 'completed' || newStatus === 'rejected') {
+                            const confirmMessage = newStatus === 'rejected'
+                                ? 'Are you sure you want to reject this special order?'
+                                : 'Are you sure this special order is completed?';
 
-                if (!confirm(confirmMessage)) {
-                    this.value = originalValue;
-                    e.preventDefault();
-                    return false;
-                }
-            }
+                            if (!confirm(confirmMessage)) {
+                                this.value = originalValue;
+                                e.preventDefault();
+                                return false;
+                            }
+                        }
         });
     });
 });

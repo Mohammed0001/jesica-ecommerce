@@ -55,7 +55,7 @@
                                         <div class="item-details">
                                             <h5 class="item-name">{{ $item->product ? $item->product->name : 'Product Unavailable' }}</h5>
                                             <p class="item-meta">
-                                                Qty: {{ $item->quantity }} × ${{ number_format($item->price, 2) }}
+                                                Qty: {{ $item->quantity }} × EGP{{ number_format($item->price, 2) }}
                                             </p>
                                         </div>
                                     </div>
@@ -72,7 +72,7 @@
                             <div class="order-summary">
                                 <div class="summary-row">
                                     <span class="summary-label">Total Amount:</span>
-                                    <span class="summary-value">${{ number_format($order->total_amount, 2) }}</span>
+                                    <span class="summary-value">EGP{{ number_format($order->total_amount, 2) }}</span>
                                 </div>
 
                                 @if($order->shipped_at)

@@ -29,19 +29,28 @@ class CartController extends Controller
         }
         $finalTotal = max(0, $displaySubtotal - $discountAmount);
 
-        // Shipping
-    $shipping = $finalTotal >= 200 ? 0 : 15; // shipping threshold/calculation in display currency
+        // Site-configurable fees
+        $deliveryFee = (float) \App\Models\SiteSetting::get('delivery_fee', 15);
+        $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
+        $taxPercentage = (float) \App\Models\SiteSetting::get('tax_percentage', 14);
+        $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);
 
-        // Tax (example 14%) - you can make this configurable
-    $tax = round($finalTotal * 0.14, 2);
+        // Delivery calculation
+        $shipping = $finalTotal >= $deliveryThreshold ? 0 : $deliveryFee;
 
-    $total = round(max(0, $finalTotal + $shipping + $tax), 2);
+        // Service fee applied as percentage of subtotal after discount
+        $serviceFee = round($finalTotal * ($serviceFeePercentage / 100), 2);
+
+        // Tax applied on (subtotal after discount + service + shipping)
+        $tax = round(($finalTotal + $serviceFee + $shipping) * ($taxPercentage / 100), 2);
+
+        $total = round(max(0, $finalTotal + $serviceFee + $shipping + $tax), 2);
 
         $hasDepositItems = collect($cartItems)->contains(function ($item) {
             return (bool) data_get($item, 'is_deposit');
         });
 
-    return view('cart.index', compact('cartItems', 'subtotal', 'displaySubtotal', 'tax', 'total', 'appliedPromo', 'discountAmount', 'finalTotal', 'shipping', 'hasDepositItems'));
+    return view('cart.index', compact('cartItems', 'subtotal', 'displaySubtotal', 'tax', 'total', 'appliedPromo', 'discountAmount', 'finalTotal', 'shipping', 'serviceFee', 'hasDepositItems'));
     }
 
     /**

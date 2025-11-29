@@ -136,27 +136,38 @@
                             <span class="fw-bold">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($displaySubtotal, 2) }}</span>
                         </div>
 
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Discount</span>
+                            <span class="text-muted">- {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($discountAmount, 2) }}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Service Fee ({{ number_format((float) \App\Models\SiteSetting::get('service_fee_percentage', 0), 2) }}%)</span>
+                            <span class="text-muted">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($serviceFee ?? 0, 2) }}</span>
+                        </div>
+
                         <div class="d-flex justify-content-between mb-3">
                             <span>Shipping</span>
                             <span class="text-muted">
-                                @if($displaySubtotal >= 200)
+                                @if($shipping <= 0)
                                     <span class="text-success">Free</span>
                                 @else
-                                    $15.00
+                                    {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($shipping, 2) }}
                                 @endif
                             </span>
                         </div>
 
-                        @if($displaySubtotal < 200)
+                        @php $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200); @endphp
+                        @if($displaySubtotal < $deliveryThreshold)
                             <div class="alert alert-info py-2 px-3 small">
                                 <i class="fas fa-truck me-1"></i>
-                                Add {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format(200 - $displaySubtotal, 2) }} more for free shipping!
+                                Add {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($deliveryThreshold - $displaySubtotal, 2) }} more for free shipping!
                             </div>
                         @endif
 
                         <div class="d-flex justify-content-between mb-3">
                             <span>Tax (estimated)</span>
-                            <span>${{ number_format($tax, 2) }}</span>
+                            <span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }}{{ number_format($tax, 2) }}</span>
                         </div>
 
                         <hr>
@@ -230,7 +241,7 @@
                                                     @endif
                                                     <div class="card-body p-2">
                                                         <small class="text-dark">{{ Str::limit($recentProduct['name'], 20) }}</small>
-                                                        <br><small class="text-muted">${{ number_format($recentProduct['price'], 2) }}</small>
+                                                           <br><small class="text-muted">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($recentProduct['price'], 2) }}</small>
                                                     </div>
                                                 </a>
                                             </div>
