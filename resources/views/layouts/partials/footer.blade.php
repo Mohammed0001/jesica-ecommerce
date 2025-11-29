@@ -7,8 +7,10 @@
                     <h6 class="footer-heading">CUSTOMER SERVICES</h6>
                     <ul class="list-unstyled footer-links">
                         <li><a href="{{ route('pages.faqs') }}">FAQs</a></li>
-                        <li><a href="{{ route('pages.track-order') }}">Track my order</a></li>
-                        <li><a href="{{ route('pages.request-return') }}">Request Return</a></li>
+                        <li><a href="{{ route('special-orders.index') }}">SPECIAL ORDERS</a></li>
+                        <li><a href="{{ route('orders.index') }}">MY ORDERS</a></li>
+                        {{-- <li><a href="{{ route('pages.track-order') }}">Track my order</a></li> --}}
+                        {{-- <li><a href="{{ route('pages.request-return') }}">Request Return</a></li> --}}
                         {{-- <li><a href="#">Store Locator</a></li> --}}
                         {{-- <li><a href="#">Request an appointment</a></li> --}}
                     </ul>

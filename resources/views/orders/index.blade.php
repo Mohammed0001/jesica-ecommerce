@@ -70,7 +70,7 @@
                             </div>
 
                             <div class="order-summary">
-                                <div class="summary-row">
+                                {{-- <div class="summary-row">
                                     <span class="summary-label">Subtotal:</span>
                                     <span class="summary-value">{{ $order->formattedSubtotal }}</span>
                                 </div>
@@ -89,7 +89,7 @@
                                 <div class="summary-row">
                                     <span class="summary-label">Tax:</span>
                                     <span class="summary-value">{{ $order->formattedTax }}</span>
-                                </div>
+                                </div> --}}
 
                                 <div class="summary-row">
                                     <span class="summary-label">Total Amount:</span>
@@ -117,17 +117,17 @@
                                 View Details
                             </a>
 
-                            @if($order->status === 'pending')
+                            {{-- @if($order->status === 'pending')
                             <button class="btn btn-secondary" onclick="cancelOrder({{ $order->id }})">
                                 Cancel Order
                             </button>
-                            @endif
-
+                            @endif --}}
+{{--
                             @if($order->status === 'completed')
                             <a href="{{ route('orders.reorder', $order) }}" class="btn btn-primary">
                                 Reorder
                             </a>
-                            @endif
+                            @endif --}}
                         </div>
                     </div>
                     @endforeach
