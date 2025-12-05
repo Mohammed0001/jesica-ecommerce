@@ -444,6 +444,14 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.shipments.*') ? 'active' : '' }}"
+                    href="{{ route('admin.shipments.index') }}">
+                    <i class="fas fa-shipping-fast"></i>
+                    Shipments
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.special-orders.*') ? 'active' : '' }}"
                     href="{{ route('admin.special-orders.index') }}">
                     <i class="fas fa-star"></i>

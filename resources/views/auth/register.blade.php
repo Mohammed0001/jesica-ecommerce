@@ -43,6 +43,25 @@
             @enderror
         </div>
 
+        <!-- Phone Number -->
+        <div class="form-group">
+            <label for="phone" class="form-label">{{ __('Phone Number') }}</label>
+            <input
+                id="phone"
+                class="form-control @error('phone') is-invalid @enderror"
+                type="tel"
+                name="phone"
+                value="{{ old('phone') }}"
+                required
+                autocomplete="tel"
+                placeholder="+20 123 456 7890"
+            />
+            <small class="form-text text-muted">Required for shipping (e.g., +201234567890)</small>
+            @error('phone')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
         <!-- Password -->
         <div class="form-group">
             <label for="password" class="form-label">{{ __('Password') }}</label>

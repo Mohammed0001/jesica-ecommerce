@@ -254,14 +254,23 @@ class OrderService
                     $errors[] = "Product '{$product->title}' does not have sufficient stock";
                 }
             } else {
-                $productSize = $product->sizes()
-                    ->where('size_label', $item['size_label'])
-                    ->first();
+                // Only validate size for multi-size products
+                if (empty($item['size_label'])) {
+                    // Check if product actually has sizes
+                    $hasSizes = $product->sizes()->exists();
+                    if ($hasSizes) {
+                        $errors[] = "Please select a size for '{$product->title}'";
+                    }
+                } else {
+                    $productSize = $product->sizes()
+                        ->where('size_label', $item['size_label'])
+                        ->first();
 
-                if (!$productSize) {
-                    $errors[] = "Size '{$item['size_label']}' not available for '{$product->title}'";
-                } elseif ($productSize->quantity < $item['quantity']) {
-                    $errors[] = "Size '{$item['size_label']}' for '{$product->title}' does not have sufficient stock";
+                    if (!$productSize) {
+                        $errors[] = "Size '{$item['size_label']}' not available for '{$product->title}'";
+                    } elseif ($productSize->quantity < $item['quantity']) {
+                        $errors[] = "Size '{$item['size_label']}' for '{$product->title}' does not have sufficient stock";
+                    }
                 }
             }
         }

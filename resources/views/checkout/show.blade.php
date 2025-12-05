@@ -5,16 +5,31 @@
     <h1 class="mb-4">Checkout</h1>
 
     @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong>Error:</strong> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     @endif
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @if($errors->any())
-        <div class="alert alert-danger">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
             <strong>Please fix the following errors:</strong>
             <ul class="mb-0 mt-2">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
@@ -88,15 +103,23 @@
 
                     <div class="row">
                         <div class="col-md-4 mb-2">
-                            <label for="city">City</label>
-                            <input type="text" name="city" id="city" class="form-control" value="{{ old('city') }}" required>
+                            <label for="city">City <span class="text-danger">*</span></label>
+                            <select name="city" id="city" class="form-control" required>
+                                <option value="">Select City</option>
+                                @foreach($bostaCities as $bostaCity)
+                                    <option value="{{ $bostaCity->name }}" {{ old('city') == $bostaCity->name ? 'selected' : '' }}>
+                                        {{ $bostaCity->name }} ({{ $bostaCity->name_ar }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-4 mb-2">
-                            <label for="state_province">State / Province</label>
-                            <input type="text" name="state_province" id="state_province" class="form-control" value="{{ old('state_province') }}" required>
+                            <label for="state_province">District / Zone <span class="text-danger">*</span></label>
+                            <input type="text" name="state_province" id="state_province" class="form-control" value="{{ old('state_province') }}" required placeholder="e.g., Nasr City, Heliopolis, Maadi">
+                            <small class="text-muted">Enter the district or zone within the city</small>
                         </div>
                         <div class="col-md-4 mb-2">
-                            <label for="postal_code">Postal code</label>
+                            <label for="postal_code">Postal code <span class="text-danger">*</span></label>
                             <input type="text" name="postal_code" id="postal_code" class="form-control" value="{{ old('postal_code') }}" required>
                         </div>
                     </div>
@@ -124,10 +147,10 @@
                             </label>
                         </div>
                     @endforeach
-                    <div class="form-check mt-2 mb-3">
+                    {{-- <div class="form-check mt-2 mb-3">
                         <input class="form-check-input" type="radio" name="shipping_address_id" id="use_new_address" value="" {{ old('shipping_address_id') === null ? '' : '' }}>
                         <label class="form-check-label" for="use_new_address">Use a different address</label>
-                    </div>
+                    </div> --}}
 
                     {{-- if user chooses different address, they can fill below - we still include the fields so backend can validate them when shipping_address_id is empty --}}
                     <div class="collapse" id="new-address-fields" style="display:none;">
@@ -147,11 +170,19 @@
                         <div class="row">
                             <div class="col-md-4 mb-2">
                                 <label for="city">City</label>
-                                <input type="text" name="city" id="city" class="form-control" value="{{ old('city') }}">
+                                <select name="city" id="city" class="form-control">
+                                    <option value="">Select City</option>
+                                    @foreach($bostaCities as $bostaCity)
+                                        <option value="{{ $bostaCity->name }}" {{ old('city') == $bostaCity->name ? 'selected' : '' }}>
+                                            {{ $bostaCity->name }} ({{ $bostaCity->name_ar }})
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-4 mb-2">
-                                <label for="state_province">State / Province</label>
-                                <input type="text" name="state_province" id="state_province" class="form-control" value="{{ old('state_province') }}">
+                                <label for="state_province">District / Zone</label>
+                                <input type="text" name="state_province" id="state_province" class="form-control" value="{{ old('state_province') }}" placeholder="e.g., Nasr City, Heliopolis, Maadi">
+                                <small class="text-muted">Enter the district or zone within the city</small>
                             </div>
                             <div class="col-md-4 mb-2">
                                 <label for="postal_code">Postal code</label>
@@ -178,16 +209,17 @@
                 <label for="payment_type">Payment Type</label>
                 <select name="payment_type" id="payment_type" class="form-select">
                     <option value="full" {{ old('payment_type') === 'full' ? 'selected' : '' }}>Full</option>
-                    <option value="deposit" {{ old('payment_type') === 'deposit' ? 'selected' : '' }}>Deposit</option>
+                    {{-- <option value="deposit" {{ old('payment_type') === 'deposit' ? 'selected' : '' }}>Deposit</option> --}}
                 </select>
             </div>
 
             <div class="mb-3">
                 <label for="payment_method">Payment Method</label>
                 <select name="payment_method" id="payment_method" class="form-select" required>
-                    <option value="mock_gateway" {{ old('payment_method', env('PAYMENT_PROVIDER', 'mock')) === 'mock' || old('payment_method') === 'mock_gateway' ? 'selected' : '' }}>Mock (test)</option>
+                    <option value="cod" {{ old('payment_method', 'cod') === 'cod' ? 'selected' : '' }}>Cash on Delivery (COD)</option>
+                    {{-- <option value="mock_gateway" disabled>Mock (test) - Coming Soon</option> --}}
                     @if(config('services.paymob.api_key') || env('PAYMENT_PROVIDER') === 'paymob')
-                        <option value="paymob" {{ old('payment_method') === 'paymob' || env('PAYMENT_PROVIDER') === 'paymob' ? 'selected' : '' }}>Paymob (card)</option>
+                        <option value="paymob" disabled>Paymob (card) - Coming Soon</option>
                     @endif
                 </select>
             </div>
@@ -256,11 +288,50 @@
         const placeLabel = document.getElementById('placeOrderLabel');
         if (checkoutForm && placeBtn) {
             checkoutForm.addEventListener('submit', function(e){
+                // Validate required fields
+                const paymentMethod = document.getElementById('payment_method');
+                const paymentType = document.getElementById('payment_type');
+
+                if (!paymentMethod || !paymentMethod.value) {
+                    e.preventDefault();
+                    showNotification('Please select a payment method', 'error');
+                    return false;
+                }
+
+                if (!paymentType || !paymentType.value) {
+                    e.preventDefault();
+                    showNotification('Please select a payment type', 'error');
+                    return false;
+                }
+
                 // Let the form submit normally, but disable the button to avoid double submits
                 placeBtn.disabled = true;
                 placeLabel.textContent = 'Processing...';
             });
         }
+
+        function showNotification(message, type = 'info') {
+            const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 80px; right: 20px; z-index: 9999; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+            notification.innerHTML = `
+                <i class="fas ${icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Make showNotification available globally for other scripts
+        window.showNotification = showNotification;
     })();
 </script>
 @endpush

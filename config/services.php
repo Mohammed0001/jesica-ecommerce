@@ -44,5 +44,30 @@ return [
         'webhook_secret' => env('PAYMOB_WEBHOOK_SECRET'),
     ],
 
+    // BOSTA shipping service configuration
+    'bosta' => [
+        'api_key' => env('BOSTA_API_KEY'),
+        'sandbox' => env('BOSTA_SANDBOX', true),
+        'webhook_secret' => env('BOSTA_WEBHOOK_SECRET'),
+
+        // Pickup address (your warehouse/store location)
+        'pickup_address' => [
+            'first_line' => env('BOSTA_PICKUP_ADDRESS_LINE1', ''),
+            'second_line' => env('BOSTA_PICKUP_ADDRESS_LINE2', ''),
+            'city' => env('BOSTA_PICKUP_CITY', 'Cairo'),
+            'zone' => env('BOSTA_PICKUP_ZONE', ''),
+            'district' => env('BOSTA_PICKUP_DISTRICT', ''),
+        ],
+
+        // Business location
+        'business_location_id' => env('BOSTA_BUSINESS_LOCATION_ID'),
+
+        // Default package settings
+        'default_package_type' => env('BOSTA_PACKAGE_TYPE', 'Parcel'),
+        'default_package_size' => env('BOSTA_PACKAGE_SIZE', 'SMALL'), // SMALL, MEDIUM, LARGE
+        'default_pickup_slot' => env('BOSTA_PICKUP_SLOT', '10:00 to 13:00'),
+        'allow_open_package' => env('BOSTA_ALLOW_OPEN_PACKAGE', false),
+    ],
+
 
 ];

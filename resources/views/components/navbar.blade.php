@@ -32,13 +32,20 @@
                 </a>
                 @endauth
 
-                <a href="{{ route('cart.index') }}" class="iris-icon-btn" aria-label="Cart">
+                <a href="{{ route('cart.index') }}" class="iris-icon-btn cart-icon-wrapper" aria-label="Cart">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <path d="M16 10a4 4 0 0 1-8 0"></path>
                     </svg>
+                    @php
+                        $cart = session()->get('cart', []);
+                        $cartCount = array_sum(array_column($cart, 'quantity'));
+                    @endphp
+                    @if($cartCount > 0)
+                        <span class="cart-badge">{{ $cartCount }}</span>
+                    @endif
                 </a>
 
                 <!-- Mobile Menu Toggle Button -->
@@ -165,6 +172,28 @@
 
     .iris-icon-btn:hover {
         opacity: 0.7;
+    }
+
+    .cart-icon-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .cart-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #000;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
     }
 
     .iris-menu-toggle {

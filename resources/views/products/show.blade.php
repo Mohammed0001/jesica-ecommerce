@@ -148,6 +148,7 @@
                                         @csrf
                                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                                         <input type="hidden" name="quantity" value="1">
+                                        <input type="hidden" name="size_label" id="size_label" value="">
 
                                         <div class="d-flex gap-3 align-items-center">
                                             <button type="submit" style="border-radius:0;" class="btn-premium-add-to-cart">
@@ -468,6 +469,78 @@
     document.addEventListener('DOMContentLoaded', () => {
         const firstThumb = document.querySelector('.thumbnail-item');
         if(firstThumb) firstThumb.classList.add('active');
+
+        // Handle size selection
+        const sizeSelect = document.getElementById('size-select');
+        if (sizeSelect) {
+            sizeSelect.addEventListener('change', function() {
+                document.getElementById('size_label').value = this.value;
+            });
+        }
+
+        // Handle add to cart form submission
+        const addToCartForm = document.getElementById('addToCartForm');
+        if (addToCartForm) {
+            addToCartForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Check if size is required and selected
+                const sizeSelect = document.getElementById('size-select');
+                if (sizeSelect && !document.getElementById('size_label').value) {
+                    showNotification('Please select a size', 'error');
+                    return;
+                }
+
+                const formData = new FormData(this);
+
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        updateCartBadge(data.cartCount);
+                    } else {
+                        showNotification(data.message || 'Error adding to cart', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Error adding to cart', 'error');
+                });
+            });
+        }
     });
+
+    function updateCartBadge(count) {
+        const cartBadge = document.querySelector('.cart-badge');
+        if (cartBadge) {
+            cartBadge.textContent = count;
+            cartBadge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+    }
+
+    function showNotification(message, type = 'info') {
+        const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 80px; right: 20px; z-index: 9999; max-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
 </script>
 @endpush

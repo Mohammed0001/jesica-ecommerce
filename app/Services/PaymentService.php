@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Gateways\MockGateway;
 use App\Services\Gateways\PaymobGateway;
+use App\Services\Gateways\CodGateway;
 use App\Services\Gateways\PaymentGatewayInterface;
 use Exception;
 
@@ -15,18 +16,34 @@ class PaymentService
 
     public function __construct()
     {
-        // Choose gateway implementation based on configuration (PAYMENT_PROVIDER)
+        // Default gateway (can be overridden by setGateway method)
         $provider = env('PAYMENT_PROVIDER', 'mock');
+        $this->gateway = $this->createGateway($provider);
+    }
 
+    /**
+     * Create gateway instance based on provider name
+     */
+    protected function createGateway(string $provider): PaymentGatewayInterface
+    {
         switch (strtolower($provider)) {
+            case 'cod':
+                return new CodGateway();
             case 'paymob':
-                $this->gateway = new PaymobGateway();
-                break;
+                return new PaymobGateway();
             case 'mock':
+            case 'mock_gateway':
             default:
-                $this->gateway = new MockGateway();
-                break;
+                return new MockGateway();
         }
+    }
+
+    /**
+     * Set gateway for this payment service instance
+     */
+    public function setGateway(string $provider): void
+    {
+        $this->gateway = $this->createGateway($provider);
     }
 
     /**
@@ -85,6 +102,9 @@ class PaymentService
     public function processDeposit(Order $order, float $amount, string $method): array
     {
         try {
+            // Set gateway based on payment method
+            $this->setGateway($method);
+
             // Create payment record
             $payment = $this->createPaymentRecord($order, $amount, $method, 'pending', 'deposit');
 
@@ -138,6 +158,9 @@ class PaymentService
     public function processFullPayment(Order $order, string $method): array
     {
         try {
+            // Set gateway based on payment method
+            $this->setGateway($method);
+
             // Create payment record
             $payment = $this->createPaymentRecord($order, $order->total_amount, $method, 'pending', 'payment');
 

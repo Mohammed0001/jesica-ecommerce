@@ -117,6 +117,55 @@
                 </div>
             </div>
 
+            <!-- Shipment Information -->
+            @if($order->shipment)
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6>Shipment Information</h6>
+                    <div class="mb-2">
+                        <strong>Tracking Number:</strong>
+                        <a href="{{ route('admin.shipments.show', $order->shipment) }}" class="text-primary">
+                            {{ $order->shipment->tracking_number ?? 'N/A' }}
+                        </a>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Status:</strong>
+                        <span class="badge bg-{{ $order->shipment->status == 'delivered' ? 'success' : ($order->shipment->status == 'cancelled' ? 'danger' : 'info') }}">
+                            {{ ucfirst(str_replace('_', ' ', $order->shipment->status)) }}
+                        </span>
+                    </div>
+                    @if($order->shipment->is_cod)
+                    <div class="mb-2">
+                        <strong>COD Amount:</strong> EGP {{ number_format($order->shipment->cod_amount, 2) }}
+                    </div>
+                    @endif
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{{ route('admin.shipments.show', $order->shipment) }}" class="btn btn-sm btn-outline-primary">
+                            View Shipment Details
+                        </a>
+                        @if($order->shipment->bosta_delivery_id)
+                        <a href="{{ route('admin.shipments.print-label', $order->shipment) }}" target="_blank" class="btn btn-sm btn-outline-success">
+                            Print AWB Label
+                        </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @else
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6>Shipment</h6>
+                    <p class="text-muted mb-3">No shipment created yet.</p>
+                    <form action="{{ route('admin.shipments.create', $order) }}" method="POST">
+                        @csrf
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Create BOSTA Shipment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
+
         </div>
     </div>
 </div>

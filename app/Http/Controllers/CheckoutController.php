@@ -29,14 +29,24 @@ class CheckoutController extends Controller
     {
         $cartItems = $this->getCartItems();
 
+        // Debug: Log cart items
+        \Log::info('Checkout - Cart Items Count:', ['count' => $cartItems->count(), 'items' => $cartItems->toArray()]);
+        \Log::info('Checkout - Session Cart:', ['cart' => session()->get('cart', [])]);
+
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.show')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
+
+        // Get BOSTA cities for dropdown
+        $bostaCities = \App\Models\BostaCity::dropOffAvailable()
+            ->orderBy('name')
+            ->get(['id', 'name', 'name_ar']);
 
         // Validate cart items
         $errors = $this->orderService->validateCartItems($cartItems);
+        \Log::info('Checkout - Validation Errors:', ['errors' => $errors]);
         if (!empty($errors)) {
-            return redirect()->route('cart.show')->with('error', implode(', ', $errors));
+            return redirect()->route('cart.index')->with('error', implode(', ', $errors));
         }
 
         // Calculate totals in display currency for checkout view
@@ -75,7 +85,12 @@ class CheckoutController extends Controller
 
         $addresses = Auth::user()->addresses;
 
-        return view('checkout.show', compact('cartItems', 'total', 'depositAmount', 'addresses', 'displaySubtotal', 'shipping', 'serviceFee', 'tax', 'discountAmount', 'finalTotal'));
+        // Get BOSTA cities for dropdown
+        $bostaCities = \App\Models\BostaCity::dropOffAvailable()
+            ->orderBy('name')
+            ->get(['id', 'name', 'name_ar']);
+
+        return view('checkout.show', compact('cartItems', 'total', 'depositAmount', 'addresses', 'displaySubtotal', 'shipping', 'serviceFee', 'tax', 'discountAmount', 'finalTotal', 'bostaCities'));
     }
 
     /**
@@ -117,7 +132,7 @@ class CheckoutController extends Controller
                 'address_line_1' => 'nullable|string|max:255',
                 'address_line_2' => 'nullable|string|max:255',
                 'city' => 'nullable|string|max:100',
-                'state_province' => 'nullable|string|max:100',
+                'state_province' => 'nullable|string|max:100|min:3',
                 'postal_code' => 'nullable|string|max:20',
                 'country' => 'nullable|string|max:100',
             ]);
@@ -128,7 +143,7 @@ class CheckoutController extends Controller
                 'address_line_1' => 'required|string|max:255',
                 'address_line_2' => 'nullable|string|max:255',
                 'city' => 'required|string|max:100',
-                'state_province' => 'required|string|max:100',
+                'state_province' => 'required|string|max:100|min:3',
                 'postal_code' => 'required|string|max:20',
                 'country' => 'required|string|max:100',
             ]);
@@ -139,7 +154,7 @@ class CheckoutController extends Controller
         $cartItems = $this->getCartItems();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.show')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
         // Determine shipping address: either existing (belongs to user) or inline data
@@ -158,6 +173,8 @@ class CheckoutController extends Controller
 
             $shippingAddressId = $address->id;
             $addressSnapshot = $address->toArray();
+            // Add user's phone to snapshot for shipping providers
+            $addressSnapshot['phone'] = Auth::user()->phone;
         } else {
             // Build snapshot from provided fields (no first/last name fields)
             $addressData = [
@@ -166,10 +183,12 @@ class CheckoutController extends Controller
                 'address_line_1' => $request->address_line_1,
                 'address_line_2' => $request->address_line_2,
                 'city' => $request->city,
-                'state_province' => $request->state_province,
+                'state_province' => $request->state_province ?? $request->city, // Fallback to city
+                'district' => $request->district, // Add district field for BOSTA
                 'postal_code' => $request->postal_code,
                 'country' => $request->country,
                 'is_default' => false,
+                'phone' => Auth::user()->phone, // Add user's phone for shipping
             ];
 
             // Optionally save address to user's profile

@@ -10,6 +10,35 @@
         </div>
     </div>
 
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong>Error:</strong> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @if(count($cartItems) > 0)
         <div class="row">
             <!-- Cart Items -->
@@ -50,35 +79,20 @@
                                         <small class="text-muted">
                                             SKU: {{ data_get($item, 'product.sku') }}
                                         </small>
-                                        @if(data_get($item, 'size'))
-                                            <br><small class="text-muted">Size: {{ data_get($item, 'size') }}</small>
-                                        @endif
-                                        @if(data_get($item, 'color'))
-                                            <br><small class="text-muted">Color: {{ ucfirst(data_get($item, 'color')) }}</small>
-                                        @endif
                                         @if(data_get($item, 'is_deposit'))
                                             <br><span class="badge bg-info">Deposit Payment</span>
                                         @endif
                                     </div>
 
-                                    <!-- Quantity Controls -->
-                                    {{-- <div class="col-md-2 col-sm-2">
-                                        <div class="input-group" style="max-width: 120px;">
-                        <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                    onclick="updateQuantity('{{ $cartKey ?? $cartProductId }}', {{ (int) data_get($item, 'quantity', 0) - 1 }})">
-                                                -
-                                            </button>
-                          <input type="number" class="form-control form-control-sm text-center"
-                              value="{{ data_get($item, 'quantity') }}"
-                                                   min="1"
-                              max="{{ data_get($item, 'product.stock_quantity') }}"
-                                                   onchange="updateQuantity('{{ $cartKey ?? $cartProductId }}', this.value)">
-                        <button type="button" class="btn btn-outline-secondary btn-sm"
-                                                    onclick="updateQuantity('{{ $cartKey ?? $cartProductId }}', {{ (int) data_get($item, 'quantity', 0) + 1 }})">
-                                                +
-                                            </button>
+                                    <!-- Quantity Display -->
+                                    <div class="col-md-2 col-sm-2 text-center">
+                                        <div class="quantity-display">
+                                            <span class="fw-semibold">Qty: {{ data_get($item, 'quantity') }}</span>
+                                            @if(data_get($item, 'size_label'))
+                                                <br><small class="text-muted">Size: {{ data_get($item, 'size_label') }}</small>
+                                            @endif
                                         </div>
-                                    </div> --}}
+                                    </div>
 
                                     <!-- Price -->
                                     <div class="col-md-2 col-sm-2 text-center">
@@ -136,9 +150,24 @@
                             <span class="fw-bold">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($displaySubtotal, 2) }}</span>
                         </div>
 
+                        @if($appliedPromo)
+                            <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 mb-3">
+                                <div>
+                                    <i class="fas fa-tag me-2"></i>
+                                    <strong>{{ $appliedPromo['code'] }}</strong> applied
+                                    @if($appliedPromo['type'] === 'percentage')
+                                        <span class="small">({{ number_format($appliedPromo['value'], 0) }}% off)</span>
+                                    @endif
+                                </div>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removePromo()" title="Remove promo code">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        @endif
+
                         <div class="d-flex justify-content-between mb-2">
                             <span>Discount</span>
-                            <span class="text-muted">- {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($discountAmount, 2) }}</span>
+                            <span class="text-success fw-semibold">- {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($discountAmount, 2) }}</span>
                         </div>
 
                         <div class="d-flex justify-content-between mb-2">
@@ -186,14 +215,16 @@
                         @endif
 
                         <!-- Promo Code -->
-                        <div class="mb-3">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Promo code" id="promoCode">
-                                <button class="btn btn-outline-secondary" type="button" onclick="applyPromoCode()">
-                                    Apply
-                                </button>
+                        @if(!$appliedPromo)
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Promo code" id="promoCode">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="applyPromoCode()">
+                                        Apply
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        @endif
 
                         <!-- Checkout Button -->
                         <div class="d-grid">
@@ -400,6 +431,32 @@ function applyPromoCode() {
     .catch(error => {
         console.error('Error:', error);
         showNotification('Error applying promo code', 'error');
+    });
+}
+
+function removePromo() {
+    if (!confirm('Remove this promo code?')) {
+        return;
+    }
+
+    fetch('/cart/remove-promo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Reload to show updated totals
+        } else {
+            showNotification(data.message || 'Error removing promo code', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error removing promo code', 'error');
     });
 }
 

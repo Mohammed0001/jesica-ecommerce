@@ -25,6 +25,7 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'phone' => ['required', 'string', 'regex:/^\+?[1-9]\d{1,14}$/'], // E.164 format (e.g., +201234567890)
         ];
     }
 }

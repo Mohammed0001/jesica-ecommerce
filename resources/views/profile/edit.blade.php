@@ -101,16 +101,25 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 mb-2">
-                                        <label class="form-label">City</label>
-                                        <input name="city" class="form-control" required value="{{ old('city') }}">
+                                        <label class="form-label">City <span class="text-danger">*</span></label>
+                                        <select name="city" class="form-control" required>
+                                            <option value="">Select city...</option>
+                                            @foreach(\App\Models\BostaCity::orderBy('name')->get() as $bostaCity)
+                                                <option value="{{ $bostaCity->name }}" {{ old('city') == $bostaCity->name ? 'selected' : '' }}>
+                                                    {{ $bostaCity->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted">Select from BOSTA supported cities</small>
                                     </div>
                                     <div class="col-md-4 mb-2">
-                                        <label class="form-label">State / Province</label>
-                                        <input name="state_province" class="form-control" required value="{{ old('state_province') }}">
+                                        <label class="form-label">District / Zone <span class="text-danger">*</span></label>
+                                        <input name="state_province" class="form-control" required value="{{ old('state_province') }}" placeholder="e.g., Nasr City, Maadi, etc.">
+                                        <small class="form-text text-muted">Min 3 characters</small>
                                     </div>
                                     <div class="col-md-4 mb-2">
                                         <label class="form-label">Postal code</label>
-                                        <input name="postal_code" class="form-control" required value="{{ old('postal_code') }}">
+                                        <input name="postal_code" class="form-control" value="{{ old('postal_code') }}">
                                     </div>
                                 </div>
                                 <div class="mb-2">

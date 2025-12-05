@@ -71,8 +71,8 @@ class ProfileController extends Controller
             'address_line_1' => 'required|string|max:255',
             'address_line_2' => 'nullable|string|max:255',
             'city' => 'required|string|max:100',
-            'state_province' => 'required|string|max:100',
-            'postal_code' => 'required|string|max:20',
+            'state_province' => 'required|string|min:3|max:100',
+            'postal_code' => 'nullable|string|max:20',
             'country' => 'required|string|max:100',
             'is_default' => 'sometimes|boolean',
         ]);
@@ -84,10 +84,17 @@ class ProfileController extends Controller
             Address::where('user_id', $user->id)->update(['is_default' => false]);
         }
 
+        // Split user's name for first_name and last_name
+        $nameParts = explode(' ', $user->name, 2);
+        $firstName = $nameParts[0] ?? '';
+        $lastName = $nameParts[1] ?? '';
+
         $address = Address::create(array_merge($request->only([
             'type','company','address_line_1','address_line_2','city','state_province','postal_code','country'
         ]), [
             'user_id' => $user->id,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
             'is_default' => $request->boolean('is_default'),
         ]));
 

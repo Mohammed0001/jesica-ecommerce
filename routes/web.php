@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\AdminSizeChartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\ShipmentController;
 
 // PUBLIC ROUTES - No authentication required
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -61,6 +62,7 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('/clear', [CartController::class, 'clear'])->name('clear');
     Route::get('/count', [CartController::class, 'count'])->name('count');
     Route::post('/apply-promo', [CartController::class, 'applyPromo'])->name('apply-promo');
+    Route::post('/remove-promo', [CartController::class, 'removePromo'])->name('remove-promo');
 });
 
 // Admin settings
@@ -110,6 +112,10 @@ Route::middleware('auth')->group(function () {
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
 Route::get('/newsletter/unsubscribe/{id}/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
+// Public tracking routes
+Route::get('/track-shipment', [ShipmentController::class, 'track'])->name('tracking.search');
+Route::get('/track-shipment/{trackingNumber}', [ShipmentController::class, 'track'])->name('tracking.show');
+
 // ADMIN ROUTES - Require admin authentication
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
@@ -155,18 +161,34 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Analytics
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
     Route::get('analytics/sales', [AnalyticsController::class, 'sales'])->name('analytics.sales');
-    Route::get('analytics/products', [AnalyticsController::class, 'products'])->name('analytics.products');
-    Route::get('analytics/clients', [AnalyticsController::class, 'clients'])->name('analytics.clients');
-    Route::get('analytics/ordering-frequency', [AnalyticsController::class, 'orderingFrequency'])->name('analytics.ordering-frequency');
-
     // Admin newsletter send
     Route::get('newsletter/send', [NewsletterController::class, 'showSendForm'])->name('newsletter.send.form');
     Route::post('newsletter/send', [NewsletterController::class, 'send'])->name('newsletter.send');
     // Admin newsletter logs viewer
     Route::get('newsletter/logs', [\App\Http\Controllers\Admin\AdminNewsletterController::class, 'showLogs'])->name('newsletter.logs');
-});
 
-// Laravel Breeze Dashboard (keep for compatibility)
+    // Shipment management
+    Route::prefix('shipments')->name('shipments.')->group(function () {
+        Route::get('/', [ShipmentController::class, 'index'])->name('index');
+        Route::get('/{shipment}', [ShipmentController::class, 'show'])->name('show');
+        Route::post('/create/{order}', [ShipmentController::class, 'create'])->name('create');
+        Route::post('/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('cancel');
+        Route::get('/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('print-label');
+        Route::post('/{shipment}/update-tracking', [ShipmentController::class, 'updateTracking'])->name('update-tracking');
+        Route::post('/request-pickup', [ShipmentController::class, 'requestPickup'])->name('request-pickup');
+    });
+}); Route::get('newsletter/send', [NewsletterController::class, 'showSendForm'])->name('newsletter.send.form');
+    Route::post('newsletter/send', [NewsletterController::class, 'send'])->name('newsletter.send');
+    // Admin newsletter logs viewer
+// Payment webhooks (Paymob)
+Route::post('/payments/webhook/paymob', [PaymentWebhookController::class, 'handlePaymob'])
+    ->name('payments.webhook.paymob')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+// BOSTA webhooks
+Route::post('/webhooks/bosta', [ShipmentController::class, 'webhook'])
+    ->name('webhooks.bosta')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

@@ -64,20 +64,33 @@ class CartController extends Controller
             'size_label' => 'nullable|string',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        $product = Product::with('sizes')->findOrFail($request->product_id);
 
         // Check if product is available
         if (!$product->getAttribute('visible') || !$product->isAvailable()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Product is not available.'], 400);
+            }
             return back()->with('error', 'Product is not available.');
         }
 
         // Validate size for multi-size products
-        if (!$product->is_one_of_a_kind && $request->size_label) {
+        if (!$product->is_one_of_a_kind && $product->sizes && $product->sizes->count() > 0) {
+            if (!$request->size_label) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Please select a size.'], 400);
+                }
+                return back()->with('error', 'Please select a size.');
+            }
+
             $productSize = $product->sizes()
                 ->where('size_label', $request->size_label)
                 ->first();
 
             if (!$productSize || $productSize->quantity < $request->quantity) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Selected size is not available in the requested quantity.'], 400);
+                }
                 return back()->with('error', 'Selected size is not available in the requested quantity.');
             }
         }
@@ -104,7 +117,7 @@ class CartController extends Controller
         // If it's an AJAX request, return JSON with success and updated cart count
         if ($request->wantsJson() || $request->ajax()) {
             $cartCount = array_sum(array_column($cart, 'quantity'));
-            return response()->json([ 'success' => true, 'message' => 'Product added to cart!', 'cartCount' => $cartCount ]);
+            return response()->json(['success' => true, 'message' => 'Product added to cart!', 'cartCount' => $cartCount]);
         }
 
         return back()->with('success', 'Product added to cart!');
@@ -240,10 +253,24 @@ class CartController extends Controller
             'promo_code' => 'required|string',
         ]);
 
-        $promo = PromoCode::where('code', $request->promo_code)->first();
+        // Case-insensitive search
+        $promoCode = strtoupper(trim($request->promo_code));
+        $promo = PromoCode::whereRaw('UPPER(code) = ?', [$promoCode])->first();
 
-        if (!$promo || !$promo->isUsable()) {
-            return response()->json(['success' => false, 'message' => 'Invalid promo code'], 400);
+        if (!$promo) {
+            return response()->json(['success' => false, 'message' => 'Promo code not found'], 400);
+        }
+
+        if (!$promo->active) {
+            return response()->json(['success' => false, 'message' => 'This promo code is not active'], 400);
+        }
+
+        if ($promo->isExpired()) {
+            return response()->json(['success' => false, 'message' => 'This promo code has expired'], 400);
+        }
+
+        if ($promo->max_uses !== null && $promo->usage_count >= $promo->max_uses) {
+            return response()->json(['success' => false, 'message' => 'This promo code has reached its maximum usage limit'], 400);
         }
 
         $cartItems = $this->getCartItems();
@@ -274,5 +301,19 @@ class CartController extends Controller
             'discount' => $discount,
             'final_total' => max(0, $total - $discount),
         ]);
+    }
+
+    /**
+     * Remove applied promo code from cart
+     */
+    public function removePromo()
+    {
+        session()->forget('applied_promo');
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Promo code removed']);
+        }
+
+        return back()->with('success', 'Promo code removed');
     }
 }

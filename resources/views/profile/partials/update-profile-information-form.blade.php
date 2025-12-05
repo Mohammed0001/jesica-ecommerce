@@ -64,6 +64,24 @@
             @endif
         </div>
 
+        <div class="form-group mb-3">
+            <label for="phone" class="form-label">{{ __('Phone Number') }}</label>
+            <input
+                id="phone"
+                name="phone"
+                type="tel"
+                class="form-control @error('phone') is-invalid @enderror"
+                value="{{ old('phone', $user->phone) }}"
+                required
+                autocomplete="tel"
+                placeholder="+20 123 456 7890"
+            />
+            <small class="form-text text-muted">Required for shipping (format: +201234567890)</small>
+            @error('phone')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
         <div class="form-actions d-flex gap-3">
             <button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
 

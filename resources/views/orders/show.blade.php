@@ -95,6 +95,60 @@
                     </div>
                     @endif
 
+                    <!-- Shipment Tracking -->
+                    @if($order->shipment)
+                    <div class="order-section">
+                        <h2 class="section-title">Shipment Tracking</h2>
+                        <div class="tracking-card">
+                            <div class="tracking-header">
+                                <div class="tracking-number">
+                                    <label>Tracking Number:</label>
+                                    <span class="number">{{ $order->shipment->tracking_number }}</span>
+                                </div>
+                                <div class="tracking-status">
+                                    <span class="status-badge status-{{ strtolower($order->shipment->status) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $order->shipment->status)) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if($order->shipment->tracking_number)
+                            <div class="tracking-actions">
+                                <a href="{{ route('tracking.show', $order->shipment->tracking_number) }}"
+                                   class="btn btn-primary btn-block">
+                                    <i class="fas fa-map-marker-alt"></i> Track Shipment
+                                </a>
+                                <a href="{{ $order->shipment->getTrackingUrl() }}"
+                                   target="_blank"
+                                   class="btn btn-outline-primary btn-block">
+                                    <i class="fas fa-external-link-alt"></i> Track on BOSTA
+                                </a>
+                            </div>
+                            @endif
+
+                            @if($order->shipment->tracking_history && count($order->shipment->tracking_history) > 0)
+                            <div class="tracking-updates">
+                                <h4>Latest Updates</h4>
+                                @foreach(array_slice(array_reverse($order->shipment->tracking_history), 0, 3) as $event)
+                                <div class="tracking-event">
+                                    <div class="event-marker"></div>
+                                    <div class="event-content">
+                                        <p class="event-status">{{ $event['status'] ?? 'Update' }}</p>
+                                        @if(isset($event['message']))
+                                        <p class="event-message">{{ $event['message'] }}</p>
+                                        @endif
+                                        <p class="event-date">
+                                            {{ \Carbon\Carbon::parse($event['timestamp'])->format('M d, Y \a\t g:i A') }}
+                                        </p>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Order Timeline -->
                     <div class="order-section">
                         <h2 class="section-title">Order Timeline</h2>
@@ -595,6 +649,118 @@
 .status-cancelled {
     background: #f8d7da;
     color: #721c24;
+}
+
+.status-created {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-in_transit {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-out_for_delivery {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-delivered {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Tracking Card */
+.tracking-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tracking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.tracking-number label {
+    display: block;
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.tracking-number .number {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.tracking-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.tracking-updates {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.tracking-updates h4 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+.tracking-event {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.tracking-event:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.event-marker {
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.event-content {
+    flex: 1;
+}
+
+.event-status {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.event-message {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.event-date {
+    font-size: 0.75rem;
+    color: #999;
 }
 
 /* Responsive Design */
