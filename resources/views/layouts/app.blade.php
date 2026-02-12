@@ -9,11 +9,8 @@
     <title>JESICA RIAD - COOL LUXURY</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('images/signature-logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/signature-logo.png') }}">
-
-    <!-- Adobe Fonts - Futura PT -->
-    <!-- INSTRUCTION: Replace the placeholder URL below with your Adobe Fonts embed code -->
+    <link rel="icon" type="image/png" href="{{ asset('images/icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icon.png') }}">
     <!-- Example: <link rel="stylesheet" href="https://use.typekit.net/your-kit-id.css"> -->
     <link rel="stylesheet" href="https://use.typekit.net/ckz0ivc.css">
 
