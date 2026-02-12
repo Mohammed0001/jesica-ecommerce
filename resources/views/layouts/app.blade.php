@@ -4,9 +4,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" contenphomet="{{ csrf_token() }}">
 
-    <title>JESICA RIAD - COOL LUXURY</title>
+    <title>JESSICA RIAD - COOL LUXURY</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/icon.png') }}">
@@ -473,7 +473,7 @@
             <div id="global-loader"
                 style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;">
                 <span style="font-family:serif;font-size:2.5rem;font-weight:bold;letter-spacing:0.2em;color:#333;"> <img
-                        src="{{ asset('images/loader.png') }}" alt="Jesica Riad Signature"
+                        src="{{ asset('images/loader.png') }}" alt="JESSICA Riad Signature"
                         class="iris-logo-image" style="filter: invert(1);height: 80px" /></span>
             </div>
             @yield('content')

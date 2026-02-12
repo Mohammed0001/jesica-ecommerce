@@ -9,7 +9,7 @@
             <div class="row justify-content-center" style="background-color: hsla(0, 0%, 100%, 0.384);padding:30px;">
                 <div class="col-lg-8 text-center">
                     <h1 class="hero-title" style="background-color: transparent;">
-                        Jesica Riad
+                        JESSICA RIAD
                     </h1>
                     <h2 class="hero-subtitle" style="background-color: transparent; color: #000;">
                         COOL LUXURY
@@ -100,7 +100,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    <h2 class="section-title text-start">About Jesica Riad</h2>
+                    <h2 class="section-title text-start">About JESSICA RIAD</h2>
                     <p>
                         Jessica Riad is a visual artist and fashion designer who transforms emotion, memory, and
                         culture into wearable art. Her creations merge craftsmanship with storytelling, blending

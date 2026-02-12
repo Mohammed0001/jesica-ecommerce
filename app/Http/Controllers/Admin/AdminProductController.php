@@ -161,13 +161,22 @@ class AdminProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        // Delete product images files and records if exist
+        // If product has order history, soft delete to preserve order data
+        if ($product->orderItems()->exists()) {
+            $product->update(['visible' => false]);
+            $product->delete(); // soft delete
+
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Product removed from store. Data retained for order history.');
+        }
+
+        // No order history — safe to hard delete images and product
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->path);
             $image->delete();
         }
 
-        $product->delete();
+        $product->forceDelete();
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Product deleted successfully.');
