@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Jesica Riad') - Luxury Fashion</title>
+    <title>JESICA RIAD - COOL LUXURY</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/signature-logo.png') }}">

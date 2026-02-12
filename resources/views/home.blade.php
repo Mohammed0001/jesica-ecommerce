@@ -12,12 +12,14 @@
                         Jesica Riad
                     </h1>
                     <h2 class="hero-subtitle" style="background-color: transparent; color: #000;">
-                        Luxury Fashion
+                        COOL LUXURY
                     </h2>
                     <p class="hero-description mx-auto" style="background-color: transparent;color: #000;">
-                        Discover exquisite fashion pieces that blend contemporary design with timeless elegance.
-                        Each creation embodies sophistication and artistic vision.
-                    </p>
+                       A visual artist and fashion designer who transforms everything she experiences — from nature
+                        textures and paintings and many merged cultures — into wearable art.
+                        Her brand thrives on curiosity and multiplicity, embracing a universe where
+                        every inusuence becomes a tactile expression
+                         </p>
                     <a href="{{ route('collections.index') }}" class="btn-primary" style="display: inline-block;">
                         Explore Collections
                     </a>

@@ -105,7 +105,7 @@
             <div class="footer-bottom-content">
                 <div class="footer-brand">
                     <img src="{{ asset('images/signature-logo.png') }}" alt="Jesica Riad" class="footer-logo" />
-                    <div class="copyright">© 2025 Jesica Riad</div>
+                    <div class="copyright">© 2026 Jesica Riad</div>
                 </div>
                 <div class="footer-credits">Designed & crafted with care • All rights reserved</div>
             </div>
