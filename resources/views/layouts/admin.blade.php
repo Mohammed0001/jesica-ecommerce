@@ -8,10 +8,10 @@
 
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('images/signature-logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/signature-logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icon.png') }}">
 
-    <title>@yield('title', 'Admin Dashboard') - {{ config('app.name', 'Jesica Riad') }}</title>
+    <title>@yield('title', 'Admin Dashboard') - {{ config('app.name', 'Jessica Riad') }}</title>
 
     <!-- Adobe Fonts -->
     <link rel="stylesheet" href="https://use.typekit.net/ckz0ivc.css">
@@ -407,7 +407,7 @@
     <div class="sidebar" id="sidebar">
         <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
             {{-- <i class="fas fa-gem me-2"></i> --}}
-            Jesica Riad
+            JESSICA RIAD
         </a>
 
         <ul class="sidebar-nav">
