@@ -473,7 +473,7 @@
             <div id="global-loader"
                 style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;">
                 <span style="font-family:serif;font-size:2.5rem;font-weight:bold;letter-spacing:0.2em;color:#333;"> <img
-                        src="{{ asset('images/signature-logo.png') }}" alt="Jesica Riad Signature"
+                        src="{{ asset('images/loader.png') }}" alt="Jesica Riad Signature"
                         class="iris-logo-image" style="filter: invert(1);height: 80px" /></span>
             </div>
             @yield('content')
