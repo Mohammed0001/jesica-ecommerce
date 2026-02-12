@@ -36,7 +36,7 @@
                         <li><a href="#">Instagram</a></li>
                     </ul>
                     <div class="social-icons">
-                        <a href="https://www.instagram.com/jessica.riad/" target="_blank"
+                        <a href="https://www.instagram.com/jessicariad._/" target="_blank"
                             class="social-box" aria-label="Instagram">
                             <i class="fab fa-instagram"></i>
                         </a>
