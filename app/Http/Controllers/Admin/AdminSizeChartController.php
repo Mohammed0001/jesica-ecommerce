@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SizeChart;
+use App\Services\ImageService;
 use Illuminate\Support\Facades\Storage;
 
 class AdminSizeChartController extends Controller
@@ -25,12 +26,13 @@ class AdminSizeChartController extends Controller
         // Accept measurements as nullable string (JSON from textarea) or array
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image',
             'measurements' => 'nullable',
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('size_charts', 'public');
+            $imageService = app(ImageService::class);
+            $path = $imageService->compressAndStore($request->file('image'), 'size_charts');
             $data['image_path'] = $path;
         }
 

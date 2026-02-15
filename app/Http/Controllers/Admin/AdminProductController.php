@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Collection;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -50,8 +51,8 @@ class AdminProductController extends Controller
             'is_one_of_a_kind' => 'boolean',
             'size_chart_id' => 'nullable|exists:size_charts,id',
             'story' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'visible' => 'boolean',
         ]);
 
@@ -67,13 +68,14 @@ class AdminProductController extends Controller
         $product = Product::create($data);
 
         // Handle multiple image uploads for newly created product
+        $imageService = app(ImageService::class);
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $file) {
-                $path = $file->store('products', 'public');
+                $path = $imageService->compressAndStore($file, 'products');
                 $product->images()->create(['path' => $path, 'order' => $index]);
             }
         } elseif ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
+            $path = $imageService->compressAndStore($request->file('image'), 'products');
             $product->images()->create(['path' => $path, 'order' => 0]);
         }
 
@@ -113,7 +115,7 @@ class AdminProductController extends Controller
             'price' => 'required|numeric|min:0',
             'collection_id' => 'required|exists:collections,id',
             'currency' => "required|string|in:$currencies",
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'visible' => 'boolean',
             'sku' => 'nullable|string|max:255',
             'quantity' => 'nullable|integer|min:0',
@@ -128,6 +130,7 @@ class AdminProductController extends Controller
     $data['is_one_of_a_kind'] = $request->boolean('is_one_of_a_kind', $product->getAttribute('is_one_of_a_kind'));
 
         // Handle image upload
+        $imageService = app(ImageService::class);
         if ($request->hasFile('images')) {
             // delete all existing images
             foreach ($product->images as $img) {
@@ -135,7 +138,7 @@ class AdminProductController extends Controller
                 $img->delete();
             }
             foreach ($request->file('images') as $index => $file) {
-                $path = $file->store('products', 'public');
+                $path = $imageService->compressAndStore($file, 'products');
                 $product->images()->create(['path' => $path, 'order' => $index]);
             }
         } elseif ($request->hasFile('image')) {
@@ -146,7 +149,7 @@ class AdminProductController extends Controller
                 $firstImage->delete();
             }
 
-            $path = $request->file('image')->store('products', 'public');
+            $path = $imageService->compressAndStore($request->file('image'), 'products');
             $product->images()->create(['path' => $path, 'order' => 0]);
         }
 

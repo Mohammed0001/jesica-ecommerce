@@ -5,17 +5,15 @@
 @section('content')
 <div class="container-fluid">
     <!-- Page Header -->
-    <div class="page-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1 class="page-title">Edit Product</h1>
-            <div class="d-flex gap-2">
-                <a href="{{ route('admin.products.show', $product) }}" class="btn btn-outline-info">
-                    <i class="fas fa-eye me-2"></i>View Product
-                </a>
-                <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Products
-                </a>
-            </div>
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">Edit Product</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.products.show', $product) }}" class="btn btn-outline-info">
+                <i class="fas fa-eye me-2"></i>View Product
+            </a>
+            <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Products
+            </a>
         </div>
     </div>
 
@@ -27,21 +25,30 @@
                     <h6>Product Information</h6>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('admin.products.update', $product) }}?_method=PUT" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
                         <div class="row">
-                            <div class="col-md-8 mb-4">
-                    <label for="title" class="form-label">Product Title</label>
-                    <input type="text" class="form-control @error('title') is-invalid @enderror"
-                        id="title" name="title" value="{{ old('title', $product->title) }}" required>
-                                @error('name')
+                            <div class="col-12 mb-4">
+                                <label for="title" class="form-label">Product Title</label>
+                                <input type="text" class="form-control @error('title') is-invalid @enderror"
+                                       id="title" name="title" value="{{ old('title', $product->title) }}" required>
+                                @error('title')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            <div class="col-md-3 mb-4">
+                            <div class="col-12 mb-4">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control @error('description') is-invalid @enderror"
+                                          id="description" name="description" rows="4" required>{{ old('description', $product->description) }}</textarea>
+                                @error('description')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-4 mb-4">
                                 <label for="price" class="form-label">Price</label>
                                 <input type="number" class="form-control @error('price') is-invalid @enderror"
                                        id="price" name="price" value="{{ old('price', $product->price) }}"
@@ -50,7 +57,7 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-1 mb-4">
+                            <div class="col-md-2 mb-4">
                                 <label for="currency" class="form-label">Currency</label>
                                 <select id="currency" name="currency" class="form-select @error('currency') is-invalid @enderror">
                                     @foreach(config('currencies.rates') as $code => $rate)
@@ -58,14 +65,6 @@
                                     @endforeach
                                 </select>
                                 @error('currency')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-12 mb-4">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control @error('description') is-invalid @enderror"
-                                          id="description" name="description" rows="4" required>{{ old('description', $product->description) }}</textarea>
-                                @error('description')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -140,7 +139,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-6 mb-4">
+                            <div class="col-12 mb-4">
                                 <label for="images" class="form-label">Product Images</label>
                                 <input type="file" class="form-control @error('images.*') is-invalid @enderror"
                                        id="images" name="images[]" accept="image/*" multiple>
@@ -166,8 +165,8 @@
 
                             <div class="col-12 mb-4">
                                 <div class="form-check">
-                     <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
-                         {{ old('visible', $product->visible) ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
+                                           {{ old('visible', $product->visible) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="visible">
                                         Publish this product (make it visible to customers)
                                     </label>
@@ -176,8 +175,9 @@
 
                             <div class="col-12">
                                 <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i>Update Product
+                                    <button type="submit" class="btn btn-primary btn-submit">
+                                        <span class="btn-text"><i class="fas fa-save me-2"></i>Update Product</span>
+                                        <span class="btn-loading d-none"><i class="fas fa-spinner fa-spin me-2"></i>Updating...</span>
                                     </button>
                                     <a href="{{ route('admin.products.show', $product) }}" class="btn btn-outline-secondary">
                                         Cancel
@@ -186,6 +186,12 @@
                             </div>
                         </div>
                     </form>
+                    <div class="form-loading-overlay d-none">
+                        <div class="loading-content">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <p>Uploading files & saving...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -248,6 +254,7 @@
         </div>
     </div>
 </div>
+@endsection
 
 @push('styles')
 <style>
@@ -384,6 +391,55 @@
     font-weight: 200;
     font-size: 0.75rem;
 }
+
+.form-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: inherit;
+}
+
+.loading-content {
+    text-align: center;
+    font-family: 'futura-pt', sans-serif;
+    font-weight: 300;
+    color: var(--primary-color);
+}
+
+.card {
+    position: relative;
+}
+
+.btn-submit:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
 </style>
 @endpush
-@endsection
+
+@push('scripts')
+<script src="{{ asset('js/image-compressor.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form[enctype="multipart/form-data"]');
+        if (!form) return;
+        form.addEventListener('submit', function () {
+            const btn = form.querySelector('.btn-submit');
+            const overlay = form.closest('.card-body').querySelector('.form-loading-overlay');
+            if (btn) {
+                btn.disabled = true;
+                btn.querySelector('.btn-text').classList.add('d-none');
+                btn.querySelector('.btn-loading').classList.remove('d-none');
+            }
+            if (overlay) overlay.classList.remove('d-none');
+        });
+    });
+</script>
+@endpush

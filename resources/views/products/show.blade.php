@@ -184,7 +184,7 @@
                                     <h4 class="h6 fw-semibold mb-3">Care & Shipping</h4>
                                     <ul class="small text-muted list-unstyled">
                                         <li class="mb-2">• Professional dry clean recommended</li>
-                                        <li class="mb-2">• Free shipping across Egypt</li>
+
                                         <li class="mb-2">• 14-day return policy</li>
                                         <li>• Authentic handcrafted piece</li>
                                     </ul>

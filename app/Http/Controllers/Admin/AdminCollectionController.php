@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -39,8 +40,8 @@ class AdminCollectionController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'release_date' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'pdf' => 'nullable|mimes:pdf|max:51200',
             'visible' => 'boolean',
         ]);
@@ -51,9 +52,10 @@ class AdminCollectionController extends Controller
     $data['visible'] = $request->boolean('visible', true);
 
         // Handle image upload
+        $imageService = app(ImageService::class);
         if ($request->hasFile('image')) {
             // Save the uploaded file path to the image_path column
-            $data['image_path'] = $request->file('image')->store('collections', 'public');
+            $data['image_path'] = $imageService->compressAndStore($request->file('image'), 'collections');
         }
 
         $collection = Collection::create($data);
@@ -61,7 +63,7 @@ class AdminCollectionController extends Controller
     // Handle images upload (multiple)
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $file) {
-                $path = $file->store('collections', 'public');
+                $path = $imageService->compressAndStore($file, 'collections');
                 $collection->images()->create([
                     'path' => $path,
                     'order' => $index,
@@ -106,8 +108,8 @@ class AdminCollectionController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'release_date' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8192',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'pdf' => 'nullable|mimes:pdf|max:51200',
             'visible' => 'boolean',
         ]);
@@ -117,12 +119,13 @@ class AdminCollectionController extends Controller
     $data['visible'] = $request->boolean('visible', $collection->getAttribute('visible'));
 
         // Handle image upload
+    $imageService = app(ImageService::class);
     if ($request->hasFile('image')) {
             // Delete old image if exists
             if ($collection->image_path) {
                 Storage::disk('public')->delete($collection->image_path);
             }
-            $data['image_path'] = $request->file('image')->store('collections', 'public');
+            $data['image_path'] = $imageService->compressAndStore($request->file('image'), 'collections');
         }
 
         $collection->update($data);
@@ -137,7 +140,7 @@ class AdminCollectionController extends Controller
 
             // store new ones
             foreach ($request->file('images') as $index => $file) {
-                $path = $file->store('collections', 'public');
+                $path = $imageService->compressAndStore($file, 'collections');
                 $collection->images()->create([
                     'path' => $path,
                     'order' => $index,
