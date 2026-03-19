@@ -69,7 +69,7 @@
                         @if($shipment->is_cod)
                         <div class="col-md-6">
                             <label class="text-muted small">COD Amount</label>
-                            <p class="mb-0 fw-semibold">EGP {{ number_format($shipment->cod_amount, 2) }}</p>
+                            <p class="mb-0 fw-semibold">{{ number_format($shipment->cod_amount, 2) }} {{ $shipment->order->currency ?? 'EGP' }}</p>
                         </div>
                         @endif
 
@@ -128,7 +128,7 @@
 
                         <div class="col-md-6">
                             <label class="text-muted small">Total Amount</label>
-                            <p class="mb-0 fw-semibold">EGP {{ number_format($shipment->order->total_amount, 2) }}</p>
+                            <p class="mb-0 fw-semibold">{{ number_format($shipment->order->total_amount, 2) }} {{ $shipment->order->currency ?? 'EGP' }}</p>
                         </div>
                     </div>
                 </div>

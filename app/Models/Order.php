@@ -165,8 +165,8 @@ class Order extends Model
      */
     public function getFormattedTotalAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->total_amount, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->total_amount, 2) . ' ' . $displayCurrency;
     }
 
     /**
@@ -174,8 +174,8 @@ class Order extends Model
      */
     public function getFormattedTotalPaidAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->total_paid, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->total_paid, 2) . ' ' . $displayCurrency;
     }
 
     /**
@@ -183,8 +183,8 @@ class Order extends Model
      */
     public function getFormattedRemainingBalanceAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->remaining_balance, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->remaining_balance, 2) . ' ' . $displayCurrency;
     }
 
     /**
@@ -192,26 +192,26 @@ class Order extends Model
      */
     public function getFormattedSubtotalAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->subtotal ?? 0, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->subtotal ?? 0, 2) . ' ' . $displayCurrency;
     }
 
     public function getFormattedShippingAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->shipping_amount ?? 0, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->shipping_amount ?? 0, 2) . ' ' . $displayCurrency;
     }
 
     public function getFormattedServiceFeeAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->service_fee ?? 0, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->service_fee ?? 0, 2) . ' ' . $displayCurrency;
     }
 
     public function getFormattedTaxAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->tax_amount ?? 0, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->tax_amount ?? 0, 2) . ' ' . $displayCurrency;
     }
 
     /**
@@ -219,8 +219,8 @@ class Order extends Model
      */
     public function getFormattedDiscountAttribute(): string
     {
-        $symbol = config('currencies.symbols')[session('currency', 'EGP')] ?? 'EGP';
-        return $symbol . ' ' . number_format($this->discount_amount ?? 0, 2);
+        $displayCurrency = session('currency', 'EGP');
+        return number_format($this->discount_amount ?? 0, 2) . ' ' . $displayCurrency;
     }
 
     /**

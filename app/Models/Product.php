@@ -144,8 +144,7 @@ class Product extends Model
     {
         $displayCurrency = session('currency', 'EGP');
         $converted = $this->convertToCurrency($displayCurrency);
-        $symbol = config('currencies.symbols')[$displayCurrency] ?? $displayCurrency;
-        return $symbol . ' ' . number_format($converted, 2) . " <span class=\"currency\">{$displayCurrency}</span>";
+        return number_format($converted, 2) . " <span class=\"currency\">{$displayCurrency}</span>";
     }
 
     /**
