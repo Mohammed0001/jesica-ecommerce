@@ -25,7 +25,7 @@
                     <h6>Product Information</h6>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.products.update', $product) }}?_method=PUT" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
@@ -425,7 +425,6 @@
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/image-compressor.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.querySelector('form[enctype="multipart/form-data"]');

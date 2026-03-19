@@ -113,7 +113,7 @@ class AdminProductController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'collection_id' => 'required|exists:collections,id',
+            'collection_id' => 'nullable|exists:collections,id',
             'currency' => "required|string|in:$currencies",
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'visible' => 'boolean',
@@ -125,6 +125,7 @@ class AdminProductController extends Controller
         ]);
 
     $data = $request->only(['title', 'description', 'price', 'currency', 'collection_id', 'sku', 'quantity', 'is_one_of_a_kind', 'size_chart_id', 'story']);
+        $data['collection_id'] = $request->input('collection_id') ?: null;
         $data['slug'] = Str::slug($request->title);
     $data['visible'] = $request->boolean('visible', $product->getAttribute('visible'));
     $data['is_one_of_a_kind'] = $request->boolean('is_one_of_a_kind', $product->getAttribute('is_one_of_a_kind'));

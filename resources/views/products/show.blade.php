@@ -93,7 +93,7 @@
                                 <span class="current-price h3 fw-semibold text-dark">{!! $product->formatted_price !!}</span>
                                 @if($product->compare_price && $product->compare_price > $product->price)
                                     <span class="original-price text-muted text-decoration-line-through">
-                                        EGP {{ number_format($product->compare_price, 0) }}
+                                        {{ number_format($product->compare_price, 0) }}
                                     </span>
                                     <span class="discount-badge bg-danger text-white px-3 py-1 rounded-pill small fw-bold">
                                         {{ round((($product->compare_price - $product->price) / $product->compare_price) * 100) }}% OFF

@@ -14,12 +14,12 @@
                     <h2 class="hero-subtitle" style="background-color: transparent; color: #000;">
                         COOL LUXURY
                     </h2>
-                    <p class="hero-description mx-auto" style="background-color: transparent;color: #000;">
+                    {{-- <p class="hero-description mx-auto" style="background-color: transparent;color: #000;">
                        A visual artist and fashion designer who transforms everything she experiences — from nature
                         textures and paintings and many merged cultures — into wearable art.
                         Her brand thrives on curiosity and multiplicity, embracing a universe where
                         every inusuence becomes a tactile expression
-                         </p>
+                         </p> --}}
                     <a href="{{ route('collections.index') }}" class="btn-primary" style="display: inline-block;">
                         Explore Collections
                     </a>

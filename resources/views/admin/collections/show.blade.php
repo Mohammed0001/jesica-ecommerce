@@ -98,8 +98,8 @@
                     <div class="stat-item">
                         <span class="label">Price Range</span>
                         <span class="value">
-                            EGP {{ number_format($collection->products->min('price')) }} –
-                            EGP {{ number_format($collection->products->max('price')) }}
+                            {{ number_format($collection->products->min('price')) }} –
+                            {{ number_format($collection->products->max('price')) }}
                         </span>
                     </div>
                     @endif

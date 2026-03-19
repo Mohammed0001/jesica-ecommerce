@@ -102,12 +102,20 @@
             Promise.all(imageInputs.map(compressInputFiles))
                 .then(function () {
                     form.dataset.compressed = 'true';
-                    form.requestSubmit();
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
                 })
                 .catch(function () {
                     // On error, submit with original files
                     form.dataset.compressed = 'true';
-                    form.requestSubmit();
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
                 });
         });
     });
