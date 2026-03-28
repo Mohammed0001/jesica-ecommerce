@@ -110,6 +110,8 @@ class AdminCollectionController extends Controller
             'release_date' => 'required|date',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'remove_images' => 'nullable|array',
+            'remove_images.*' => 'integer|exists:collection_images,id',
             'pdf' => 'nullable|mimes:pdf|max:51200',
             'visible' => 'boolean',
         ]);
@@ -130,20 +132,25 @@ class AdminCollectionController extends Controller
 
         $collection->update($data);
 
-        // Replace collection images (if provided)
-    if ($request->hasFile('images')) {
-            // delete old files
-            foreach ($collection->images as $img) {
-                Storage::disk('public')->delete($img->path);
+        // Remove selected secondary images
+        if ($request->has('remove_images')) {
+            foreach ($request->remove_images as $imageId) {
+                $image = $collection->images()->find($imageId);
+                if ($image) {
+                    Storage::disk('public')->delete($image->path);
+                    $image->delete();
+                }
             }
-            $collection->images()->delete();
+        }
 
-            // store new ones
+        // Append new collection images (if provided)
+        if ($request->hasFile('images')) {
+            $maxOrder = $collection->images()->max('order') ?? -1;
             foreach ($request->file('images') as $index => $file) {
                 $path = $imageService->compressAndStore($file, 'collections');
                 $collection->images()->create([
                     'path' => $path,
-                    'order' => $index,
+                    'order' => $maxOrder + 1 + $index,
                 ]);
             }
         }

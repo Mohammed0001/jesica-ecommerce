@@ -85,13 +85,19 @@
                                     </div>
 
                                     <!-- Quantity Display -->
-                                    <div class="col-md-2 col-sm-2 text-center">
-                                        <div class="quantity-display">
-                                            <span class="fw-semibold">Qty: {{ data_get($item, 'quantity') }}</span>
-                                            @if(data_get($item, 'size_label'))
-                                                <br><small class="text-muted">Size: {{ data_get($item, 'size_label') }}</small>
-                                            @endif
+                                    <div class="col-md-2 col-sm-2 text-center d-flex flex-column align-items-center">
+                                        <div class="input-group input-group-sm mb-1" style="max-width: 100px;">
+                                            <button class="btn btn-outline-secondary px-2" type="button" onclick="updateQuantity('{{ $cartKey ?? $cartProductId }}', {{ data_get($item, 'quantity') - 1 }})">
+                                                <i class="fas fa-minus" style="font-size: 0.75rem;"></i>
+                                            </button>
+                                            <input type="number" class="form-control text-center px-1" value="{{ data_get($item, 'quantity') }}" min="1" onchange="updateQuantity('{{ $cartKey ?? $cartProductId }}', this.value)">
+                                            <button class="btn btn-outline-secondary px-2" type="button" onclick="updateQuantity('{{ $cartKey ?? $cartProductId }}', {{ data_get($item, 'quantity') + 1 }})">
+                                                <i class="fas fa-plus" style="font-size: 0.75rem;"></i>
+                                            </button>
                                         </div>
+                                        @if(data_get($item, 'size_label'))
+                                            <small class="text-muted mt-1">Size: {{ data_get($item, 'size_label') }}</small>
+                                        @endif
                                     </div>
 
                                     <!-- Price -->
@@ -313,6 +319,7 @@ function updateQuantity(cartKey, newQuantity) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
@@ -343,6 +350,7 @@ function removeFromCart(cartKey) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
@@ -385,6 +393,7 @@ function clearCart() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
@@ -414,6 +423,7 @@ function applyPromoCode() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
@@ -443,6 +453,7 @@ function removePromo() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })

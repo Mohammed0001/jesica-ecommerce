@@ -6,8 +6,8 @@
             <!-- Left: Logo -->
             <a href="/" class="iris-navbar-logo-link">
                 <div class="iris-navbar-logo">
-                    <img src="{{ asset('images/signature-logo.png') }}" alt="Jesica Riad Signature" class="iris-logo-image"
-                        style="filter: invert(1); height: 50px;" loading="lazy" />
+                    <img src="{{ asset('images/signature-logo.png') }}" alt="Jesica Riad Signature"
+                        class="iris-logo-image" style="filter: invert(1); height: 50px;" loading="lazy" />
                 </div>
             </a>
 
@@ -17,24 +17,25 @@
 
                 <a href="{{ Auth::check() ? route('profile.edit') : route('login') }}" class="iris-icon-btn"
                     aria-label="Account">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                 </a>
 
                 @auth
-                <a href="{{ route('special-orders.index') }}" class="iris-icon-btn" aria-label="Request Special Order" title="Request Special Order">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                    </svg>
-                </a>
+                    <a href="{{ route('special-orders.index') }}" class="iris-icon-btn" aria-label="Request Special Order"
+                        title="Request Special Order">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z">
+                            </path>
+                        </svg>
+                    </a>
                 @endauth
 
                 <a href="{{ route('cart.index') }}" class="iris-icon-btn cart-icon-wrapper" aria-label="Cart">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -56,6 +57,7 @@
         </div>
 
         <!-- Fullscreen Mobile Navigation -->
+        <!-- Fullscreen Mobile Navigation -->
         <div class="iris-fullscreen-nav" id="iris-mobile-nav">
             <div class="iris-nav-content">
                 <!-- Close Button -->
@@ -63,27 +65,47 @@
                     ×
                 </button>
 
-                <div class="iris-nav-links-mobile">
-                    <x-nav-link :href="route('home')" :active="request()->routeIs('home')">Home</x-nav-link>
-                    <x-nav-link :href="route('collections.index')" :active="request()->routeIs('collections.*')">Collections</x-nav-link>
-                    <x-nav-link :href="route('about')" :active="request()->routeIs('about')">About</x-nav-link>
-                    <x-nav-link :href="route('contact')" :active="request()->routeIs('contact')">Contact</x-nav-link>
+                <div class="iris-nav-columns">
+                    <!-- Primary Links Column -->
+                    <div class="iris-nav-primary">
+                        <x-nav-link :href="route('home')" :active="request()->routeIs('home')">Home</x-nav-link>
+                        <x-nav-link :href="route('collections.index')"
+                            :active="request()->routeIs('collections.*')">Collections</x-nav-link>
+                        <x-nav-link :href="route('about')" :active="request()->routeIs('about')">About</x-nav-link>
+                        <x-nav-link :href="route('contact')"
+                            :active="request()->routeIs('contact')">Contact</x-nav-link>
 
-                    @auth
-                        @if (Auth::user()->role->name === 'ADMIN')
-                            <x-nav-link :href="route('admin.dashboard')">Admin</x-nav-link>
-                        @endif
+                        @auth
+                            @if (Auth::user()->role->name === 'ADMIN')
+                                <x-nav-link :href="route('admin.dashboard')">Admin</x-nav-link>
+                            @endif
+                        @endauth
+                    </div>
+
+                    <!-- Secondary Links Column -->
+                    <div class="iris-nav-secondary">
+                        <p class="iris-nav-col-label">Account</p>
+                        @auth
                             <x-nav-link :href="route('special-orders.index')">Special Orders</x-nav-link>
-                        <x-nav-link :href="route('orders.index')">Orders</x-nav-link>
-                        <x-nav-link :href="route('cart.index')">Cart</x-nav-link>
-                        <form method="POST" action="{{ route('logout') }}" style="width: 100%;">
+                            <x-nav-link :href="route('orders.index')">Orders</x-nav-link>
+                            <x-nav-link :href="route('cart.index')">Cart</x-nav-link>
+                        @else
+                            <x-nav-link :href="route('login')">Login</x-nav-link>
+                            <x-nav-link :href="route('register')">Register</x-nav-link>
+                        @endauth
+                    </div>
+                </div>
+
+                <!-- Bottom Footer Row -->
+                <div class="iris-nav-footer">
+                    @auth
+                        <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="iris-nav-link iris-nav-button">Logout</button>
+                            <button type="submit" class="iris-nav-footer-link">Logout</button>
                         </form>
-                    @else
-                        <x-nav-link :href="route('login')">Login</x-nav-link>
-                        <x-nav-link :href="route('register')">Register</x-nav-link>
                     @endauth
+                    <a href="{{ route('profile.edit') }}" class="iris-nav-footer-link">My Account</a>
+                    <a href="{{ route('contact') }}" class="iris-nav-footer-link">Customer Service</a>
                 </div>
             </div>
         </div>
@@ -137,6 +159,7 @@
     /* Default: Logo on left, icons on right */
     .iris-navbar-logo-link {
         position: absolute;
+        background-color: transparent;
         left: 2rem;
         z-index: 10;
         transition: all 0.3s ease;
@@ -213,6 +236,7 @@
     }
 
     /* Fullscreen Mobile Menu */
+    /* Fullscreen Nav - McQueen layout */
     .iris-fullscreen-nav {
         position: fixed;
         top: 0;
@@ -222,13 +246,11 @@
         background: white;
         z-index: 2000;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-direction: column;
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.35s ease, visibility 0.35s ease;
         pointer-events: none;
-        overflow-y: auto;
     }
 
     .iris-fullscreen-nav.show {
@@ -239,9 +261,10 @@
 
     .iris-nav-content {
         position: relative;
-        text-align: center;
-        padding: 2rem;
-        width: 100%;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding: 3rem 4rem 0;
     }
 
     .iris-nav-close {
@@ -255,96 +278,138 @@
         cursor: pointer;
         color: #000;
         line-height: 1;
-        padding: 0.5rem;
+        padding: 0;
         transition: opacity 0.2s;
+        z-index: 10;
     }
 
     .iris-nav-close:hover {
-        opacity: 0.6;
+        opacity: 0.5;
     }
 
-    .iris-nav-links-mobile {
+    /* Two-column horizontal layout */
+    .iris-nav-columns {
+        display: flex;
+        gap: 5rem;
+        flex: 1;
+        align-items: flex-start;
+    }
+
+    /* Big primary links on the left */
+    .iris-nav-primary {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 2.5rem;
-        margin-top: 4rem;
+        gap: 1.2rem;
     }
 
-    .iris-nav-links-mobile .iris-nav-link,
-    .iris-nav-button {
-        font-size: 1.8rem;
+    .iris-nav-primary .iris-nav-link {
+        font-size: 1.5rem;
         font-weight: 400;
-        letter-spacing: 1.2px;
+        letter-spacing: 0.5px;
         color: #000;
         text-decoration: none;
         transition: opacity 0.2s;
     }
 
-    .iris-nav-links-mobile .iris-nav-link:hover,
-    .iris-nav-button:hover {
-        opacity: 0.7;
+    .iris-nav-primary .iris-nav-link:hover {
+        opacity: 0.5;
     }
 
-    .iris-navbar-logo-link {
-        background-color: transparent;
+    /* Smaller secondary links on the right */
+    .iris-nav-secondary {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        padding-top: 0.25rem;
     }
 
+    .iris-nav-col-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #888;
+        margin: 0 0 0.4rem;
+    }
 
-    .iris-nav-button {
+    .iris-nav-secondary .iris-nav-link {
+        font-size: 0.9rem;
+        font-weight: 400;
+        color: #000;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+
+    .iris-nav-secondary .iris-nav-link:hover {
+        opacity: 0.5;
+    }
+
+    /* Bottom footer strip */
+    .iris-nav-footer {
+        border-top: 0.5px solid #e0e0e0;
+        padding: 1.2rem 0;
+        margin-top: auto;
+        display: flex;
+        gap: 2rem;
+    }
+
+    .iris-nav-footer-link {
+        font-size: 0.8rem;
+        color: #888;
+        text-decoration: none;
+        letter-spacing: 0.5px;
         background: none;
         border: none;
         cursor: pointer;
         padding: 0;
+        transition: color 0.2s;
     }
 
+    .iris-nav-footer-link:hover {
+        color: #000;
+    }
+
+    /* Mobile: stack back to vertical */
     @media (max-width: 768px) {
-        .iris-navbar-container {
-            padding: 0 1rem;
+        .iris-nav-content {
+            padding: 3rem 2rem 0;
         }
 
-        .is-home .iris-navbar-logo-link {
-            left: 0rem;
-            transform: translateX(0);
+        .iris-nav-columns {
+            flex-direction: column;
+            gap: 2.5rem;
         }
 
-        .iris-navbar-logo-link {
-            left: 1rem;
+        .iris-nav-primary .iris-nav-link {
+            font-size: 1.25rem;
         }
 
-        .iris-navbar-logo-link {
-            background-color: transparent;
-        }
-
-
-        .iris-navbar-main {
+        .iris-nav-footer {
             padding: 1rem 0;
-        }
-
-
-        .iris-navbar-right {
-            gap: 5px;
+            gap: 1.5rem;
+            flex-wrap: wrap;
         }
     }
 </style>
 
-    <!-- Hide navbars when printing -->
-    <style>
-        @media print {
-            .iris-navbar,
-            .iris-fullscreen-nav {
-                display: none !important;
-                visibility: hidden !important;
-                height: 0 !important;
-                overflow: hidden !important;
-            }
+<!-- Hide navbars when printing -->
+<style>
+    @media print {
+
+        .iris-navbar,
+        .iris-fullscreen-nav {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
         }
-    </style>
+    }
+</style>
 
 <!-- Add home page class to navbar container -->
 @if (request()->routeIs('home'))
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             document.querySelector('.iris-navbar').classList.add('is-home');
         });
     </script>

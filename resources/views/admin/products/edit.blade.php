@@ -140,25 +140,34 @@
                             </div>
 
                             <div class="col-12 mb-4">
-                                <label for="images" class="form-label">Product Images</label>
+                                <label for="images" class="form-label">Product Images (Gallery)</label>
                                 <input type="file" class="form-control @error('images.*') is-invalid @enderror"
                                        id="images" name="images[]" accept="image/*" multiple>
-                                @error('image')
+                                @error('images.*')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Leave empty to keep current image. Supported formats: JPEG, PNG, JPG, GIF</div>
+                                <div class="form-text">Uploading new images will append them to the existing gallery. Supported formats: JPEG, PNG, JPG, GIF</div>
                             </div>
 
                             @if($product->images && $product->images->count() > 0)
                             <div class="col-12 mb-4">
-                                <label class="form-label">Current Image</label>
-                                <div class="current-image-container">
-                                    <img src="{{ optional($product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" alt="{{ $product->name }}" class="current-image">
-                                    <div class="image-actions">
-                                        <a href="{{ optional($product->main_image)->url ?? asset('images/placeholder-product.jpg') }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-external-link-alt"></i> View Full Size
-                                        </a>
-                                    </div>
+                                <label class="form-label">Existing Images</label>
+                                <div class="d-flex flex-wrap gap-3">
+                                    @foreach($product->images as $img)
+                                        <div class="position-relative d-inline-block">
+                                            <div class="rounded border p-1 bg-white">
+                                                <img src="{{ $img->url }}" alt="{{ $product->name }}" style="width: 120px; height: 120px; object-fit: cover;">
+                                            </div>
+                                            <div class="mt-2 text-center">
+                                                <div class="form-check d-inline-block">
+                                                    <input class="form-check-input" type="checkbox" name="remove_images[]" value="{{ $img->id }}" id="remove_product_img_{{ $img->id }}">
+                                                    <label class="form-check-label text-danger" for="remove_product_img_{{ $img->id }}" style="font-size: 0.8rem;">
+                                                        Remove
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
                             @endif

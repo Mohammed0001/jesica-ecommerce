@@ -116,6 +116,9 @@ class AdminProductController extends Controller
             'collection_id' => 'nullable|exists:collections,id',
             'currency' => "required|string|in:$currencies",
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'remove_images' => 'nullable|array',
+            'remove_images.*' => 'integer|exists:product_images,id',
             'visible' => 'boolean',
             'sku' => 'nullable|string|max:255',
             'quantity' => 'nullable|integer|min:0',
@@ -132,18 +135,29 @@ class AdminProductController extends Controller
 
         // Handle image upload
         $imageService = app(ImageService::class);
-        if ($request->hasFile('images')) {
-            // delete all existing images
-            foreach ($product->images as $img) {
-                Storage::disk('public')->delete($img->path);
-                $img->delete();
+
+        // Remove selected images
+        if ($request->has('remove_images')) {
+            foreach ($request->remove_images as $imageId) {
+                $image = $product->images()->find($imageId);
+                if ($image) {
+                    Storage::disk('public')->delete($image->path);
+                    $image->delete();
+                }
             }
+        }
+
+        if ($request->hasFile('images')) {
+            // Append new images
+            $maxOrder = $product->images()->max('order') ?? -1;
             foreach ($request->file('images') as $index => $file) {
                 $path = $imageService->compressAndStore($file, 'products');
-                $product->images()->create(['path' => $path, 'order' => $index]);
+                $product->images()->create(['path' => $path, 'order' => $maxOrder + 1 + $index]);
             }
-        } elseif ($request->hasFile('image')) {
-            // Replace first image only
+        } 
+        
+        if ($request->hasFile('image')) {
+            // Replace first image only (main image)
             $firstImage = $product->images()->orderBy('order')->first();
             if ($firstImage) {
                 Storage::disk('public')->delete($firstImage->path);
