@@ -141,7 +141,7 @@
                 @else
                     @foreach($addresses as $address)
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="shipping_address_id" id="addr-{{ $address->id }}" value="{{ $address->id }}" {{ $loop->first ? 'checked' : '' }}>
+                            <input class="form-check-input" type="radio" name="shipping_address_id" id="addr-{{ $address->id }}" value="{{ $address->id }}" data-city="{{ $address->city }}" data-country="{{ $address->country }}" {{ $loop->first ? 'checked' : '' }}>
                             <label class="form-check-label" for="addr-{{ $address->id }}">
                                 {{ $address->formatted_address ?? $address->address_line_1 }}
                             </label>
@@ -298,12 +298,36 @@
 
         // --- Live city fee lookup ---
         let feeXhr = null;
-        function onCityChange(cityValue) {
+        function onDeliveryLocationChange() {
             if (feeXhr) feeXhr.abort();
-            if (!cityValue) return;
+
+            // Try to find the visible address fields block
+            let newAddressBlock = document.getElementById('new-address-fields');
+            let isUsingNewAddress = newAddressBlock && newAddressBlock.style.display !== 'none';
+            // Also if there's no saved addresses, the inputs are directly inside the form
+            let hasNoSavedAddresses = document.querySelectorAll('input[name="shipping_address_id"]').length === 0;
+
+            let cityValue = '';
+            let countryValue = 'Egypt';
+
+            if (isUsingNewAddress || hasNoSavedAddresses) {
+                // Get from visible inputs (either new address form or fallback form)
+                let visibleCity = Array.from(document.querySelectorAll('select[name="city"], input[name="city"]')).find(el => el.offsetParent !== null);
+                if (visibleCity) cityValue = visibleCity.value;
+
+                let visibleCountry = Array.from(document.querySelectorAll('input[name="country"]')).find(el => el.offsetParent !== null);
+                if (visibleCountry) countryValue = visibleCountry.value;
+            } else {
+                // Address radio button selected
+                let selectedRadio = document.querySelector('input[name="shipping_address_id"]:checked');
+                if (selectedRadio) {
+                    cityValue = selectedRadio.getAttribute('data-city') || '';
+                    countryValue = selectedRadio.getAttribute('data-country') || 'Egypt';
+                }
+            }
 
             feeXhr = new XMLHttpRequest();
-            feeXhr.open('GET', '/checkout/delivery-fee?city=' + encodeURIComponent(cityValue), true);
+            feeXhr.open('GET', '/checkout/delivery-fee?city=' + encodeURIComponent(cityValue) + '&country=' + encodeURIComponent(countryValue), true);
             feeXhr.onload = function() {
                 if (this.status === 200) {
                     const data = JSON.parse(this.responseText);
@@ -313,14 +337,25 @@
             feeXhr.send();
         }
 
-        // Hook into all city selects on the page
-        document.querySelectorAll('select[name="city"]').forEach(function(select) {
-            select.addEventListener('change', function() {
-                onCityChange(this.value);
-            });
-            // Trigger on load if a city is already selected
-            if (select.value) onCityChange(select.value);
+        // Hook into all city and country inputs
+        document.querySelectorAll('select[name="city"], input[name="country"]').forEach(function(el) {
+            el.addEventListener('change', onDeliveryLocationChange);
+            if (el.tagName.toLowerCase() === 'input') {
+                el.addEventListener('keyup', function() {
+                    // debounce simple
+                    clearTimeout(el.dataset.timeout);
+                    el.dataset.timeout = setTimeout(onDeliveryLocationChange, 400);
+                });
+            }
         });
+
+        // Hook into address radios
+        document.querySelectorAll('input[name="shipping_address_id"]').forEach(function(radio) {
+            radio.addEventListener('change', onDeliveryLocationChange);
+        });
+        
+        // Trigger on load
+        onDeliveryLocationChange();
 
         // Toggle new-address fields when user selects 'Use a different address'
         const addressRadios = document.querySelectorAll('input[name="shipping_address_id"]');

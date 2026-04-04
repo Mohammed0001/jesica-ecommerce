@@ -30,7 +30,16 @@
                             <input name="delivery_fee" type="number" step="0.01" min="0"
                                    class="form-control" required value="{{ old('delivery_fee', $delivery_fee) }}">
                         </div>
-                        <div class="form-text">Global fallback. Use Delivery Areas for per-city fees.</div>
+                        <div class="form-text">Global fallback for Egypt cities not in Delivery Areas.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">International Delivery Fee <small class="text-muted">(display currency)</small></label>
+                        <div class="input-group">
+                            <span class="input-group-text">EGP</span>
+                            <input name="international_delivery_fee" type="number" step="0.01" min="0"
+                                   class="form-control" required value="{{ old('international_delivery_fee', $international_delivery_fee ?? 50) }}">
+                        </div>
+                        <div class="form-text">Unified fee for all countries outside Egypt.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Free Delivery Threshold <small class="text-muted">(display currency)</small></label>

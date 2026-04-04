@@ -60,10 +60,14 @@ class CheckoutController extends Controller
         // Resolve per-area delivery fee: use city from first saved address as the initial value
         $addresses = Auth::user()->addresses;
         $initialCity = null;
+        $initialDistrict = null;
+        $initialCountry = 'Egypt';
         if ($addresses->isNotEmpty()) {
             $initialCity = $addresses->first()->city ?? null;
+            $initialDistrict = $addresses->first()->state_province ?? null;
+            $initialCountry = $addresses->first()->country ?? 'Egypt';
         }
-        $deliveryFee = Region::getDeliveryFeeForCity($initialCity);
+        $deliveryFee = Region::getDeliveryFeeForLocation($initialCity, $initialDistrict, $initialCountry);
         $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
         $taxPercentage = (float) \App\Models\SiteSetting::get('tax_percentage', 14);
         $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);
@@ -221,23 +225,42 @@ class CheckoutController extends Controller
             }
         }
 
-        // Extract city for per-area fee resolution
+        // Extract city, district, and country
         $city = null;
+        $district = null;
+        $country = 'Egypt';
+        
         if (!empty($addressSnapshot['city'])) {
             $city = $addressSnapshot['city'];
         } elseif ($request->filled('city')) {
             $city = $request->city;
         }
 
+        if (!empty($addressSnapshot['state_province'])) {
+            $district = $addressSnapshot['state_province'];
+        } elseif (!empty($addressSnapshot['district'])) {
+            $district = $addressSnapshot['district'];
+        } elseif ($request->filled('state_province')) {
+            $district = $request->state_province;
+        }
+
+        if (!empty($addressSnapshot['country'])) {
+            $country = $addressSnapshot['country'];
+        } elseif ($request->filled('country')) {
+            $country = $request->country;
+        }
+
         DB::beginTransaction();
 
         try {
-            // Create order using the resolved shipping address id and city (for per-area fee)
+            // Create order
             $order = $this->orderService->createOrder(
                 Auth::user(),
                 $cartItems,
                 $shippingAddressId,
-                $city
+                $city,
+                $district,
+                $country
             );
 
             // Store address snapshot (either saved model or inline data)
@@ -301,11 +324,15 @@ class CheckoutController extends Controller
     public function getDeliveryFee(Request $request)
     {
         $city = $request->input('city', '');
+        $district = $request->input('district', '');
+        $country = $request->input('country', 'Egypt');
         $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
-        $fee = Region::getDeliveryFeeForCity($city ?: null);
+        $fee = Region::getDeliveryFeeForLocation($city ?: null, $district ?: null, $country ?: null);
 
         return response()->json([
             'city'      => $city,
+            'district'  => $district,
+            'country'   => $country,
             'fee'       => $fee,
             'threshold' => $deliveryThreshold,
         ]);

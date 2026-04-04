@@ -22,11 +22,12 @@ class SettingsController extends Controller
         $delivery_threshold = SiteSetting::get('delivery_threshold', '200');
         $tax_percentage = SiteSetting::get('tax_percentage', '14');
         $service_fee_percentage = SiteSetting::get('service_fee_percentage', '0');
+        $international_delivery_fee = SiteSetting::get('international_delivery_fee', '50');
         $hero_image = SiteSetting::get('hero_image', null);
 
         return view('admin.settings', compact(
             'delivery_fee', 'delivery_threshold', 'tax_percentage',
-            'service_fee_percentage', 'hero_image'
+            'service_fee_percentage', 'hero_image', 'international_delivery_fee'
         ));
     }
 
@@ -37,12 +38,14 @@ class SettingsController extends Controller
             'delivery_threshold'    => 'required|numeric|min:0',
             'tax_percentage'        => 'required|numeric|min:0',
             'service_fee_percentage'=> 'required|numeric|min:0',
+            'international_delivery_fee' => 'required|numeric|min:0',
         ]);
 
         SiteSetting::set('delivery_fee', $request->delivery_fee);
         SiteSetting::set('delivery_threshold', $request->delivery_threshold);
         SiteSetting::set('tax_percentage', $request->tax_percentage);
         SiteSetting::set('service_fee_percentage', $request->service_fee_percentage);
+        SiteSetting::set('international_delivery_fee', $request->international_delivery_fee);
 
         return Redirect::back()->with('success', 'Settings updated');
     }
