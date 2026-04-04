@@ -15,7 +15,7 @@ class OrderService
     /**
      * Create a new order from cart items
      */
-    public function createOrder(User $user, Collection $cartItems, ?int $shippingAddressId = null): Order
+    public function createOrder(User $user, Collection $cartItems, ?int $shippingAddressId = null, ?string $city = null): Order
     {
         // Calculate subtotal from product prices
         $subtotal = $this->calculateTotal($cartItems);
@@ -31,8 +31,8 @@ class OrderService
             }
         }
 
-        // Site settings
-        $deliveryFee = (float) \App\Models\SiteSetting::get('delivery_fee', 15);
+        // Per-area delivery fee (falls back to global site setting for unknown cities)
+        $deliveryFee = \App\Models\Region::getDeliveryFeeForCity($city);
         $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
         $taxPercentage = (float) \App\Models\SiteSetting::get('tax_percentage', 14);
         $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);

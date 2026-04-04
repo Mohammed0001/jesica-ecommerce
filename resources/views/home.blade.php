@@ -130,9 +130,13 @@
 @endsection
 
 @push('styles')
+    @php
+        $heroImage = \App\Models\SiteSetting::get('hero_image');
+        $heroUrl = $heroImage ? asset($heroImage) : asset('images/hero-background.jpg');
+    @endphp
     <style>
         .hero-background {
-            background: url('{{ asset('images/hero-background.jpg') }}') no-repeat center center;
+            background: url('{{ $heroUrl }}') no-repeat center center;
             background-size: cover;
             height: 100vh;
             /* color: white; */

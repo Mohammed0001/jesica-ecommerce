@@ -371,6 +371,35 @@
 
     /* Mobile: stack back to vertical */
     @media (max-width: 768px) {
+        .iris-navbar-container {
+            padding: 0 1rem;
+        }
+
+        /* Prevent logo intersection by keeping it relative on mobile */
+        .iris-navbar-logo-link, 
+        .is-home .iris-navbar-logo-link {
+            position: relative;
+            left: 0;
+            transform: none;
+        }
+
+        .iris-navbar-logo .iris-logo-image {
+            height: 35px !important; /* Smaller logo for mobile */
+        }
+
+        .iris-navbar-right {
+            gap: 0.5rem; /* Tighter gap for mobile icons */
+        }
+
+        .iris-icon-btn {
+            padding: 0.25rem;
+        }
+
+        .iris-menu-toggle {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.75rem;
+        }
+
         .iris-nav-content {
             padding: 3rem 2rem 0;
         }

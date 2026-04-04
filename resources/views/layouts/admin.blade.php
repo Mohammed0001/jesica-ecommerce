@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
 
@@ -480,6 +480,14 @@
                     href="{{ route('admin.settings.edit') }}">
                     <i class="fas fa-cog"></i>
                     Settings
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.delivery-areas.*') ? 'active' : '' }}"
+                    href="{{ route('admin.delivery-areas.index') }}">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Delivery Areas
                 </a>
             </li>
 

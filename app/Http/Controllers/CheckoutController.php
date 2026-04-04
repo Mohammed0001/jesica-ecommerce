@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Address;
+use App\Models\Region;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
@@ -56,8 +57,13 @@ class CheckoutController extends Controller
             return (float) (data_get($it, 'product.display_subtotal') ?? (data_get($it, 'display_subtotal') ?? 0));
         });
 
-        // Use SiteSetting for fees like in CartController
-        $deliveryFee = (float) \App\Models\SiteSetting::get('delivery_fee', 15);
+        // Resolve per-area delivery fee: use city from first saved address as the initial value
+        $addresses = Auth::user()->addresses;
+        $initialCity = null;
+        if ($addresses->isNotEmpty()) {
+            $initialCity = $addresses->first()->city ?? null;
+        }
+        $deliveryFee = Region::getDeliveryFeeForCity($initialCity);
         $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
         $taxPercentage = (float) \App\Models\SiteSetting::get('tax_percentage', 14);
         $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);
@@ -83,14 +89,23 @@ class CheckoutController extends Controller
             $this->paymentService->getDefaultDepositPercentage()
         );
 
-        $addresses = Auth::user()->addresses;
-
         // Get BOSTA cities for dropdown
         $bostaCities = \App\Models\BostaCity::dropOffAvailable()
             ->orderBy('name')
             ->get(['id', 'name', 'name_ar']);
 
-        return view('checkout.show', compact('cartItems', 'total', 'depositAmount', 'addresses', 'displaySubtotal', 'shipping', 'serviceFee', 'tax', 'discountAmount', 'finalTotal', 'bostaCities'));
+        // Pass delivery fee data for live JS update
+        $deliveryFeeData = [
+            'threshold'     => $deliveryThreshold,
+            'taxPercentage' => $taxPercentage,
+            'servicePct'    => $serviceFeePercentage,
+        ];
+
+        return view('checkout.show', compact(
+            'cartItems', 'total', 'depositAmount', 'addresses',
+            'displaySubtotal', 'shipping', 'serviceFee', 'tax',
+            'discountAmount', 'finalTotal', 'bostaCities', 'deliveryFeeData'
+        ));
     }
 
     /**
@@ -206,14 +221,23 @@ class CheckoutController extends Controller
             }
         }
 
+        // Extract city for per-area fee resolution
+        $city = null;
+        if (!empty($addressSnapshot['city'])) {
+            $city = $addressSnapshot['city'];
+        } elseif ($request->filled('city')) {
+            $city = $request->city;
+        }
+
         DB::beginTransaction();
 
         try {
-            // Create order using the resolved shipping address id (may be null)
+            // Create order using the resolved shipping address id and city (for per-area fee)
             $order = $this->orderService->createOrder(
                 Auth::user(),
                 $cartItems,
-                $shippingAddressId
+                $shippingAddressId,
+                $city
             );
 
             // Store address snapshot (either saved model or inline data)
@@ -268,6 +292,23 @@ class CheckoutController extends Controller
             Log::error('Checkout process failed: ' . $e->getMessage(), ['exception' => $e]);
             return back()->with('error', 'An error occurred during checkout. Please try again.');
         }
+    }
+
+    /**
+     * AJAX: return the delivery fee for a given city
+     * GET /checkout/delivery-fee?city=Cairo
+     */
+    public function getDeliveryFee(Request $request)
+    {
+        $city = $request->input('city', '');
+        $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200);
+        $fee = Region::getDeliveryFeeForCity($city ?: null);
+
+        return response()->json([
+            'city'      => $city,
+            'fee'       => $fee,
+            'threshold' => $deliveryThreshold,
+        ]);
     }
 
     /**

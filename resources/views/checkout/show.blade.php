@@ -67,10 +67,10 @@
                 <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($displaySubtotal, 2) }}</span></div>
                 <div class="d-flex justify-content-between mb-2"><span>Discount</span><span>- {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($discountAmount ?? 0, 2) }}</span></div>
                 <div class="d-flex justify-content-between mb-2"><span>Service fee</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($serviceFee ?? 0, 2) }}</span></div>
-                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><span>{{ $shipping <= 0 ? 'Free' : (config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP')) . ' ' . number_format($shipping, 2) }}</span></div>
-                <div class="d-flex justify-content-between mb-2"><span>Tax (est.)</span><span>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($tax ?? 0, 2) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><span id="shipping-display">{{ $shipping <= 0 ? 'Free' : (config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP')) . ' ' . number_format($shipping, 2) }}</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Tax (est.)</span><span id="tax-display">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($tax ?? 0, 2) }}</span></div>
                 <hr />
-                <div class="d-flex justify-content-between mb-0"><strong>Total</strong><strong>{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($total, 2) }}</strong></div>
+                <div class="d-flex justify-content-between mb-0"><strong>Total</strong><strong id="total-display">{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($total, 2) }}</strong></div>
             </div>
         </div>
 
@@ -239,31 +239,91 @@
 @push('scripts')
 <script>
     (function(){
-        const total = {{ json_encode($total) }};
-        const deposit = {{ json_encode($depositAmount) }};
+        const currencySymbol = '{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }}';
+        const feeConfig = @json($deliveryFeeData);   // { threshold, taxPercentage, servicePct }
+        const displaySubtotal = {{ json_encode($displaySubtotal) }};
+        const discountAmount  = {{ json_encode($discountAmount ?? 0) }};
+        const initialDeposit  = {{ json_encode($depositAmount) }};
 
-        const paymentTypeEl = document.getElementById('payment_type');
-        const chargeAmountEl = document.getElementById('charge-amount');
+        // Current live values — updated when city changes
+        let currentShipping = {{ json_encode($shipping) }};
+        let currentTotal    = {{ json_encode($total) }};
+        let currentDeposit  = {{ json_encode($depositAmount) }};
+
+        const shippingEl       = document.getElementById('shipping-display');
+        const taxEl            = document.getElementById('tax-display');
+        const totalEl          = document.getElementById('total-display');
+        const chargeAmountEl   = document.getElementById('charge-amount');
+        const depositAmountEl  = document.getElementById('deposit-amount');
+        const paymentTypeEl    = document.getElementById('payment_type');
+
+        function recalcTotals(shippingFee) {
+            const finalAfterDiscount = Math.max(0, displaySubtotal - discountAmount);
+            const freeThreshold = feeConfig.threshold;
+            const shipping = finalAfterDiscount >= freeThreshold ? 0 : shippingFee;
+
+            const serviceFee = Math.round(finalAfterDiscount * (feeConfig.servicePct / 100) * 100) / 100;
+            const tax = Math.round((finalAfterDiscount + serviceFee + shipping) * (feeConfig.taxPercentage / 100) * 100) / 100;
+            const total = Math.max(0, finalAfterDiscount + serviceFee + shipping + tax);
+
+            currentShipping = shipping;
+            currentTotal    = total;
+
+            if (shippingEl) {
+                shippingEl.textContent = shipping <= 0 ? 'Free' : currencySymbol + ' ' + shipping.toFixed(2);
+            }
+            if (taxEl) {
+                taxEl.textContent = currencySymbol + ' ' + tax.toFixed(2);
+            }
+            if (totalEl) {
+                totalEl.textContent = currencySymbol + ' ' + total.toFixed(2);
+            }
+            updateCharge();
+        }
 
         function updateCharge() {
-            if (!paymentTypeEl || !chargeAmountEl) return;
-            const v = paymentTypeEl.value;
+            if (!chargeAmountEl) return;
+            const v = paymentTypeEl ? paymentTypeEl.value : 'full';
             if (v === 'full') {
-                chargeAmountEl.textContent = Number(total).toFixed(2);
+                chargeAmountEl.textContent = currencySymbol + ' ' + currentTotal.toFixed(2);
             } else {
-                chargeAmountEl.textContent = Number(deposit).toFixed(2);
+                chargeAmountEl.textContent = currencySymbol + ' ' + currentDeposit.toFixed(2);
             }
         }
 
         if (paymentTypeEl) {
             paymentTypeEl.addEventListener('change', updateCharge);
-            // initialize
             updateCharge();
         }
 
+        // --- Live city fee lookup ---
+        let feeXhr = null;
+        function onCityChange(cityValue) {
+            if (feeXhr) feeXhr.abort();
+            if (!cityValue) return;
+
+            feeXhr = new XMLHttpRequest();
+            feeXhr.open('GET', '/checkout/delivery-fee?city=' + encodeURIComponent(cityValue), true);
+            feeXhr.onload = function() {
+                if (this.status === 200) {
+                    const data = JSON.parse(this.responseText);
+                    recalcTotals(data.fee);
+                }
+            };
+            feeXhr.send();
+        }
+
+        // Hook into all city selects on the page
+        document.querySelectorAll('select[name="city"]').forEach(function(select) {
+            select.addEventListener('change', function() {
+                onCityChange(this.value);
+            });
+            // Trigger on load if a city is already selected
+            if (select.value) onCityChange(select.value);
+        });
+
         // Toggle new-address fields when user selects 'Use a different address'
         const addressRadios = document.querySelectorAll('input[name="shipping_address_id"]');
-        const useNewRadio = document.getElementById('use_new_address');
         const newAddressBlock = document.getElementById('new-address-fields');
 
         function toggleNewAddressBlock() {
@@ -278,7 +338,6 @@
 
         if (addressRadios.length) {
             addressRadios.forEach(r => r.addEventListener('change', toggleNewAddressBlock));
-            // initialize
             toggleNewAddressBlock();
         }
 
@@ -288,7 +347,6 @@
         const placeLabel = document.getElementById('placeOrderLabel');
         if (checkoutForm && placeBtn) {
             checkoutForm.addEventListener('submit', function(e){
-                // Validate required fields
                 const paymentMethod = document.getElementById('payment_method');
                 const paymentType = document.getElementById('payment_type');
 
@@ -304,7 +362,6 @@
                     return false;
                 }
 
-                // Let the form submit normally, but disable the button to avoid double submits
                 placeBtn.disabled = true;
                 placeLabel.textContent = 'Processing...';
             });
@@ -330,7 +387,6 @@
             }, 5000);
         }
 
-        // Make showNotification available globally for other scripts
         window.showNotification = showNotification;
     })();
 </script>

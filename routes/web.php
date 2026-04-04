@@ -6,6 +6,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\DeliveryAreasController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SpecialOrderController;
@@ -69,6 +70,8 @@ Route::prefix('cart')->name('cart.')->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/hero-image', [SettingsController::class, 'uploadHero'])->name('settings.hero.upload');
+    Route::post('/settings/hero-image/reset', [SettingsController::class, 'resetHero'])->name('settings.hero.reset');
     // newsletter send form (admin-only routes are registered in the admin group below)
 });
 
@@ -81,6 +84,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/success', [CheckoutController::class, 'success'])->name('success');
         Route::get('/cancel', [CheckoutController::class, 'cancel'])->name('cancel');
     });
+    // AJAX: per-area delivery fee lookup (no CSRF needed, GET only)
+    Route::get('/checkout/delivery-fee', [CheckoutController::class, 'getDeliveryFee'])->name('checkout.delivery-fee');
 
     // Order routes - User's own orders
     Route::prefix('orders')->name('orders.')->group(function () {
@@ -161,6 +166,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Analytics
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
     Route::get('analytics/sales', [AnalyticsController::class, 'sales'])->name('analytics.sales');
+
+    // Delivery areas (per-city fees)
+    Route::resource('delivery-areas', DeliveryAreasController::class)->parameters([
+        'delivery-areas' => 'deliveryArea',
+    ]);
     // Admin newsletter send
     Route::get('newsletter/send', [NewsletterController::class, 'showSendForm'])->name('newsletter.send.form');
     Route::post('newsletter/send', [NewsletterController::class, 'send'])->name('newsletter.send');
@@ -205,3 +215,30 @@ Route::post('/payments/webhook/paymob', [PaymentWebhookController::class, 'handl
 Route::get('/payments/status/{order}', [PaymentWebhookController::class, 'checkStatus'])
     ->name('payments.status')
     ->middleware(['auth']);
+
+// --- Artisan Utility Routes (For Hosting Environments without SSH) ---
+Route::prefix('dev/cmd')->middleware(['auth'])->group(function () {
+    Route::get('/optimize', function () {
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        \Illuminate\Support\Facades\Artisan::call('optimize');
+        return 'Optimized successfully. <br> <a href="/">Go Home</a>';
+    });
+    
+    Route::get('/migrate', function () {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return 'Migrated successfully. <br> <a href="/">Go Home</a>';
+    });
+    
+    Route::get('/storage-link', function () {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return 'Storage linked successfully. <br> <a href="/">Go Home</a>';
+    });
+    
+    Route::get('/clear', function () {
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+        return 'Caches cleared successfully. <br> <a href="/">Go Home</a>';
+    });
+});
