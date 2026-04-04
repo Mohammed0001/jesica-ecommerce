@@ -119,12 +119,22 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-6 mb-4">
-                                <div class="form-check">
+                            <div class="col-md-3 mb-4">
+                                <div class="form-check mt-3">
                                     <input class="form-check-input" type="checkbox" id="is_one_of_a_kind" name="is_one_of_a_kind" value="1"
                                            {{ old('is_one_of_a_kind') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="is_one_of_a_kind">
                                         One of a kind product
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 mb-4">
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input" type="checkbox" id="is_sold_out" name="is_sold_out" value="1"
+                                           {{ old('is_sold_out') ? 'checked' : '' }}>
+                                    <label class="form-check-label text-danger fw-bold" for="is_sold_out">
+                                        Mark as Sold Out
                                     </label>
                                 </div>
                             </div>

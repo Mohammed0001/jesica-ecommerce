@@ -405,7 +405,8 @@
             width: 100%;
             height: auto;
             display: block;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: #f8f9fa;
             transition: transform 0.5s ease;
         }
 
@@ -440,7 +441,8 @@
         .mq-thumb img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: #f8f9fa;
             display: block;
         }
 
@@ -776,8 +778,9 @@
         .mq-product-card__img-wrap img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             display: block;
+            background-color: #f8f9fa;
             transition: transform 0.5s ease;
         }
 

@@ -334,7 +334,8 @@
         .product-image {
             width: 100%;
             height: 350px;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: #f8f9fa;
             display: block;
         }
 

@@ -59,7 +59,7 @@
                                             <img src="{{ data_get($item, 'product.main_image.url') ?? asset('images/picsum/600x800-1-0.jpg') }}"
                                                  class="img-fluid rounded"
                                                  alt="{{ data_get($item, 'product.name') }}"
-                                                 style="height: 80px; width: 80px; object-fit: cover;">
+                                                 style="height: 80px; width: 80px; object-fit: contain; background-color: #f8f9fa;">
                                         @else
                                             <div class="bg-light d-flex align-items-center justify-content-center rounded"
                                                  style="height: 80px; width: 80px;">
@@ -269,7 +269,7 @@
                                                         <img src="{{ asset('storage/' . $recentProduct['image']) }}"
                                                              class="card-img-top"
                                                              alt="{{ $recentProduct['name'] }}"
-                                                             style="height: 80px; object-fit: cover;">
+                                                             style="height: 80px; object-fit: contain; background-color: #f8f9fa;">
                                                     @else
                                                         <div class="bg-light d-flex align-items-center justify-content-center"
                                                              style="height: 80px;">
