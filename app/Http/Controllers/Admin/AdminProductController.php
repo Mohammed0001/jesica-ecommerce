@@ -49,6 +49,7 @@ class AdminProductController extends Controller
             'sku' => 'nullable|string|max:255',
             'quantity' => 'nullable|integer|min:0',
             'is_one_of_a_kind' => 'boolean',
+            'is_sold_out' => 'boolean',
             'size_chart_id' => 'nullable|exists:size_charts,id',
             'story' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
@@ -56,11 +57,12 @@ class AdminProductController extends Controller
             'visible' => 'boolean',
         ]);
 
-    $data = $request->only(['title', 'description', 'price', 'currency', 'collection_id', 'sku', 'quantity', 'is_one_of_a_kind', 'size_chart_id', 'story']);
+    $data = $request->only(['title', 'description', 'price', 'currency', 'collection_id', 'sku', 'quantity', 'is_one_of_a_kind', 'is_sold_out', 'size_chart_id', 'story']);
         $data['slug'] = Str::slug($request->title);
         $data['visible'] = $request->boolean('visible', true);
         $data['quantity'] = $request->input('quantity', 1);
         $data['is_one_of_a_kind'] = $request->boolean('is_one_of_a_kind', false);
+        $data['is_sold_out'] = $request->boolean('is_sold_out', false);
 
         // Handle image upload
         // product images are managed via ProductImage; admin UI will handle this separately
@@ -123,15 +125,17 @@ class AdminProductController extends Controller
             'sku' => 'nullable|string|max:255',
             'quantity' => 'nullable|integer|min:0',
             'is_one_of_a_kind' => 'boolean',
+            'is_sold_out' => 'boolean',
             'size_chart_id' => 'nullable|exists:size_charts,id',
             'story' => 'nullable|string',
         ]);
 
-    $data = $request->only(['title', 'description', 'price', 'currency', 'collection_id', 'sku', 'quantity', 'is_one_of_a_kind', 'size_chart_id', 'story']);
+    $data = $request->only(['title', 'description', 'price', 'currency', 'collection_id', 'sku', 'quantity', 'is_one_of_a_kind', 'is_sold_out', 'size_chart_id', 'story']);
         $data['collection_id'] = $request->input('collection_id') ?: null;
         $data['slug'] = Str::slug($request->title);
     $data['visible'] = $request->boolean('visible', $product->getAttribute('visible'));
     $data['is_one_of_a_kind'] = $request->boolean('is_one_of_a_kind', $product->getAttribute('is_one_of_a_kind'));
+    $data['is_sold_out'] = $request->boolean('is_sold_out', $product->getAttribute('is_sold_out'));
 
         // Handle image upload
         $imageService = app(ImageService::class);

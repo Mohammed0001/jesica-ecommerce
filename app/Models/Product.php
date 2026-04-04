@@ -24,6 +24,7 @@ class Product extends Model
         'sku',
         'quantity',
         'is_one_of_a_kind',
+        'is_sold_out',
         'visible',
         'size_chart_id',
     ];
@@ -31,6 +32,7 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'is_one_of_a_kind' => 'boolean',
+        'is_sold_out' => 'boolean',
         'visible' => 'boolean',
     ];
 
@@ -110,7 +112,7 @@ class Product extends Model
      */
     public function scopeAvailable(Builder $query): void
     {
-        $query->where('quantity', '>', 0);
+        $query->where('is_sold_out', false)->where('quantity', '>', 0);
     }
 
     /**
@@ -118,6 +120,9 @@ class Product extends Model
      */
     public function isAvailable(): bool
     {
+        if ($this->is_sold_out) {
+            return false;
+        }
         return $this->quantity > 0;
     }
 
@@ -126,6 +131,9 @@ class Product extends Model
      */
     public function isSoldOut(): bool
     {
+        if ($this->is_sold_out) {
+            return true;
+        }
         return $this->quantity <= 0;
     }
 
