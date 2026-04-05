@@ -105,10 +105,15 @@ class CheckoutController extends Controller
             'servicePct'    => $serviceFeePercentage,
         ];
 
+        // For smart cascading address picker on checkout
+        $cairoDistricts = Region::cairoDistricts();
+        $governorates   = Region::governorates();
+
         return view('checkout.show', compact(
             'cartItems', 'total', 'depositAmount', 'addresses',
             'displaySubtotal', 'shipping', 'serviceFee', 'tax',
-            'discountAmount', 'finalTotal', 'bostaCities', 'deliveryFeeData'
+            'discountAmount', 'finalTotal', 'bostaCities', 'deliveryFeeData',
+            'cairoDistricts', 'governorates'
         ));
     }
 

@@ -42,7 +42,7 @@
                 <li class="list-group-item d-flex align-items-center">
                     <div class="me-3" style="width:80px;height:100px;flex:0 0 80px;">
                         @if(!empty($item['product']['main_image_url']))
-                            <img src="{{ $item['product']['main_image_url'] }}" alt="{{ $item['product']['title'] }}" class="img-fluid" style="max-height:100px;object-fit:cover;">
+                            <img src="{{ $item['product']['main_image_url'] }}" alt="{{ $item['product']['title'] }}" class="img-fluid" style="max-height:100px;object-fit:contain;background:#f8f9fa;">
                         @else
                             <div class="bg-light" style="width:80px;height:100px;"></div>
                         @endif
@@ -82,52 +82,31 @@
 
             <div class="mb-3">
                 @if($addresses->isEmpty())
+                    {{-- ═══════════ NO SAVED ADDRESSES ═══════════ --}}
                     <p><strong>No saved addresses.</strong> Please provide a shipping address below.</p>
-
-                    {{-- Name fields removed: use profile name for recipient --}}
 
                     <div class="mb-2">
                         <label for="company">Company (optional)</label>
                         <input type="text" name="company" id="company" class="form-control" value="{{ old('company') }}">
                     </div>
-
                     <div class="mb-2">
-                        <label for="address_line_1">Address line 1</label>
+                        <label for="address_line_1">Address line 1 <span class="text-danger">*</span></label>
                         <input type="text" name="address_line_1" id="address_line_1" class="form-control" value="{{ old('address_line_1') }}" required>
                     </div>
-
                     <div class="mb-2">
                         <label for="address_line_2">Address line 2 (optional)</label>
                         <input type="text" name="address_line_2" id="address_line_2" class="form-control" value="{{ old('address_line_2') }}">
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-4 mb-2">
-                            <label for="city">City <span class="text-danger">*</span></label>
-                            <select name="city" id="city" class="form-control" required>
-                                <option value="">Select City</option>
-                                @foreach($bostaCities as $bostaCity)
-                                    <option value="{{ $bostaCity->name }}" {{ old('city') == $bostaCity->name ? 'selected' : '' }}>
-                                        {{ $bostaCity->name }} ({{ $bostaCity->name_ar }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <label for="state_province">District / Zone <span class="text-danger">*</span></label>
-                            <input type="text" name="state_province" id="state_province" class="form-control" value="{{ old('state_province') }}" required placeholder="e.g., Nasr City, Heliopolis, Maadi">
-                            <small class="text-muted">Enter the district or zone within the city</small>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <label for="postal_code">Postal code <span class="text-danger">*</span></label>
-                            <input type="text" name="postal_code" id="postal_code" class="form-control" value="{{ old('postal_code') }}" required>
-                        </div>
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="country">Country</label>
-                        <input type="text" name="country" id="country" class="form-control" value="{{ old('country', 'Egypt') }}" required>
-                    </div>
+                    {{-- Smart cascading location picker --}}
+                    @include('checkout._location_picker', [
+                        'prefix'         => 'new',
+                        'cairoDistricts' => $cairoDistricts,
+                        'governorates'   => $governorates,
+                        'oldCountry'     => old('country', 'Egypt'),
+                        'oldCity'        => old('city', ''),
+                        'oldDistrict'    => old('state_province', ''),
+                    ])
 
                     <div class="form-check mb-2">
                         <input type="checkbox" name="save_address" id="save_address" class="form-check-input" {{ old('save_address') ? 'checked' : '' }}>
@@ -139,69 +118,25 @@
                     </div>
 
                 @else
+                    {{-- ═══════════ SAVED ADDRESSES ═══════════ --}}
                     @foreach($addresses as $address)
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="shipping_address_id" id="addr-{{ $address->id }}" value="{{ $address->id }}" data-city="{{ $address->city }}" data-country="{{ $address->country }}" {{ $loop->first ? 'checked' : '' }}>
+                            <input class="form-check-input saved-addr-radio" type="radio"
+                                   name="shipping_address_id"
+                                   id="addr-{{ $address->id }}"
+                                   value="{{ $address->id }}"
+                                   data-city="{{ $address->city }}"
+                                   data-district="{{ $address->state_province }}"
+                                   data-country="{{ $address->country }}"
+                                   {{ $loop->first ? 'checked' : '' }}>
                             <label class="form-check-label" for="addr-{{ $address->id }}">
                                 {{ $address->formatted_address ?? $address->address_line_1 }}
+                                @if($address->city)
+                                    — <em>{{ $address->city }}{{ $address->state_province ? ', ' . $address->state_province : '' }}, {{ $address->country }}</em>
+                                @endif
                             </label>
                         </div>
                     @endforeach
-                    {{-- <div class="form-check mt-2 mb-3">
-                        <input class="form-check-input" type="radio" name="shipping_address_id" id="use_new_address" value="" {{ old('shipping_address_id') === null ? '' : '' }}>
-                        <label class="form-check-label" for="use_new_address">Use a different address</label>
-                    </div> --}}
-
-                    {{-- if user chooses different address, they can fill below - we still include the fields so backend can validate them when shipping_address_id is empty --}}
-                    <div class="collapse" id="new-address-fields" style="display:none;">
-                        <!-- New address inputs (name fields removed) -->
-                        <div class="mb-2">
-                            <label for="company">Company (optional)</label>
-                            <input type="text" name="company" id="company" class="form-control" value="{{ old('company') }}">
-                        </div>
-                        <div class="mb-2">
-                            <label for="address_line_1">Address line 1</label>
-                            <input type="text" name="address_line_1" id="address_line_1" class="form-control" value="{{ old('address_line_1') }}">
-                        </div>
-                        <div class="mb-2">
-                            <label for="address_line_2">Address line 2 (optional)</label>
-                            <input type="text" name="address_line_2" id="address_line_2" class="form-control" value="{{ old('address_line_2') }}">
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <label for="city">City</label>
-                                <select name="city" id="city" class="form-control">
-                                    <option value="">Select City</option>
-                                    @foreach($bostaCities as $bostaCity)
-                                        <option value="{{ $bostaCity->name }}" {{ old('city') == $bostaCity->name ? 'selected' : '' }}>
-                                            {{ $bostaCity->name }} ({{ $bostaCity->name_ar }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <label for="state_province">District / Zone</label>
-                                <input type="text" name="state_province" id="state_province" class="form-control" value="{{ old('state_province') }}" placeholder="e.g., Nasr City, Heliopolis, Maadi">
-                                <small class="text-muted">Enter the district or zone within the city</small>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <label for="postal_code">Postal code</label>
-                                <input type="text" name="postal_code" id="postal_code" class="form-control" value="{{ old('postal_code') }}">
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <label for="country">Country</label>
-                            <input type="text" name="country" id="country" class="form-control" value="{{ old('country', 'Egypt') }}">
-                        </div>
-                        <div class="form-check mb-2">
-                            <input type="checkbox" name="save_address" id="save_address" class="form-check-input" {{ old('save_address') ? 'checked' : '' }}>
-                            <label for="save_address" class="form-check-label">Save this address to my profile</label>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input type="checkbox" name="is_default" id="is_default" class="form-check-input" {{ old('is_default') ? 'checked' : '' }}>
-                            <label for="is_default" class="form-check-label">Set as my default shipping address</label>
-                        </div>
-                    </div>
                 @endif
             </div>
 
@@ -209,7 +144,6 @@
                 <label for="payment_type">Payment Type</label>
                 <select name="payment_type" id="payment_type" class="form-select">
                     <option value="full" {{ old('payment_type') === 'full' ? 'selected' : '' }}>Full</option>
-                    {{-- <option value="deposit" {{ old('payment_type') === 'deposit' ? 'selected' : '' }}>Deposit</option> --}}
                 </select>
             </div>
 
@@ -217,7 +151,6 @@
                 <label for="payment_method">Payment Method</label>
                 <select name="payment_method" id="payment_method" class="form-select" required>
                     <option value="cod" {{ old('payment_method', 'cod') === 'cod' ? 'selected' : '' }}>Cash on Delivery (COD)</option>
-                    {{-- <option value="mock_gateway" disabled>Mock (test) - Coming Soon</option> --}}
                     @if(config('services.paymob.api_key') || env('PAYMENT_PROVIDER') === 'paymob')
                         <option value="paymob" disabled>Paymob (card) - Coming Soon</option>
                     @endif
@@ -240,189 +173,133 @@
 <script>
     (function(){
         const currencySymbol = '{{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }}';
-        const feeConfig = @json($deliveryFeeData);   // { threshold, taxPercentage, servicePct }
+        const feeConfig = @json($deliveryFeeData);
         const displaySubtotal = {{ json_encode($displaySubtotal) }};
         const discountAmount  = {{ json_encode($discountAmount ?? 0) }};
-        const initialDeposit  = {{ json_encode($depositAmount) }};
 
-        // Current live values — updated when city changes
         let currentShipping = {{ json_encode($shipping) }};
         let currentTotal    = {{ json_encode($total) }};
         let currentDeposit  = {{ json_encode($depositAmount) }};
 
-        const shippingEl       = document.getElementById('shipping-display');
-        const taxEl            = document.getElementById('tax-display');
-        const totalEl          = document.getElementById('total-display');
-        const chargeAmountEl   = document.getElementById('charge-amount');
-        const depositAmountEl  = document.getElementById('deposit-amount');
-        const paymentTypeEl    = document.getElementById('payment_type');
+        const shippingEl      = document.getElementById('shipping-display');
+        const taxEl           = document.getElementById('tax-display');
+        const totalEl         = document.getElementById('total-display');
+        const chargeAmountEl  = document.getElementById('charge-amount');
+        const depositAmountEl = document.getElementById('deposit-amount');
+        const paymentTypeEl   = document.getElementById('payment_type');
 
         function recalcTotals(shippingFee) {
             const finalAfterDiscount = Math.max(0, displaySubtotal - discountAmount);
             const freeThreshold = feeConfig.threshold;
             const shipping = finalAfterDiscount >= freeThreshold ? 0 : shippingFee;
-
             const serviceFee = Math.round(finalAfterDiscount * (feeConfig.servicePct / 100) * 100) / 100;
             const tax = Math.round((finalAfterDiscount + serviceFee + shipping) * (feeConfig.taxPercentage / 100) * 100) / 100;
             const total = Math.max(0, finalAfterDiscount + serviceFee + shipping + tax);
-
             currentShipping = shipping;
-            currentTotal    = total;
-
-            if (shippingEl) {
-                shippingEl.textContent = shipping <= 0 ? 'Free' : currencySymbol + ' ' + shipping.toFixed(2);
-            }
-            if (taxEl) {
-                taxEl.textContent = currencySymbol + ' ' + tax.toFixed(2);
-            }
-            if (totalEl) {
-                totalEl.textContent = currencySymbol + ' ' + total.toFixed(2);
-            }
+            currentTotal = total;
+            if (shippingEl) shippingEl.textContent = shipping <= 0 ? 'Free' : currencySymbol + ' ' + shipping.toFixed(2);
+            if (taxEl) taxEl.textContent = currencySymbol + ' ' + tax.toFixed(2);
+            if (totalEl) totalEl.textContent = currencySymbol + ' ' + total.toFixed(2);
             updateCharge();
         }
 
         function updateCharge() {
             if (!chargeAmountEl) return;
             const v = paymentTypeEl ? paymentTypeEl.value : 'full';
-            if (v === 'full') {
-                chargeAmountEl.textContent = currencySymbol + ' ' + currentTotal.toFixed(2);
-            } else {
-                chargeAmountEl.textContent = currencySymbol + ' ' + currentDeposit.toFixed(2);
-            }
+            chargeAmountEl.textContent = currencySymbol + ' ' + (v === 'full' ? currentTotal : currentDeposit).toFixed(2);
         }
 
-        if (paymentTypeEl) {
-            paymentTypeEl.addEventListener('change', updateCharge);
-            updateCharge();
+        if (paymentTypeEl) { paymentTypeEl.addEventListener('change', updateCharge); updateCharge(); }
+
+        // ─── Live delivery fee lookup ───
+        let feeTimer = null;
+        function fetchDeliveryFee(city, district, country) {
+            clearTimeout(feeTimer);
+            feeTimer = setTimeout(function() {
+                const url = '/checkout/delivery-fee'
+                    + '?city='     + encodeURIComponent(city     || '')
+                    + '&district=' + encodeURIComponent(district || '')
+                    + '&country='  + encodeURIComponent(country  || 'Egypt');
+                fetch(url)
+                    .then(r => r.json())
+                    .then(data => recalcTotals(data.fee))
+                    .catch(() => {});
+            }, 250);
         }
 
-        // --- Live city fee lookup ---
-        let feeXhr = null;
-        function onDeliveryLocationChange() {
-            if (feeXhr) feeXhr.abort();
+        // ─── Read location from the cascading picker ───
+        function getPickerLocation() {
+            const countryEl  = document.getElementById('checkout_country');
+            const govEl      = document.getElementById('checkout_governorate');
+            const cairoEl    = document.getElementById('checkout_cairo_area');
 
-            // Try to find the visible address fields block
-            let newAddressBlock = document.getElementById('new-address-fields');
-            let isUsingNewAddress = newAddressBlock && newAddressBlock.style.display !== 'none';
-            // Also if there's no saved addresses, the inputs are directly inside the form
-            let hasNoSavedAddresses = document.querySelectorAll('input[name="shipping_address_id"]').length === 0;
+            if (!countryEl) return { city: '', district: '', country: 'Egypt' };
 
-            let cityValue = '';
-            let countryValue = 'Egypt';
-
-            if (isUsingNewAddress || hasNoSavedAddresses) {
-                // Get from visible inputs (either new address form or fallback form)
-                let visibleCity = Array.from(document.querySelectorAll('select[name="city"], input[name="city"]')).find(el => el.offsetParent !== null);
-                if (visibleCity) cityValue = visibleCity.value;
-
-                let visibleCountry = Array.from(document.querySelectorAll('input[name="country"]')).find(el => el.offsetParent !== null);
-                if (visibleCountry) countryValue = visibleCountry.value;
-            } else {
-                // Address radio button selected
-                let selectedRadio = document.querySelector('input[name="shipping_address_id"]:checked');
-                if (selectedRadio) {
-                    cityValue = selectedRadio.getAttribute('data-city') || '';
-                    countryValue = selectedRadio.getAttribute('data-country') || 'Egypt';
-                }
+            const country = countryEl.value;
+            if (country === 'International') {
+                return { city: '', district: '', country: 'International' };
             }
-
-            feeXhr = new XMLHttpRequest();
-            feeXhr.open('GET', '/checkout/delivery-fee?city=' + encodeURIComponent(cityValue) + '&country=' + encodeURIComponent(countryValue), true);
-            feeXhr.onload = function() {
-                if (this.status === 200) {
-                    const data = JSON.parse(this.responseText);
-                    recalcTotals(data.fee);
-                }
-            };
-            feeXhr.send();
+            // Egypt selected
+            const gov = govEl ? govEl.value : '';
+            if (gov === 'Cairo') {
+                const area = cairoEl ? cairoEl.value : '';
+                return { city: 'Cairo', district: area, country: 'Egypt' };
+            }
+            return { city: gov, district: '', country: 'Egypt' };
         }
 
-        // Hook into all city and country inputs
-        document.querySelectorAll('select[name="city"], input[name="country"]').forEach(function(el) {
-            el.addEventListener('change', onDeliveryLocationChange);
-            if (el.tagName.toLowerCase() === 'input') {
-                el.addEventListener('keyup', function() {
-                    // debounce simple
-                    clearTimeout(el.dataset.timeout);
-                    el.dataset.timeout = setTimeout(onDeliveryLocationChange, 400);
-                });
-            }
+        function onPickerChange() {
+            const loc = getPickerLocation();
+            // Sync hidden form fields
+            const hiddenCity     = document.getElementById('hidden_city');
+            const hiddenDistrict = document.getElementById('hidden_district');
+            const hiddenCountry  = document.getElementById('hidden_country');
+            if (hiddenCity)     hiddenCity.value     = loc.city;
+            if (hiddenDistrict) hiddenDistrict.value = loc.district;
+            if (hiddenCountry)  hiddenCountry.value  = loc.country;
+            fetchDeliveryFee(loc.city, loc.district, loc.country);
+        }
+
+        // Hook picker selects
+        ['checkout_country', 'checkout_governorate', 'checkout_cairo_area'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', onPickerChange);
         });
 
-        // Hook into address radios
-        document.querySelectorAll('input[name="shipping_address_id"]').forEach(function(radio) {
-            radio.addEventListener('change', onDeliveryLocationChange);
+        // Hook saved address radios
+        document.querySelectorAll('.saved-addr-radio').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const city     = this.dataset.city     || '';
+                const district = this.dataset.district || '';
+                const country  = this.dataset.country  || 'Egypt';
+                fetchDeliveryFee(city, district, country);
+            });
         });
-        
+
         // Trigger on load
-        onDeliveryLocationChange();
-
-        // Toggle new-address fields when user selects 'Use a different address'
-        const addressRadios = document.querySelectorAll('input[name="shipping_address_id"]');
-        const newAddressBlock = document.getElementById('new-address-fields');
-
-        function toggleNewAddressBlock() {
-            if (!newAddressBlock) return;
-            const selected = document.querySelector('input[name="shipping_address_id"]:checked');
-            if (selected && selected.id === 'use_new_address') {
-                newAddressBlock.style.display = '';
-            } else {
-                newAddressBlock.style.display = 'none';
-            }
+        const firstRadio = document.querySelector('.saved-addr-radio:checked');
+        if (firstRadio) {
+            fetchDeliveryFee(firstRadio.dataset.city || '', firstRadio.dataset.district || '', firstRadio.dataset.country || 'Egypt');
+        } else {
+            onPickerChange();
         }
 
-        if (addressRadios.length) {
-            addressRadios.forEach(r => r.addEventListener('change', toggleNewAddressBlock));
-            toggleNewAddressBlock();
-        }
-
-        // Prevent multiple submits and provide feedback
+        // Prevent double-submit
         const checkoutForm = document.getElementById('checkoutForm');
         const placeBtn = document.getElementById('placeOrderButton');
         const placeLabel = document.getElementById('placeOrderLabel');
         if (checkoutForm && placeBtn) {
-            checkoutForm.addEventListener('submit', function(e){
-                const paymentMethod = document.getElementById('payment_method');
-                const paymentType = document.getElementById('payment_type');
-
-                if (!paymentMethod || !paymentMethod.value) {
+            checkoutForm.addEventListener('submit', function(e) {
+                const pm = document.getElementById('payment_method');
+                if (!pm || !pm.value) {
                     e.preventDefault();
-                    showNotification('Please select a payment method', 'error');
+                    alert('Please select a payment method');
                     return false;
                 }
-
-                if (!paymentType || !paymentType.value) {
-                    e.preventDefault();
-                    showNotification('Please select a payment type', 'error');
-                    return false;
-                }
-
                 placeBtn.disabled = true;
                 placeLabel.textContent = 'Processing...';
             });
         }
-
-        function showNotification(message, type = 'info') {
-            const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
-            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
-            const notification = document.createElement('div');
-            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 80px; right: 20px; z-index: 9999; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-            notification.innerHTML = `
-                <i class="fas ${icon} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-
-        window.showNotification = showNotification;
     })();
 </script>
 @endpush

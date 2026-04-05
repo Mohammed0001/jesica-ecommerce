@@ -80,8 +80,9 @@ class DeliveryAreasController extends Controller
     {
         $request->validate([
             'name'         => 'required|string|max:255',
+            'type'         => 'required|in:cairo_district,governorate',
             'delivery_fee' => 'required|numeric|min:0',
-            'city_names'   => 'required|string', // comma-separated, converted below
+            'city_names'   => 'required|string',
         ]);
 
         // Convert comma-separated city names to array, trimming whitespace
@@ -92,6 +93,7 @@ class DeliveryAreasController extends Controller
 
         return [
             'name'         => $request->name,
+            'type'         => $request->type,
             'delivery_fee' => $request->delivery_fee,
             'city_names'   => array_values($cityNames),
         ];

@@ -10,6 +10,7 @@ class Region extends Model
     protected $fillable = [
         'name',
         'code',
+        'type',
         'delivery_fee',
         'city_names',
     ];
@@ -18,6 +19,18 @@ class Region extends Model
         'delivery_fee' => 'float',
         'city_names'   => 'array',
     ];
+
+    /** Regions that are Cairo sub-districts */
+    public static function cairoDistricts()
+    {
+        return static::where('type', 'cairo_district')->orderBy('name')->get();
+    }
+
+    /** Regions that are full governorates (non-Cairo) */
+    public static function governorates()
+    {
+        return static::where('type', 'governorate')->orderBy('name')->get();
+    }
 
     /**
      * Get all users in this region

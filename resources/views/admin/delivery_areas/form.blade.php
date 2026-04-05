@@ -39,10 +39,33 @@
                            id="name"
                            class="form-control @error('name') is-invalid @enderror"
                            value="{{ old('name', $area?->name) }}"
-                           placeholder="e.g., Greater Cairo, Alexandria, Giza"
+                           placeholder="e.g., Maadi, Alexandria, Giza"
                            required>
-                    <div class="form-text">A descriptive label for this delivery zone (not shown to customers).</div>
+                    <div class="form-text">A descriptive label for this delivery zone.</div>
                     @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Area Type <span class="text-danger">*</span></label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="type" id="type_cairo" value="cairo_district"
+                                {{ old('type', $area?->type ?? 'governorate') === 'cairo_district' ? 'checked' : '' }}>
+                            <label class="form-check-label" for="type_cairo">
+                                <strong>Cairo District</strong>
+                                <small class="text-muted d-block">A specific area <em>within</em> Cairo (e.g., Maadi, Nasr City, Zamalek)</small>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline mt-2">
+                            <input class="form-check-input" type="radio" name="type" id="type_gov" value="governorate"
+                                {{ old('type', $area?->type ?? 'governorate') === 'governorate' ? 'checked' : '' }}>
+                            <label class="form-check-label" for="type_gov">
+                                <strong>Governorate</strong>
+                                <small class="text-muted d-block">An entire Egyptian governorate (e.g., Alexandria, Giza, Luxor)</small>
+                            </label>
+                        </div>
+                    </div>
+                    @error('type')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="mb-3">

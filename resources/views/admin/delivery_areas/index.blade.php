@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0 fw-bold">Delivery Areas</h1>
-            <p class="text-muted small mb-0">Set per-city / per-area delivery fees. Cities not listed will use the global delivery fee from Settings.</p>
+            <p class="text-muted small mb-0">Configure per-area delivery fees. Cairo districts have individual pricing; other governorates have a single fee. International orders use the global international fee.</p>
         </div>
         <a href="{{ route('admin.delivery-areas.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i> Add Area
@@ -35,8 +35,9 @@
                     <thead class="table-dark">
                         <tr>
                             <th>Area Name</th>
+                            <th>Type</th>
                             <th>Delivery Fee</th>
-                            <th>City Names (matched at checkout)</th>
+                            <th>Matched Name(s)</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -44,6 +45,13 @@
                         @foreach($areas as $area)
                         <tr>
                             <td class="fw-semibold">{{ $area->name }}</td>
+                            <td>
+                                @if($area->type === 'cairo_district')
+                                    <span class="badge bg-warning text-dark">Cairo District</span>
+                                @else
+                                    <span class="badge bg-primary">Governorate</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($area->delivery_fee !== null)
                                     <span class="badge bg-success fs-6">{{ number_format($area->delivery_fee, 2) }} EGP</span>
