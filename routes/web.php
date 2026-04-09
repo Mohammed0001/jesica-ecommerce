@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\GuestCheckoutController;
 
 // PUBLIC ROUTES - No authentication required
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -52,6 +53,14 @@ Route::get('/collections/{collection:slug}', [CollectionController::class, 'show
 // Products - Public access
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+
+// Guest Checkout - No login required
+Route::prefix('checkout/guest')->name('guest.checkout.')->group(function () {
+    Route::get('/', [GuestCheckoutController::class, 'show'])->name('show');
+    Route::post('/process', [GuestCheckoutController::class, 'process'])->name('process');
+    Route::get('/confirmation/{order}', [GuestCheckoutController::class, 'confirmation'])->name('confirmation');
+    Route::get('/delivery-fee', [GuestCheckoutController::class, 'getDeliveryFee'])->name('delivery-fee');
+});
 
 // Cart routes - Public access (session-based)
 Route::prefix('cart')->name('cart.')->group(function () {
@@ -240,5 +249,25 @@ Route::prefix('dev/cmd')->middleware(['auth'])->group(function () {
         \Illuminate\Support\Facades\Artisan::call('route:clear');
         \Illuminate\Support\Facades\Artisan::call('view:clear');
         return 'Caches cleared successfully. <br> <a href="/">Go Home</a>';
+    });
+
+    Route::get('/seed/cairo-areas', function () {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CairoAreasSeeder', '--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return 'Cairo areas seeded. <br><pre>' . e($output) . '</pre><a href="/">Go Home</a>';
+    });
+
+    Route::get('/seed/regions', function () {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RegionSeeder', '--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return 'Regions seeded. <br><pre>' . e($output) . '</pre><a href="/">Go Home</a>';
+    });
+
+    Route::get('/seed/all', function () {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RegionSeeder', '--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'CairoAreasSeeder', '--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'BostaCitySeeder', '--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return 'All seeders ran. <br><pre>' . e($output) . '</pre><a href="/">Go Home</a>';
     });
 });

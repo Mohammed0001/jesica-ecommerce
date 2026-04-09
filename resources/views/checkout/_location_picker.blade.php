@@ -60,27 +60,33 @@
         <small class="text-muted">Select your governorate. Cairo has area-specific pricing.</small>
     </div>
 
-    {{-- ── Step 3: Cairo Area (only when Cairo selected) ── --}}
+    {{-- ── Step 3: Cairo Area (combobox — type to search or pick) ── --}}
     <div class="col-md-4 mb-3" id="cairoAreaWrapper" style="{{ ($isEgypt && $isCairo) ? '' : 'display:none;' }}">
         <label for="checkout_cairo_area" class="form-label fw-semibold">
             Cairo Area <span class="text-danger">*</span>
         </label>
-        <select id="checkout_cairo_area" class="form-select">
-            <option value="">— Select Area —</option>
+
+        {{-- Datalist provides the autocomplete suggestions --}}
+        <datalist id="cairo_area_options">
             @foreach($cairoDistricts as $district)
-                @php
-                    $districtName = $district->city_names[0] ?? $district->name;
-                @endphp
+                @php $districtName = $district->city_names[0] ?? $district->name; @endphp
                 <option value="{{ $districtName }}"
-                    {{ strtolower($oldDistrict ?? '') === strtolower($districtName) ? 'selected' : '' }}>
+                        data-fee="{{ $district->delivery_fee }}">
                     {{ $district->name }}
-                    @if($district->delivery_fee > 0)
-                        — {{ number_format($district->delivery_fee, 0) }} EGP
-                    @endif
+                    @if($district->delivery_fee > 0)({{ number_format($district->delivery_fee, 0) }} EGP)@endif
                 </option>
             @endforeach
-        </select>
-        <small class="text-muted">Pricing varies by Cairo area.</small>
+        </datalist>
+
+        <input type="text"
+               id="checkout_cairo_area"
+               list="cairo_area_options"
+               class="form-control"
+               placeholder="Type to search area…"
+               value="{{ $oldDistrict ?? '' }}"
+               autocomplete="off">
+
+        <small class="text-muted">Type or pick your Cairo area. Pricing varies by area.</small>
     </div>
 
     {{-- Postal code --}}
@@ -159,6 +165,7 @@
     countryEl.addEventListener('change', onCountryChange);
     govEl.addEventListener('change', onGovChange);
     cairoAreaEl.addEventListener('change', onCairoAreaChange);
+    cairoAreaEl.addEventListener('input', onCairoAreaChange);
 
     // Init
     syncHiddens();

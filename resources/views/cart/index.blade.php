@@ -232,11 +232,16 @@
                             </div>
                         @endif
 
-                        <!-- Checkout Button -->
-                        <div class="d-grid">
-                            <a href="{{ route('checkout.index') }}" class="btn btn-primary btn-lg">
+                        <!-- Checkout Buttons -->
+                        <div class="d-grid gap-2">
+                            <a href="{{ route('guest.checkout.show') }}" class="btn btn-primary btn-lg">
                                 Proceed to Checkout
                             </a>
+                            @auth
+                            <a href="{{ route('checkout.index') }}" class="btn btn-outline-secondary btn-sm text-muted">
+                                <i class="fas fa-user me-1"></i> Checkout with your account
+                            </a>
+                            @endauth
                         </div>
 
                         <!-- Payment Options -->

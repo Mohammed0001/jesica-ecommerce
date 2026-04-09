@@ -15,7 +15,7 @@ class OrderService
     /**
      * Create a new order from cart items
      */
-    public function createOrder(User $user, Collection $cartItems, ?int $shippingAddressId = null, ?string $city = null, ?string $district = null, ?string $country = 'Egypt'): Order
+    public function createOrder(?User $user, Collection $cartItems, ?int $shippingAddressId = null, ?string $city = null, ?string $district = null, ?string $country = 'Egypt', array $guestData = []): Order
     {
         // Calculate subtotal from product prices
         $subtotal = $this->calculateTotal($cartItems);
@@ -44,7 +44,10 @@ class OrderService
         $totalAmount = round(max(0, $finalAfterDiscount + $serviceFee + $shippingAmount + $taxAmount), 2);
 
         $order = Order::create([
-            'user_id' => $user->id,
+            'user_id' => $user?->id,
+            'guest_email' => $guestData['email'] ?? null,
+            'guest_name' => $guestData['name'] ?? null,
+            'guest_phone' => $guestData['phone'] ?? null,
             'subtotal' => $subtotal,
             'discount_amount' => $discountAmount,
             'shipping_amount' => $shippingAmount,
