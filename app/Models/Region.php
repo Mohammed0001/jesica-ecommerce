@@ -13,6 +13,7 @@ class Region extends Model
         'type',
         'delivery_fee',
         'city_names',
+        'bosta_id',
     ];
 
     protected $casts = [
@@ -20,16 +21,22 @@ class Region extends Model
         'city_names'   => 'array',
     ];
 
-    /** Regions that are Cairo sub-districts */
+    /** All Bosta-backed regions (governorate level) */
     public static function cairoDistricts()
     {
-        return static::where('type', 'cairo_district')->orderBy('name')->get();
+        return collect(); // Bosta regions are governorate-level; no sub-districts
     }
 
-    /** Regions that are full governorates (non-Cairo) */
+    /** All delivery regions */
     public static function governorates()
     {
-        return static::where('type', 'governorate')->orderBy('name')->get();
+        return static::whereNotNull('bosta_id')->orderBy('name')->get();
+    }
+
+    /** Look up a region by Bosta city ID */
+    public static function findByBostaId(string $bostaId): ?static
+    {
+        return static::where('bosta_id', $bostaId)->first();
     }
 
     /**
@@ -59,6 +66,14 @@ class Region extends Model
 
         $cityLower = $city ? mb_strtolower(trim($city)) : null;
         $districtLower = $district ? mb_strtolower(trim($district)) : null;
+
+        // Fast path: match by Bosta city ID
+        if ($city) {
+            $byBosta = static::where('bosta_id', $city)->whereNotNull('delivery_fee')->first();
+            if ($byBosta) {
+                return (float) $byBosta->delivery_fee;
+            }
+        }
 
         $regions = static::whereNotNull('delivery_fee')
             ->whereNotNull('city_names')

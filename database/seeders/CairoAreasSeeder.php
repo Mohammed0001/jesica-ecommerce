@@ -6,114 +6,243 @@ use App\Models\Region;
 use Illuminate\Database\Seeder;
 
 /**
- * Seed Cairo delivery districts and all Egyptian governorates.
+ * Seed delivery regions from Bosta's Egyptian city list.
  * Run with: php artisan db:seed --class=CairoAreasSeeder
  *
- * Fees are examples — adjust in Admin → Delivery Areas.
+ * Fees are defaults — adjust in Admin → Delivery Areas.
  */
 class CairoAreasSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Cairo Districts ─────────────────────────────────────────────
-        // type = cairo_district
-        // city_names[0] is the canonical match key used in the picker
-        $cairoDistricts = [
-            // Central Cairo
-            ['name' => 'Downtown Cairo',        'code' => 'cairo-downtown',        'fee' => 50,  'aliases' => ['Downtown Cairo', 'وسط القاهرة', 'Downtown']],
-            ['name' => 'Zamalek',               'code' => 'cairo-zamalek',         'fee' => 55,  'aliases' => ['Zamalek', 'الزمالك']],
-            ['name' => 'Garden City',           'code' => 'cairo-garden-city',     'fee' => 55,  'aliases' => ['Garden City', 'جاردن سيتي']],
-            ['name' => 'Mohandiseen',           'code' => 'cairo-mohandiseen',     'fee' => 55,  'aliases' => ['Mohandiseen', 'المهندسين']],
-            ['name' => 'Agouza',                'code' => 'cairo-agouza',          'fee' => 55,  'aliases' => ['Agouza', 'العجوزة']],
-            ['name' => 'Dokki',                 'code' => 'cairo-dokki',           'fee' => 55,  'aliases' => ['Dokki', 'الدقي']],
-            ['name' => 'Imbaba',                'code' => 'cairo-imbaba',          'fee' => 60,  'aliases' => ['Imbaba', 'إمبابة']],
+        // Source: BostaCitySeeder (matches Bosta's city IDs exactly)
+        // sector 1 = Greater Cairo, 2 = Alexandria belt, 3 = Delta,
+        // 4 = Middle Egypt, 5 = Upper Egypt / coasts, 6 = North Coast, 7 = Remote
+        $cities = [
+            // Greater Cairo — sector 1
+            [
+                'bosta_id' => 'FceDyHXwpSYYF9zGW',
+                'name'     => 'Cairo',
+                'code'     => 'EG-01',
+                'fee'      => 50,
+                'aliases'  => ['Cairo', 'القاهرة', 'القاهره', 'Al Qahirah'],
+            ],
+            [
+                'bosta_id' => '0064Qb0OgcA',
+                'name'     => 'Giza',
+                'code'     => 'EG-25',
+                'fee'      => 55,
+                'aliases'  => ['Giza', 'الجيزة', 'الجيزه'],
+            ],
 
-            // East Cairo
-            ['name' => 'Heliopolis (Masr El Gedida)', 'code' => 'cairo-heliopolis', 'fee' => 60,  'aliases' => ['Heliopolis', 'Masr El Gedida', 'مصر الجديدة']],
-            ['name' => 'Nasr City',             'code' => 'cairo-nasr-city',       'fee' => 60,  'aliases' => ['Nasr City', 'مدينة نصر']],
-            ['name' => 'El Nozha',              'code' => 'cairo-nozha',           'fee' => 60,  'aliases' => ['El Nozha', 'النزهة']],
-            ['name' => 'El Obour City',         'code' => 'cairo-obour',           'fee' => 75,  'aliases' => ['El Obour City', 'مدينة العبور', 'Obour']],
-            ['name' => 'Ain Shams',             'code' => 'cairo-ain-shams',       'fee' => 60,  'aliases' => ['Ain Shams', 'عين شمس']],
-            ['name' => 'El Mataria',            'code' => 'cairo-mataria',         'fee' => 60,  'aliases' => ['El Mataria', 'المطرية']],
-            ['name' => 'El Zeitoun',            'code' => 'cairo-zeitoun',         'fee' => 60,  'aliases' => ['El Zeitoun', 'الزيتون']],
-            ['name' => 'Shoubra',               'code' => 'cairo-shoubra',         'fee' => 60,  'aliases' => ['Shoubra', 'شبرا']],
-            ['name' => 'Shoubra El Kheima',     'code' => 'cairo-shoubra-kheima',  'fee' => 65,  'aliases' => ['Shoubra El Kheima', 'شبرا الخيمة']],
+            // Alexandria belt — sector 2
+            [
+                'bosta_id' => 'Jrb6X6ucjiYgMP4T7',
+                'name'     => 'Alexandria',
+                'code'     => 'EG-02',
+                'fee'      => 80,
+                'aliases'  => ['Alexandria', 'الإسكندرية', 'الاسكندريه'],
+            ],
+            [
+                'bosta_id' => 'g3GchTSmCgR2JynsJ',
+                'name'     => 'Beheira',
+                'code'     => 'EG-04',
+                'fee'      => 85,
+                'aliases'  => ['Beheira', 'البحيرة', 'البحيره'],
+            ],
 
-            // West Cairo / New
-            ['name' => 'October City (6th of October)', 'code' => 'cairo-6-october', 'fee' => 70, 'aliases' => ['October City', '6th of October', 'السادس من أكتوبر', '6 October']],
-            ['name' => 'Sheikh Zayed',          'code' => 'cairo-sheikh-zayed',    'fee' => 70,  'aliases' => ['Sheikh Zayed', 'الشيخ زايد']],
-            ['name' => 'Haram',                 'code' => 'cairo-haram',           'fee' => 60,  'aliases' => ['Haram', 'الهرم']],
-            ['name' => 'Faisal',                'code' => 'cairo-faisal',          'fee' => 60,  'aliases' => ['Faisal', 'فيصل']],
-            ['name' => 'El Warraq',             'code' => 'cairo-warraq',          'fee' => 65,  'aliases' => ['El Warraq', 'الوراق']],
+            // Delta — sector 3
+            [
+                'bosta_id' => 'yp3atroeTwnyiBNKE',
+                'name'     => 'Qalyubia',
+                'code'     => 'EG-06',
+                'fee'      => 65,
+                'aliases'  => ['Qalyubia', 'القليوبية', 'القليوبيه', 'El Kalioubia'],
+            ],
+            [
+                'bosta_id' => 'RrDhS8YYsXAwZ9Zfo',
+                'name'     => 'Dakahlia',
+                'code'     => 'EG-05',
+                'fee'      => 80,
+                'aliases'  => ['Dakahlia', 'الدقهلية', 'الدقهليه'],
+            ],
+            [
+                'bosta_id' => '6ExcoGbpYHnggP8JD',
+                'name'     => 'Sharqia',
+                'code'     => 'EG-10',
+                'fee'      => 80,
+                'aliases'  => ['Sharqia', 'الشرقية', 'الشرقيه', 'Sharkia'],
+            ],
+            [
+                'bosta_id' => 'ruBSjGBDX9wpRa3cc',
+                'name'     => 'Monufia',
+                'code'     => 'EG-09',
+                'fee'      => 80,
+                'aliases'  => ['Monufia', 'المنوفية', 'المنوفيه', 'Menofia'],
+            ],
+            [
+                'bosta_id' => 'K3RwC677J8kJytdZD',
+                'name'     => 'Gharbia',
+                'code'     => 'EG-07',
+                'fee'      => 85,
+                'aliases'  => ['Gharbia', 'الغربية', 'الغربيه'],
+            ],
+            [
+                'bosta_id' => 'ByP7rFCjL6XzF6j4S',
+                'name'     => 'Kafr El Sheikh',
+                'code'     => 'EG-08',
+                'fee'      => 90,
+                'aliases'  => ['Kafr El Sheikh', 'كفر الشيخ', 'Kafr Alsheikh', 'Kafr Al-Sheikh'],
+            ],
+            [
+                'bosta_id' => 'qoZvYcZ8Cqji4pGp5',
+                'name'     => 'Damietta',
+                'code'     => 'EG-14',
+                'fee'      => 85,
+                'aliases'  => ['Damietta', 'دمياط'],
+            ],
+            [
+                'bosta_id' => 'PJqNriLtFtx2cfkKP',
+                'name'     => 'Ismailia',
+                'code'     => 'EG-11',
+                'fee'      => 85,
+                'aliases'  => ['Ismailia', 'الإسماعيلية', 'الاسماعيليه'],
+            ],
+            [
+                'bosta_id' => 'skFtf6ZmKo8kBEBDK',
+                'name'     => 'Port Said',
+                'code'     => 'EG-13',
+                'fee'      => 85,
+                'aliases'  => ['Port Said', 'بورسعيد', 'بور سعيد'],
+            ],
+            [
+                'bosta_id' => 'PickurJ5uJZ9rDTHW',
+                'name'     => 'Suez',
+                'code'     => 'EG-12',
+                'fee'      => 85,
+                'aliases'  => ['Suez', 'السويس'],
+            ],
 
-            // New Cairo / East
-            ['name' => 'New Cairo (5th Settlement)', 'code' => 'cairo-new-cairo', 'fee' => 65,   'aliases' => ['New Cairo', '5th Settlement', 'القاهرة الجديدة', 'التجمع الخامس']],
-            ['name' => 'Maadi',                 'code' => 'cairo-maadi',           'fee' => 60,  'aliases' => ['Maadi', 'المعادي']],
-            ['name' => 'Helwan',                'code' => 'cairo-helwan',          'fee' => 65,  'aliases' => ['Helwan', 'حلوان']],
-            ['name' => 'El Basatin',            'code' => 'cairo-basatin',         'fee' => 60,  'aliases' => ['El Basatin', 'البساتين']],
-            ['name' => 'El Marg',               'code' => 'cairo-marg',            'fee' => 65,  'aliases' => ['El Marg', 'المرج']],
-            ['name' => 'Mostorod',              'code' => 'cairo-mostorod',        'fee' => 70,  'aliases' => ['Mostorod', 'مسطرد']],
+            // Middle Egypt — sector 4
+            [
+                'bosta_id' => 'LzbbvTzZ7D2CgE2PL',
+                'name'     => 'Beni Suef',
+                'code'     => 'EG-16',
+                'fee'      => 85,
+                'aliases'  => ['Beni Suef', 'بني سويف', 'Bani Suif'],
+            ],
+            [
+                'bosta_id' => 'BW5MiNxEirB7tuz2y',
+                'name'     => 'Fayoum',
+                'code'     => 'EG-15',
+                'fee'      => 85,
+                'aliases'  => ['Fayoum', 'الفيوم', 'Faiyum'],
+            ],
+            [
+                'bosta_id' => 'si6eLnKjXqTFTMBj9',
+                'name'     => 'Minya',
+                'code'     => 'EG-19',
+                'fee'      => 90,
+                'aliases'  => ['Minya', 'المنيا', 'Menya'],
+            ],
+            [
+                'bosta_id' => '7mDPAohM3ArSZmWTm',
+                'name'     => 'Assiut',
+                'code'     => 'EG-17',
+                'fee'      => 95,
+                'aliases'  => ['Assiut', 'أسيوط', 'Assuit', 'Asyut'],
+            ],
+            [
+                'bosta_id' => 'n3EENg2adhuR9xBZK',
+                'name'     => 'Sohag',
+                'code'     => 'EG-18',
+                'fee'      => 95,
+                'aliases'  => ['Sohag', 'سوهاج'],
+            ],
 
-            // Other popular areas
-            ['name' => 'Shubra El Kheima',      'code' => 'cairo-shubra-kheima',   'fee' => 65,  'aliases' => ['Shubra El Kheima', 'شبرا الخيمة']],
-            ['name' => 'Badr City',             'code' => 'cairo-badr',            'fee' => 80,  'aliases' => ['Badr City', 'مدينة بدر']],
+            // Upper Egypt / coasts — sector 5
+            [
+                'bosta_id' => 'vfTHTes3uGjAszgtg',
+                'name'     => 'Qena',
+                'code'     => 'EG-20',
+                'fee'      => 100,
+                'aliases'  => ['Qena', 'قنا'],
+            ],
+            [
+                'bosta_id' => 'wgYEdH2WMzxGE2Ztp',
+                'name'     => 'Luxor',
+                'code'     => 'EG-22',
+                'fee'      => 100,
+                'aliases'  => ['Luxor', 'الأقصر', 'الاقصر'],
+            ],
+            [
+                'bosta_id' => 'kLvZ5JY6LJPL5chzN',
+                'name'     => 'Aswan',
+                'code'     => 'EG-21',
+                'fee'      => 100,
+                'aliases'  => ['Aswan', 'أسوان', 'اسوان'],
+            ],
+            [
+                'bosta_id' => 'r5TscLCNSjR2GimxQ',
+                'name'     => 'Red Sea',
+                'code'     => 'EG-23',
+                'fee'      => 120,
+                'aliases'  => ['Red Sea', 'البحر الأحمر', 'البحر الاحمر'],
+            ],
+            [
+                'bosta_id' => 'KBpGiRZJMIx',
+                'name'     => 'Matrouh',
+                'code'     => 'EG-28',
+                'fee'      => 120,
+                'aliases'  => ['Matrouh', 'مرسي مطروح', 'مطروح'],
+            ],
+            [
+                'bosta_id' => 'nG_c44vHQht',
+                'name'     => 'South Sinai',
+                'code'     => 'EG-26',
+                'fee'      => 120,
+                'aliases'  => ['South Sinai', 'جنوب سيناء'],
+            ],
+
+            // North Coast — sector 6
+            [
+                'bosta_id' => '2hGtNLfRgqGrJjnW9',
+                'name'     => 'North Coast',
+                'code'     => 'EG-03',
+                'fee'      => 120,
+                'aliases'  => ['North Coast', 'الساحل الشمالي'],
+            ],
+
+            // Remote — sector 7
+            [
+                'bosta_id' => 'ZuCaDAVQlPT',
+                'name'     => 'North Sinai',
+                'code'     => 'EG-27',
+                'fee'      => 120,
+                'aliases'  => ['North Sinai', 'شمال سيناء'],
+            ],
+            [
+                'bosta_id' => 'w4yDVHVJWqa4HpbzA',
+                'name'     => 'New Valley',
+                'code'     => 'EG-24',
+                'fee'      => 130,
+                'aliases'  => ['New Valley', 'الوادي الجديد'],
+            ],
         ];
 
-        foreach ($cairoDistricts as $d) {
+        foreach ($cities as $city) {
             Region::updateOrCreate(
-                ['code' => $d['code']],
+                ['bosta_id' => $city['bosta_id']],
                 [
-                    'name'         => $d['name'],
-                    'type'         => 'cairo_district',
-                    'delivery_fee' => $d['fee'],
-                    'city_names'   => $d['aliases'],
-                ]
-            );
-        }
-
-        // ── Egyptian Governorates ────────────────────────────────────────
-        // type = governorate  (Cairo handled above as districts)
-        $governorates = [
-            ['name' => 'Alexandria',       'code' => 'gov-alex',       'fee' => 80,  'aliases' => ['Alexandria', 'الإسكندرية']],
-            ['name' => 'Giza',             'code' => 'gov-giza',       'fee' => 55,  'aliases' => ['Giza', 'الجيزة']],
-            ['name' => 'Qalyubia',         'code' => 'gov-qalyubia',   'fee' => 65,  'aliases' => ['Qalyubia', 'القليوبية', 'Qalyubiyya']],
-            ['name' => 'Dakahlia',         'code' => 'gov-dakahlia',   'fee' => 80,  'aliases' => ['Dakahlia', 'الدقهلية']],
-            ['name' => 'Sharqia',          'code' => 'gov-sharqia',    'fee' => 80,  'aliases' => ['Sharqia', 'الشرقية', 'Sharkia']],
-            ['name' => 'Monufia',          'code' => 'gov-monufia',    'fee' => 80,  'aliases' => ['Monufia', 'المنوفية', 'Menofia']],
-            ['name' => 'Beheira',          'code' => 'gov-beheira',    'fee' => 85,  'aliases' => ['Beheira', 'البحيرة']],
-            ['name' => 'Kafr El Sheikh',   'code' => 'gov-kafr',       'fee' => 90,  'aliases' => ['Kafr El Sheikh', 'كفر الشيخ']],
-            ['name' => 'Gharbia',          'code' => 'gov-gharbia',    'fee' => 85,  'aliases' => ['Gharbia', 'الغربية']],
-            ['name' => 'Minya',            'code' => 'gov-minya',      'fee' => 90,  'aliases' => ['Minya', 'المنيا']],
-            ['name' => 'Assiut',           'code' => 'gov-assiut',     'fee' => 95,  'aliases' => ['Assiut', 'أسيوط', 'Asyut']],
-            ['name' => 'Sohag',            'code' => 'gov-sohag',      'fee' => 95,  'aliases' => ['Sohag', 'سوهاج']],
-            ['name' => 'Qena',             'code' => 'gov-qena',       'fee' => 100, 'aliases' => ['Qena', 'قنا']],
-            ['name' => 'Luxor',            'code' => 'gov-luxor',      'fee' => 100, 'aliases' => ['Luxor', 'الأقصر']],
-            ['name' => 'Aswan',            'code' => 'gov-aswan',      'fee' => 100, 'aliases' => ['Aswan', 'أسوان']],
-            ['name' => 'Beni Suef',        'code' => 'gov-benisuef',   'fee' => 85,  'aliases' => ['Beni Suef', 'بني سويف']],
-            ['name' => 'Fayoum',           'code' => 'gov-fayoum',     'fee' => 85,  'aliases' => ['Fayoum', 'الفيوم']],
-            ['name' => 'Ismailia',         'code' => 'gov-ismailia',   'fee' => 85,  'aliases' => ['Ismailia', 'الإسماعيلية']],
-            ['name' => 'Suez',             'code' => 'gov-suez',       'fee' => 85,  'aliases' => ['Suez', 'السويس']],
-            ['name' => 'Port Said',        'code' => 'gov-portsaid',   'fee' => 85,  'aliases' => ['Port Said', 'بورسعيد']],
-            ['name' => 'Damietta',         'code' => 'gov-damietta',   'fee' => 85,  'aliases' => ['Damietta', 'دمياط']],
-            ['name' => 'Matruh',           'code' => 'gov-matruh',     'fee' => 120, 'aliases' => ['Matruh', 'مطروح']],
-            ['name' => 'North Sinai',      'code' => 'gov-n-sinai',    'fee' => 120, 'aliases' => ['North Sinai', 'شمال سيناء']],
-            ['name' => 'South Sinai',      'code' => 'gov-s-sinai',    'fee' => 120, 'aliases' => ['South Sinai', 'جنوب سيناء']],
-            ['name' => 'Red Sea',          'code' => 'gov-redsea',     'fee' => 120, 'aliases' => ['Red Sea', 'البحر الأحمر']],
-            ['name' => 'New Valley',       'code' => 'gov-newvalley',  'fee' => 130, 'aliases' => ['New Valley', 'الوادي الجديد']],
-        ];
-
-        foreach ($governorates as $g) {
-            Region::updateOrCreate(
-                ['code' => $g['code']],
-                [
-                    'name'         => $g['name'],
+                    'name'         => $city['name'],
+                    'code'         => $city['code'],
                     'type'         => 'governorate',
-                    'delivery_fee' => $g['fee'],
-                    'city_names'   => $g['aliases'],
+                    'delivery_fee' => $city['fee'],
+                    'city_names'   => $city['aliases'],
                 ]
             );
         }
 
-        $this->command->info('Seeded ' . count($cairoDistricts) . ' Cairo districts and ' . count($governorates) . ' governorates.');
+        $this->command->info('Seeded ' . count($cities) . ' Bosta delivery regions.');
     }
 }
