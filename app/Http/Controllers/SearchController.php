@@ -24,7 +24,7 @@ class SearchController extends Controller
                     $q->where('title', 'LIKE', "%{$query}%")
                       ->orWhere('description', 'LIKE', "%{$query}%");
                 })
-                ->with('collection')
+                ->with(['collection', 'images'])
                 ->take(10)
                 ->get();
 

@@ -13,7 +13,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::visible()
-            ->with(['collection', 'images']);
+            ->with(['collection', 'images', 'sizes']);
 
         // Apply filters
         if ($request->filled('collection')) {

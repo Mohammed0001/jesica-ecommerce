@@ -86,7 +86,7 @@ class AdminCollectionController extends Controller
      */
     public function show(Collection $collection)
     {
-        $collection->load(['products']);
+        $collection->load(['products.images']);
 
         return view('admin.collections.show', compact('collection'));
     }
@@ -96,6 +96,8 @@ class AdminCollectionController extends Controller
      */
     public function edit(Collection $collection)
     {
+        $collection->load(['products.images']);
+
         return view('admin.collections.edit', compact('collection'));
     }
 

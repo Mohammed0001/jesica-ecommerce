@@ -31,19 +31,24 @@
                                 ? $product->main_image->url
                                 : asset('images/picsum/600x800-1-0.jpg');
                             $images = $product->images && $product->images->count() > 0
-                                ? $product->images->prepend($product->main_image)
+                                ? $product->images
                                 : collect([$product->main_image ?? (object) ['url' => $mainImageUrl]]);
                         @endphp
 
-                        <div class="mq-gallery__main">
-                            <img id="mainImage" src="{{ $mainImageUrl }}" alt="{{ $product->name }}" loading="lazy">
+                        <div class="mq-gallery__main" id="mainImageTrack">
+                            @foreach($images as $index => $image)
+                                <div class="mq-gallery__slide">
+                                    <img src="{{ $image->url }}" alt="{{ $product->name }} {{ $index + 1 }}"
+                                        loading="{{ $index === 0 ? 'eager' : 'lazy' }}">
+                                </div>
+                            @endforeach
                         </div>
 
                         @if($images->count() > 1)
                             <div class="mq-gallery__thumbs">
                                 @foreach($images as $index => $image)
                                     <button class="mq-thumb {{ $index === 0 ? 'is-active' : '' }}"
-                                        onclick="changeMainImage('{{ $image->url }}', this)" type="button">
+                                        onclick="scrollToImage({{ $index }})" type="button">
                                         <img src="{{ $image->url }}" alt="{{ $product->name }} {{ $index + 1 }}" loading="lazy">
                                     </button>
                                 @endforeach
@@ -74,7 +79,7 @@
                                         class="mq-size-guide">Size guide</a>
                                 @endif
                             </div>
-                            @if($product->sizes && $product->sizes->where('quantity', '>', 0)->count() > 0)
+                            @if(!$product->isSoldOut() && $product->sizes && $product->sizes->where('quantity', '>', 0)->count() > 0)
                                 <div class="mq-select-wrap">
                                     <select id="size-select" class="mq-select" required>
                                         <option value="">Select a size</option>
@@ -94,7 +99,7 @@
                         </div>
 
                         {{-- CTA Buttons --}}
-                        @if($product->quantity > 0)
+                        @if($product->isAvailable())
                             @php
                                 $availableSizes = $product->sizes ? $product->sizes->where('quantity', '>', 0) : collect();
                                 $needsSizeSelection = $availableSizes->count() > 1;
@@ -199,7 +204,7 @@
             <span class="mq-sticky-bar__name">{{ $product->name }}</span>
             <span class="mq-sticky-bar__price">{!! $product->formatted_price !!}</span>
             <div class="mq-sticky-bar__actions">
-                @if($product->quantity > 0)
+                @if($product->isAvailable())
                     <button class="mq-btn mq-btn--primary mq-btn--sm"
                         onclick="document.getElementById('addToCartForm').dispatchEvent(new Event('submit'))">
                         {{ $needsSizeSelection ? 'SELECT A SIZE' : 'ADD TO CART' }}
@@ -359,9 +364,24 @@
         .mq-gallery__main {
             width: 100%;
             background: #f8f9fa;
-            overflow: hidden;
             position: relative;
             aspect-ratio: 3/4;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .mq-gallery__main::-webkit-scrollbar { display: none; }
+
+        .mq-gallery__slide {
+            flex: 0 0 100%;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
         }
 
         .mq-gallery__main img {
@@ -372,11 +392,6 @@
             object-fit: contain;
             object-position: center center;
             background-color: #f8f9fa;
-            transition: transform 0.5s ease;
-        }
-
-        .mq-gallery__main img:hover {
-            transform: scale(1.02);
         }
 
         .mq-gallery__thumbs {
@@ -572,7 +587,6 @@
             .mq-gallery__main {
                 aspect-ratio: 1 / 1 !important;
                 height: auto !important;
-                overflow: hidden;
             }
 
             .mq-gallery__main img {
@@ -671,14 +685,25 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
-            /* ── Image switcher ── */
-            window.changeMainImage = (src, el) => {
-                const img = document.getElementById('mainImage');
-                img.style.opacity = '0.5';
-                setTimeout(() => { img.src = src; img.style.opacity = '1'; }, 150);
-                document.querySelectorAll('.mq-thumb').forEach(t => t.classList.remove('is-active'));
-                el.classList.add('is-active');
+            /* ── Image gallery: scroll-snap track + thumbnail sync ── */
+            const mainTrack = document.getElementById('mainImageTrack');
+            const thumbs = document.querySelectorAll('.mq-thumb');
+
+            window.scrollToImage = (index) => {
+                const slide = mainTrack?.children[index];
+                if (slide) slide.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
             };
+
+            if (mainTrack && thumbs.length) {
+                let scrollTimeout;
+                mainTrack.addEventListener('scroll', () => {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        const index = Math.round(mainTrack.scrollLeft / mainTrack.clientWidth);
+                        thumbs.forEach((t, i) => t.classList.toggle('is-active', i === index));
+                    }, 100);
+                });
+            }
 
             /* ── Accordions ── */
             document.querySelectorAll('.mq-accordion__trigger').forEach(btn => {

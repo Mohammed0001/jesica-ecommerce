@@ -24,7 +24,7 @@ class AnalyticsController extends Controller
         $top_products = OrderItem::select('product_id', DB::raw('SUM(quantity) as orders_count'), DB::raw('SUM(subtotal) as total_revenue'))
             ->groupBy('product_id')
             ->orderByDesc('orders_count')
-            ->with('product')
+            ->with('product.images')
             ->take(10)
             ->get();
 

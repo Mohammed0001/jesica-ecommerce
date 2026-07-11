@@ -41,12 +41,7 @@ class ProductImage extends Model
             return 'https://picsum.photos/600/800?random=' . $productId . $imageIndex;
         }
 
-        // Otherwise, use storage path - prefer Storage::url and check the file exists
-        if (Storage::disk('public')->exists($this->path)) {
-            return Storage::url($this->path);
-        }
-
-        // If the file is missing (no storage link or file gone), return a placeholder image
-        return asset('images/picsum/600x800-1-0.jpg');
+        // Otherwise, use the storage path directly
+        return Storage::url($this->path);
     }
 }

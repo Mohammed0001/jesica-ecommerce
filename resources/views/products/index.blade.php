@@ -94,12 +94,16 @@
                                 <span class="sale-badge">Sale</span>
                             @endif
 
+                            @if($product->isSoldOut())
+                                <span class="sold-out-badge">Sold Out</span>
+                            @else
                                 <div class="product-overlay">
                                     <button class="btn btn-primary btn-sm add-to-cart"
                                             data-product-id="{{ $product->id }}">
                                         Add to Cart
                                     </button>
                                 </div>
+                            @endif
                         </div>
 
                         <div class="product-info">
@@ -299,6 +303,21 @@
     top: 1rem;
     right: 1rem;
     background: #dc3545;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    z-index: 2;
+}
+
+.sold-out-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: #212529;
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 20px;

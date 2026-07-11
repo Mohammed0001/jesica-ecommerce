@@ -17,7 +17,7 @@ class AdminProductController extends Controller
      */
     public function index()
     {
-        $products = Product::with(['collection'])
+        $products = Product::with(['collection', 'images'])
             ->latest()
             ->paginate(20);
 

@@ -112,18 +112,32 @@ class Product extends Model
      */
     public function scopeAvailable(Builder $query): void
     {
-        $query->where('is_sold_out', false)->where('quantity', '>', 0);
+        $query->where('is_sold_out', false)->where(function (Builder $q) {
+            $q->where(function (Builder $q2) {
+                $q2->where('is_one_of_a_kind', true)->where('quantity', '>', 0);
+            })->orWhere(function (Builder $q2) {
+                $q2->where('is_one_of_a_kind', false)
+                    ->whereHas('sizes', fn (Builder $sq) => $sq->where('quantity', '>', 0));
+            });
+        });
     }
 
     /**
-     * Check if product is available
+     * Check if product is available. For multi-size products, stock lives on
+     * ProductSize rows rather than the product's own quantity column.
      */
     public function isAvailable(): bool
     {
         if ($this->is_sold_out) {
             return false;
         }
-        return $this->quantity > 0;
+
+        if ($this->is_one_of_a_kind) {
+            return $this->quantity > 0;
+        }
+
+        $sizes = $this->relationLoaded('sizes') ? $this->sizes : $this->sizes()->get();
+        return $sizes->contains(fn (ProductSize $size) => $size->quantity > 0);
     }
 
     /**
@@ -131,10 +145,7 @@ class Product extends Model
      */
     public function isSoldOut(): bool
     {
-        if ($this->is_sold_out) {
-            return true;
-        }
-        return $this->quantity <= 0;
+        return !$this->isAvailable();
     }
 
     /**
@@ -142,7 +153,7 @@ class Product extends Model
      */
     public function getMainImageAttribute(): ?ProductImage
     {
-        return $this->images()->first();
+        return $this->images->first();
     }
 
     /**

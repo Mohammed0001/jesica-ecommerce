@@ -184,6 +184,8 @@ class OrderService
                         $productSize->increment('quantity', $item->quantity);
                     }
                 }
+
+                $this->syncSoldOutStatus($product);
             }
             }
 
@@ -226,10 +228,32 @@ class OrderService
                     $productSize->decrement('quantity', $item->quantity);
                 }
             }
+
+            $this->syncSoldOutStatus($product);
         }
 
         // Mark that stock has been decremented for this order
         $order->update(['stock_decremented' => true]);
+    }
+
+    /**
+     * Keep the manual is_sold_out flag in sync with actual stock levels.
+     * Auto-marks a product sold out when its stock hits zero, and clears
+     * the flag again once it's restocked (order cancelled/refunded).
+     */
+    private function syncSoldOutStatus(Product $product): void
+    {
+        $product->refresh();
+
+        $hasStock = $product->is_one_of_a_kind
+            ? $product->quantity > 0
+            : $product->sizes()->where('quantity', '>', 0)->exists();
+
+        if (!$hasStock && !$product->is_sold_out) {
+            $product->update(['is_sold_out' => true]);
+        } elseif ($hasStock && $product->is_sold_out) {
+            $product->update(['is_sold_out' => false]);
+        }
     }
 
     /**
