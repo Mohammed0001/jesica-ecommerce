@@ -133,9 +133,9 @@ class AdminProductController extends Controller
     $data = $request->only(['title', 'description', 'price', 'currency', 'collection_id', 'sku', 'quantity', 'is_one_of_a_kind', 'is_sold_out', 'size_chart_id', 'story']);
         $data['collection_id'] = $request->input('collection_id') ?: null;
         $data['slug'] = Str::slug($request->title);
-    $data['visible'] = $request->boolean('visible', $product->getAttribute('visible'));
-    $data['is_one_of_a_kind'] = $request->boolean('is_one_of_a_kind', $product->getAttribute('is_one_of_a_kind'));
-    $data['is_sold_out'] = $request->boolean('is_sold_out', $product->getAttribute('is_sold_out'));
+    $data['visible'] = $request->boolean('visible');
+    $data['is_one_of_a_kind'] = $request->boolean('is_one_of_a_kind');
+    $data['is_sold_out'] = $request->boolean('is_sold_out');
 
         // Handle image upload
         $imageService = app(ImageService::class);
