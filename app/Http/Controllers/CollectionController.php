@@ -35,9 +35,12 @@ class CollectionController extends Controller
 
         // Build products query with sorting
         $productsQuery = $collection->visibleProducts()
-            ->with(['images' => function($query) {
-                $query->orderBy('order')->limit(1);
-            }]);
+            ->with([
+                'images' => function ($query) {
+                    $query->orderBy('order')->limit(1);
+                },
+                'sizes',
+            ]);
 
         // Apply sorting
         switch ($request->get('sort')) {

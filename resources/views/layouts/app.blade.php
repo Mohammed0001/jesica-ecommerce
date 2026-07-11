@@ -331,12 +331,31 @@
             transform: translateY(-3px);
         }
 
+        .product-image-wrap {
+            position: relative;
+        }
+
         .product-image {
             width: 100%;
             height: 350px;
             object-fit: contain;
             background-color: #f8f9fa;
             display: block;
+        }
+
+        .sold-out-badge {
+            position: absolute;
+            top: var(--spacing-sm);
+            left: var(--spacing-sm);
+            background: #212529;
+            color: #fff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 2;
         }
 
         .product-content {

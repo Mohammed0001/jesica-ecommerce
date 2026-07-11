@@ -25,7 +25,7 @@ class HomeController extends Controller
 
         // Get featured products (latest products)
         $featuredProducts = Product::visible()
-            ->with(['collection', 'images'])
+            ->with(['collection', 'images', 'sizes'])
             ->orderBy('created_at', 'desc')
             ->take(8)
             ->get();

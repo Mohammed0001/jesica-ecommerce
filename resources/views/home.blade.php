@@ -73,14 +73,19 @@
                 <div class="products-grid">
                     @foreach ($featuredProducts as $product)
                         <div class="product-card">
-                            @if ($product->main_image)
-                                <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
-                                    class="product-image" alt="{{ $product->title }}">
-                            @else
-                                <div class="product-image placeholder">
-                                    <span>{{ $product->title }}</span>
-                                </div>
-                            @endif
+                            <div class="product-image-wrap">
+                                @if ($product->main_image)
+                                    <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
+                                        class="product-image" alt="{{ $product->title }}">
+                                @else
+                                    <div class="product-image placeholder">
+                                        <span>{{ $product->title }}</span>
+                                    </div>
+                                @endif
+                                @if ($product->isSoldOut())
+                                    <span class="sold-out-badge">Sold Out</span>
+                                @endif
+                            </div>
                             <div class="product-content">
                                 <h3 class="product-title">{{ $product->title }}</h3>
                                 <p class="product-price">{!! $product->formatted_price !!}</p>

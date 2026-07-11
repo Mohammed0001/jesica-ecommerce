@@ -39,7 +39,16 @@
                             @foreach($images as $index => $image)
                                 <div class="mq-gallery__slide">
                                     <img src="{{ $image->url }}" alt="{{ $product->name }} {{ $index + 1 }}"
-                                        loading="{{ $index === 0 ? 'eager' : 'lazy' }}">
+                                        loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                        class="mq-zoom-trigger" data-index="{{ $index }}">
+                                    <button type="button" class="mq-zoom-btn" data-index="{{ $index }}" aria-label="Zoom image">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="7" />
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                            <line x1="11" y1="8" x2="11" y2="14" />
+                                            <line x1="8" y1="11" x2="14" y2="11" />
+                                        </svg>
+                                    </button>
                                 </div>
                             @endforeach
                         </div>
@@ -281,6 +290,27 @@
             </div>
         </div>
     @endif
+
+    {{-- ── IMAGE ZOOM MODAL ── --}}
+    <div class="modal fade mq-zoom-modal" id="imageZoomModal" tabindex="-1" aria-labelledby="imageZoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen m-0">
+            <div class="modal-content mq-zoom-content">
+                <span id="imageZoomModalLabel" class="visually-hidden">{{ $product->name }} — zoomed image</span>
+                <button type="button" class="mq-zoom-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+                @if($images->count() > 1)
+                    <button type="button" class="mq-zoom-arrow mq-zoom-arrow--prev" id="zoomPrevBtn" aria-label="Previous image">&#8249;</button>
+                    <button type="button" class="mq-zoom-arrow mq-zoom-arrow--next" id="zoomNextBtn" aria-label="Next image">&#8250;</button>
+                @endif
+                <div class="mq-zoom-viewport" id="zoomViewport">
+                    <img id="zoomImage" src="" alt="{{ $product->name }}">
+                </div>
+                @if($images->count() > 1)
+                    <div class="mq-zoom-counter" id="zoomCounter"></div>
+                @endif
+                <p class="mq-zoom-hint">Click image to zoom</p>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -425,6 +455,127 @@
         .mq-thumb.is-active,
         .mq-thumb:hover {
             border-color: var(--mq-black);
+        }
+
+        /* Zoom trigger + button */
+        .mq-zoom-trigger {
+            cursor: zoom-in;
+        }
+
+        .mq-zoom-btn {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--mq-border);
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--mq-text);
+            z-index: 2;
+            transition: background 0.2s ease;
+        }
+
+        .mq-zoom-btn:hover {
+            background: var(--mq-white);
+        }
+
+        /* Zoom lightbox modal */
+        .mq-zoom-modal .modal-content.mq-zoom-content {
+            background: rgba(255, 255, 255, 0.98);
+            border: none;
+            border-radius: 0;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mq-zoom-close {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            background: none;
+            border: none;
+            font-size: 32px;
+            line-height: 1;
+            cursor: pointer;
+            color: var(--mq-text);
+            z-index: 5;
+        }
+
+        .mq-zoom-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--mq-border);
+            background: var(--mq-white);
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mq-zoom-arrow--prev { left: 24px; }
+        .mq-zoom-arrow--next { right: 24px; }
+
+        .mq-zoom-viewport {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-in;
+            touch-action: none;
+        }
+
+        .mq-zoom-viewport img {
+            max-width: 90%;
+            max-height: 85vh;
+            object-fit: contain;
+            transform-origin: center center;
+            transition: transform 0.15s ease-out;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .mq-zoom-viewport.is-zoomed {
+            cursor: zoom-out;
+        }
+
+        .mq-zoom-viewport.is-zoomed img {
+            transition: none;
+        }
+
+        .mq-zoom-counter {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            letter-spacing: 0.05em;
+            color: var(--mq-mid);
+        }
+
+        .mq-zoom-hint {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            font-size: 11px;
+            color: var(--mq-mid);
+            margin: 0;
         }
 
         /* Product Info */
@@ -676,6 +827,23 @@
             .mq-sticky-bar__actions .mq-btn {
                 width: 100%;
             }
+
+            .mq-zoom-hint {
+                display: none;
+            }
+
+            .mq-zoom-arrow {
+                width: 36px;
+                height: 36px;
+                font-size: 20px;
+            }
+
+            .mq-zoom-arrow--prev { left: 8px; }
+            .mq-zoom-arrow--next { right: 8px; }
+
+            .mq-zoom-viewport img {
+                max-width: 100%;
+            }
         }
     </style>
 @endpush
@@ -702,6 +870,81 @@
                         const index = Math.round(mainTrack.scrollLeft / mainTrack.clientWidth);
                         thumbs.forEach((t, i) => t.classList.toggle('is-active', i === index));
                     }, 100);
+                });
+            }
+
+            /* ── Image zoom lightbox ── */
+            const zoomModalEl = document.getElementById('imageZoomModal');
+            if (zoomModalEl) {
+                const zoomModal = new bootstrap.Modal(zoomModalEl);
+                const zoomViewport = document.getElementById('zoomViewport');
+                const zoomImage = document.getElementById('zoomImage');
+                const zoomCounter = document.getElementById('zoomCounter');
+                const prevBtn = document.getElementById('zoomPrevBtn');
+                const nextBtn = document.getElementById('zoomNextBtn');
+                const galleryImages = Array.from(document.querySelectorAll('.mq-zoom-trigger')).map(img => img.src);
+                const ZOOM_SCALE = 2.5;
+                let currentIndex = 0;
+
+                const resetZoom = () => {
+                    zoomViewport.classList.remove('is-zoomed');
+                    zoomImage.style.transform = 'scale(1)';
+                };
+
+                const showImage = (index) => {
+                    currentIndex = (index + galleryImages.length) % galleryImages.length;
+                    zoomImage.src = galleryImages[currentIndex];
+                    resetZoom();
+                    if (zoomCounter) zoomCounter.textContent = `${currentIndex + 1} / ${galleryImages.length}`;
+                };
+
+                const openZoom = (index) => {
+                    showImage(index);
+                    zoomModal.show();
+                };
+
+                document.querySelectorAll('.mq-zoom-trigger, .mq-zoom-btn').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openZoom(parseInt(el.dataset.index, 10) || 0);
+                    });
+                });
+
+                prevBtn?.addEventListener('click', () => showImage(currentIndex - 1));
+                nextBtn?.addEventListener('click', () => showImage(currentIndex + 1));
+
+                const panTo = (clientX, clientY) => {
+                    const rect = zoomImage.getBoundingClientRect();
+                    const originX = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100));
+                    const originY = Math.min(100, Math.max(0, ((clientY - rect.top) / rect.height) * 100));
+                    zoomImage.style.transformOrigin = `${originX}% ${originY}%`;
+                };
+
+                zoomViewport.addEventListener('click', (e) => {
+                    if (zoomViewport.classList.contains('is-zoomed')) {
+                        resetZoom();
+                        return;
+                    }
+                    panTo(e.clientX, e.clientY);
+                    zoomImage.style.transform = `scale(${ZOOM_SCALE})`;
+                    zoomViewport.classList.add('is-zoomed');
+                });
+
+                zoomViewport.addEventListener('mousemove', (e) => {
+                    if (zoomViewport.classList.contains('is-zoomed')) panTo(e.clientX, e.clientY);
+                });
+
+                zoomViewport.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    if (touch && zoomViewport.classList.contains('is-zoomed')) panTo(touch.clientX, touch.clientY);
+                }, { passive: true });
+
+                zoomModalEl.addEventListener('hidden.bs.modal', resetZoom);
+
+                document.addEventListener('keydown', (e) => {
+                    if (!zoomModalEl.classList.contains('show')) return;
+                    if (e.key === 'ArrowRight') showImage(currentIndex + 1);
+                    if (e.key === 'ArrowLeft') showImage(currentIndex - 1);
                 });
             }
 
