@@ -40,15 +40,15 @@ class AdminCollectionController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'release_date' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-            'pdf' => 'nullable|mimes:pdf|max:51200',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif,bmp,heic,heif',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif,bmp,heic,heif',
+            'pdf' => 'nullable|mimes:pdf',
             'visible' => 'boolean',
         ]);
 
         // Only collect attributes we expect to insert
     $data = $request->only(['title', 'description', 'release_date']);
-        $data['slug'] = Str::slug($request->title);
+        $data['slug'] = Collection::generateUniqueSlug($request->title);
     $data['visible'] = $request->boolean('visible', true);
 
         // Handle image upload
@@ -110,16 +110,18 @@ class AdminCollectionController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'release_date' => 'required|date',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif,bmp,heic,heif',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif,bmp,heic,heif',
             'remove_images' => 'nullable|array',
             'remove_images.*' => 'integer|exists:collection_images,id',
-            'pdf' => 'nullable|mimes:pdf|max:51200',
+            'pdf' => 'nullable|mimes:pdf',
             'visible' => 'boolean',
         ]);
 
     $data = $request->only(['title', 'description', 'release_date']);
-        $data['slug'] = Str::slug($request->title);
+        $data['slug'] = $request->title === $collection->title
+            ? $collection->slug
+            : Collection::generateUniqueSlug($request->title, $collection->id);
     $data['visible'] = $request->boolean('visible', $collection->getAttribute('visible'));
 
         // Handle image upload

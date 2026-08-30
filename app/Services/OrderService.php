@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderStatusUpdated as OrderStatusUpdatedMail;
 use Illuminate\Support\Collection;
@@ -59,21 +60,19 @@ class OrderService
         ]);
 
         // Create order items
+        $products = $this->resolveProducts($cartItems);
+
         foreach ($cartItems as $item) {
-            // Allow cart item to carry fetched product data to avoid duplicate queries
-            $product = null;
-            if (!empty($item['product']) && is_array($item['product'])) {
-                // we still want the Eloquent model when possible for relations
-                $product = Product::find($item['product']['id']);
-            } else {
-                $product = Product::find($item['product_id']);
-            }
+            $product = $products->get($item['product_id']);
 
             if (!$product) {
                 continue;
             }
 
             $mainImage = $product->main_image;
+            // The customer pays the sale price when a sale is running; `price`
+            // is kept in the snapshot so the discount stays auditable.
+            $unitPrice = $product->effective_price;
 
             // Store full product snapshot for historical reference
             $productSnapshot = [
@@ -82,19 +81,23 @@ class OrderService
                 'title' => $product->title,
                 'description' => $product->description,
                 'price' => (float) $product->price,
+                'sale_price' => $product->isOnSale() ? (float) $product->sale_price : null,
+                'was_on_sale' => $product->isOnSale(),
                 'currency' => $product->currency,
                 'collection_title' => $product->collection->title ?? null,
                 'is_one_of_a_kind' => (bool) $product->is_one_of_a_kind,
+                'color_name' => $item['color_name'] ?? null,
                 'main_image_url' => $mainImage?->url,
             ];
 
             OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $product->id,
-                'price' => $product->price,
+                'price' => $unitPrice,
                 'quantity' => $item['quantity'],
                 'size_label' => $item['size_label'] ?? null,
-                'subtotal' => $product->price * $item['quantity'],
+                'color_name' => $item['color_name'] ?? null,
+                'subtotal' => round($unitPrice * $item['quantity'], 2),
                 'product_snapshot' => $productSnapshot,
             ]);
         }
@@ -107,16 +110,41 @@ class OrderService
      */
     public function calculateTotal(Collection $cartItems): float
     {
+        $products = $this->resolveProducts($cartItems);
         $total = 0;
 
         foreach ($cartItems as $item) {
-            $product = Product::find($item['product_id']);
+            $product = $products->get($item['product_id']);
             if ($product) {
-                $total += $product->price * $item['quantity'];
+                $total += $product->effective_price * $item['quantity'];
             }
         }
 
         return round($total, 2);
+    }
+
+    /**
+     * Load every product referenced by the cart in one query, keyed by id.
+     *
+     * Cart lines arrive either as plain ids or with a pre-fetched product
+     * array; both are handled here so callers never issue a query per line.
+     */
+    private function resolveProducts(Collection $cartItems): \Illuminate\Support\Collection
+    {
+        $ids = $cartItems
+            ->map(fn ($item) => $item['product_id'] ?? ($item['product']['id'] ?? null))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return Product::with(['images', 'collection'])
+            ->whereIn('id', $ids->all())
+            ->get()
+            ->keyBy('id');
     }
 
     /**
@@ -134,7 +162,7 @@ class OrderService
             }
         } catch (\Exception $e) {
             // swallow to avoid breaking status updates; log if necessary
-            \Log::error('Failed to queue order status email for order ' . $order->id . ': ' . $e->getMessage());
+            Log::error('Failed to queue order status email for order ' . $order->id . ': ' . $e->getMessage());
         }
 
         // Handle status-specific actions
@@ -155,11 +183,15 @@ class OrderService
     /**
      * Cancel an order
      */
-    public function cancelOrder(Order $order, string $reason = null): Order
+    public function cancelOrder(Order $order, ?string $reason = null): Order
     {
         // Can only cancel orders that haven't been shipped
         if (in_array($order->status, ['shipped', 'completed'])) {
-            throw new \Exception('Cannot cancel order that has already been shipped or completed.');
+            throw new \Exception(sprintf(
+                'Order %s cannot be cancelled because it has already been marked as %s. Please request a return instead.',
+                $order->order_number,
+                $order->status
+            ));
         }
 
         $order->update([
@@ -263,41 +295,67 @@ class OrderService
     {
         $errors = [];
 
+        $products = Product::with(['sizes', 'colors'])
+            ->whereIn('id', $cartItems->pluck('product_id')->filter()->unique()->all())
+            ->get()
+            ->keyBy('id');
+
         foreach ($cartItems as $index => $item) {
-            $product = Product::find($item['product_id']);
+            $product = $products->get($item['product_id']);
+            $position = $index + 1;
 
             if (!$product) {
-                $errors[] = "Product not found for item {$index}";
+                $errors[] = "Item {$position} in your bag no longer exists in the store. Please remove it and try again.";
                 continue;
             }
 
             if (!$product->getAttribute('visible')) {
-                $errors[] = "Product '{$product->title}' is no longer available";
+                $errors[] = "'{$product->title}' has been removed from the store. Please take it out of your bag to continue.";
                 continue;
             }
 
             if ($product->is_one_of_a_kind) {
                 if ($product->quantity < $item['quantity']) {
-                    $errors[] = "Product '{$product->title}' does not have sufficient stock";
+                    $errors[] = $product->quantity > 0
+                        ? "Only {$product->quantity} left of '{$product->title}', but your bag has {$item['quantity']}."
+                        : "'{$product->title}' has just sold out.";
                 }
             } else {
                 // Only validate size for multi-size products
                 if (empty($item['size_label'])) {
                     // Check if product actually has sizes
-                    $hasSizes = $product->sizes()->exists();
-                    if ($hasSizes) {
-                        $errors[] = "Please select a size for '{$product->title}'";
+                    if ($product->sizes->isNotEmpty()) {
+                        $offered = $product->sizes->where('quantity', '>', 0)->pluck('size_label')->implode(', ');
+                        $errors[] = "Please select a size for '{$product->title}'"
+                            . ($offered !== '' ? " (available: {$offered})" : '') . '.';
                     }
                 } else {
-                    $productSize = $product->sizes()
-                        ->where('size_label', $item['size_label'])
-                        ->first();
+                    $productSize = $product->sizes->firstWhere('size_label', $item['size_label']);
 
                     if (!$productSize) {
-                        $errors[] = "Size '{$item['size_label']}' not available for '{$product->title}'";
+                        $offered = $product->sizes->where('quantity', '>', 0)->pluck('size_label')->implode(', ');
+                        $errors[] = "Size '{$item['size_label']}' is no longer offered for '{$product->title}'"
+                            . ($offered !== '' ? ". Available sizes: {$offered}" : '') . '.';
                     } elseif ($productSize->quantity < $item['quantity']) {
-                        $errors[] = "Size '{$item['size_label']}' for '{$product->title}' does not have sufficient stock";
+                        $errors[] = $productSize->quantity > 0
+                            ? "Only {$productSize->quantity} left of '{$product->title}' in size {$item['size_label']}, but your bag has {$item['quantity']}."
+                            : "'{$product->title}' in size {$item['size_label']} has just sold out.";
                     }
+                }
+            }
+
+            // Colour is a presentation variant: it must still be on offer.
+            $availableColors = $product->available_colors;
+
+            if ($availableColors->isNotEmpty()) {
+                $chosen = $item['color_name'] ?? null;
+
+                if (empty($chosen)) {
+                    $errors[] = "Please select a colour for '{$product->title}' (available: "
+                        . $availableColors->pluck('name')->implode(', ') . ').';
+                } elseif (!$availableColors->contains(fn ($color) => $color->name === $chosen)) {
+                    $errors[] = "Colour '{$chosen}' is no longer available for '{$product->title}'. Available colours: "
+                        . $availableColors->pluck('name')->implode(', ') . '.';
                 }
             }
         }

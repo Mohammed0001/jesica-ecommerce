@@ -587,6 +587,9 @@
                         @if(!empty($item['size_label']))
                             <div class="summary-item-size">Size: {{ $item['size_label'] }}</div>
                         @endif
+                        @if(!empty($item['color_name']))
+                            <div class="summary-item-size">Colour: {{ $item['color_name'] }}</div>
+                        @endif
                     </div>
                     <div class="summary-item-price">
                         {{ $currSym }} {{ number_format($item['product']['display_subtotal'] ?? 0, 2) }}

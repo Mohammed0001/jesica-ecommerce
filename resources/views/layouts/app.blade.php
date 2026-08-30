@@ -6,7 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>JESSICA RIAD - COOL LUXURY</title>
+    {{-- Each directive needs whitespace before its @, or Blade leaves it as
+         literal text. Browsers collapse the whitespace in a <title>. --}}
+    <title>
+        @hasSection('title')
+            @yield('title') | JESSICA RIAD
+        @else
+            JESSICA RIAD - COOL LUXURY
+        @endif
+    </title>
+    <meta name="description" content="@yield('meta_description', 'JESSICA RIAD — cool luxury. Collectible fashion pieces that merge craftsmanship, heritage and storytelling.')">
+
+    {{-- Open the TCP + TLS connections to the third-party origins while the
+         HTML is still being parsed, rather than when the tags are reached. --}}
+    <link rel="preconnect" href="https://use.typekit.net" crossorigin>
+    <link rel="preconnect" href="https://p.typekit.net" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/icon.png') }}">
@@ -17,14 +33,37 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {{-- Font Awesome is decorative only, so it is loaded without blocking the
+         first paint: media="print" makes it a low-priority fetch, and onload
+         promotes it to the real stylesheet once it arrives. --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          media="print" onload="this.media='all';this.onload=null;">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </noscript>
 
     <!-- Navbar CSS -->
     <link rel="stylesheet" href="{{ asset('css/navbar.css') }}">
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script>
+        // The intro loader belongs to the visit, not to every page view. Mark
+        // the document before first paint so the CSS below decides whether the
+        // loader is ever painted at all: no flash, no second appearance when
+        // the visitor navigates on to another page.
+        (function () {
+            try {
+                if (!sessionStorage.getItem('jr_intro_shown')) {
+                    document.documentElement.classList.add('jr-intro');
+                    sessionStorage.setItem('jr_intro_shown', '1');
+                }
+            } catch (e) {
+                // Private browsing can throw on sessionStorage; skip the intro.
+            }
+        })();
+    </script>
 @stack('styles')
     <style>
         :root {
@@ -321,14 +360,33 @@
             margin-top: var(--spacing-xl);
         }
 
+        /* The card itself is an <a>, so the entire tile is one click target. */
         .product-card {
             background: var(--secondary-color);
             overflow: hidden;
             transition: transform 0.3s ease;
+            display: block;
+            color: inherit;
+            text-decoration: none;
         }
 
-        .product-card:hover {
+        .product-card:hover,
+        .product-card:focus {
             transform: translateY(-3px);
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .product-card:focus-visible {
+            outline: 2px solid var(--primary-color) !important;
+            outline-offset: 3px;
+        }
+
+        /* Hovering anywhere on the card fills the View Details button, so the
+           tile reads as a single control rather than a button in a box. */
+        .product-card:hover .btn-outline {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
         }
 
         .product-image-wrap {
@@ -356,6 +414,31 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             z-index: 2;
+        }
+
+        .sale-badge {
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            background: #b02a37;
+            color: #fff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 2;
+        }
+
+        .price-sale {
+            color: #b02a37;
+        }
+
+        .price-original {
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+            margin-left: var(--spacing-sm);
         }
 
         .product-content {
@@ -481,35 +564,195 @@
         .bg-light {
             background-color: #fafafa !important;
         }
+
+        /* Intro Loader
+           Hidden by default and only painted when the head script decided this
+           is the first page of the visit. Covers every viewport size: inset:0
+           rather than 100vw, which would otherwise add a horizontal scrollbar. */
+        #global-loader {
+            display: none;
+        }
+
+        html.jr-intro #global-loader {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--secondary-color);
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        html.jr-intro #global-loader.is-hiding {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #global-loader img {
+            height: 80px;
+            width: auto;
+            max-width: 60vw;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html.jr-intro #global-loader {
+                transition: none;
+            }
+        }
+
+        /* Flash Messages */
+        .flash-stack {
+            position: fixed;
+            top: 96px;
+            right: 1rem;
+            left: 1rem;
+            z-index: 1080;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        @media (min-width: 576px) {
+            .flash-stack {
+                left: auto;
+                max-width: 30rem;
+            }
+        }
+
+        .flash {
+            pointer-events: auto;
+            padding: var(--spacing-md);
+            border: 1px solid var(--primary-color);
+            background: var(--secondary-color);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+
+        .flash--error {
+            border-color: #b02a37;
+            color: #b02a37;
+        }
+
+        .flash--success {
+            border-color: #146c43;
+            color: #146c43;
+        }
+
+        .flash--info {
+            border-color: #0a58ca;
+            color: #0a58ca;
+        }
+
+        .flash__body {
+            flex: 1;
+        }
+
+        .flash__list {
+            margin: 0.35rem 0 0;
+            padding-left: 1.1rem;
+        }
+
+        .flash__close {
+            background: none;
+            border: 0;
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            color: inherit;
+            padding: 0;
+        }
     </style>
 </head>
 
 <body>
+    <!-- Global Loading Screen (first page of a visit only) -->
+    <div id="global-loader" role="status" aria-live="polite">
+        <img src="{{ asset('images/loader.png') }}" alt="JESSICA Riad" fetchpriority="high">
+    </div>
+
     <div id="app">
         <x-navbar />
 
-        <main style="margin-top: 80px;">
-            <!-- Global Loading Screen -->
-            <div id="global-loader"
-                style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;">
-                <span style="font-family:serif;font-size:2.5rem;font-weight:bold;letter-spacing:0.2em;color:#333;"> <img
-                        src="{{ asset('images/loader.png') }}" alt="JESSICA Riad Signature"
-                        class="iris-logo-image" style="height: 80px" /></span>
+        {{-- Server-side messages: without this region every ->with('error', ...)
+             the controllers set would be discarded unseen. --}}
+        @php
+            $flashes = collect([
+                'error' => session('error'),
+                'success' => session('success'),
+                'info' => session('info'),
+                'status' => session('status'),
+            ])->filter(fn ($message) => filled($message) && is_string($message));
+        @endphp
+
+        @if ($flashes->isNotEmpty() || $errors->any())
+            <div class="flash-stack" id="flashStack">
+                @foreach ($flashes as $type => $message)
+                    <div class="flash flash--{{ $type === 'status' ? 'info' : $type }}">
+                        <div class="flash__body">{{ $message }}</div>
+                        <button type="button" class="flash__close" aria-label="Dismiss">&times;</button>
+                    </div>
+                @endforeach
+
+                @if ($errors->any())
+                    <div class="flash flash--error">
+                        <div class="flash__body">
+                            {{ $errors->count() === 1 ? 'Please fix this before continuing:' : 'Please fix these ' . $errors->count() . ' problems before continuing:' }}
+                            <ul class="flash__list">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <button type="button" class="flash__close" aria-label="Dismiss">&times;</button>
+                    </div>
+                @endif
             </div>
+        @endif
+
+        <main style="margin-top: 80px;">
             @yield('content')
-            <script>
-                window.addEventListener('load', function() {
-                    var loader = document.getElementById('global-loader');
-                    if (loader) loader.style.display = 'none';
-                });
-            </script>
         </main>
 
         @include('layouts.partials.footer')
     </div>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <script>
+        (function () {
+            var loader = document.getElementById('global-loader');
+
+            function hideLoader() {
+                if (!loader) return;
+                loader.classList.add('is-hiding');
+                setTimeout(function () { loader.style.display = 'none'; }, 400);
+            }
+
+            if (document.documentElement.classList.contains('jr-intro')) {
+                window.addEventListener('load', hideLoader);
+                // A single stalled image must never leave the visitor staring
+                // at the logo, so cap the intro regardless of load events.
+                setTimeout(hideLoader, 4000);
+            }
+
+            // Dismissible flash messages, auto-clearing the non-critical ones.
+            document.querySelectorAll('.flash__close').forEach(function (btn) {
+                btn.addEventListener('click', function () { btn.closest('.flash').remove(); });
+            });
+
+            document.querySelectorAll('.flash--success, .flash--info').forEach(function (flash) {
+                setTimeout(function () { flash.remove(); }, 6000);
+            });
+        })();
+    </script>
     @stack('scripts')
 </body>
 

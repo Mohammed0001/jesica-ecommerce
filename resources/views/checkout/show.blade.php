@@ -53,6 +53,9 @@
                         @if(!empty($item['size_label']))
                             <div>Size: {{ $item['size_label'] }}</div>
                         @endif
+                        @if(!empty($item['color_name']))
+                            <div>Colour: {{ $item['color_name'] }}</div>
+                        @endif
                     </div>
                     <div class="text-end" style="min-width:120px;">
                         <div><strong>Subtotal</strong></div>

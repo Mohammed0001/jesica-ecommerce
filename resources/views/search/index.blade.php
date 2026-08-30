@@ -46,7 +46,8 @@
                             $currencySymbol = config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP');
                             $subtitle = $isCollection
                                 ? $item->products_count . ' items'
-                                : $currencySymbol . ' ' . number_format($item->price, 2);
+                                // Sale-aware: show what the piece actually costs today.
+                                : $currencySymbol . ' ' . number_format($item->effective_price, 2);
                             $image = $isCollection
                                 ? $item->images->first()?->url ?? null
                                 : $item->main_image?->url ?? null;
@@ -78,6 +79,9 @@
                             {{-- Price / count --}}
                             <div class="mq-result__meta">
                                 <span class="mq-result__price">{{ $subtitle }}</span>
+                                @if(!$isCollection && $item->isOnSale())
+                                    <span class="mq-result__sale">{{ $item->discount_percentage }}% off</span>
+                                @endif
                             </div>
 
                             {{-- Arrow --}}
@@ -279,6 +283,15 @@
         font-size: 13px;
         color: #1a1a1a;
         letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    .mq-result__sale {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #b02a37;
         white-space: nowrap;
     }
 

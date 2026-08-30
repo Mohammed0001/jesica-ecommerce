@@ -13,7 +13,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::visible()
-            ->with(['collection', 'images', 'sizes']);
+            ->with(['collection', 'images', 'sizes', 'colors']);
 
         // Apply filters
         if ($request->filled('collection')) {
@@ -74,7 +74,9 @@ class ProductController extends Controller
         $product->load([
             'collection',
             'images',
-            'sizes'
+            'sizes',
+            'colors',
+            'sizeChart',
         ]);
 
         // Get related products from the same collection or similar products

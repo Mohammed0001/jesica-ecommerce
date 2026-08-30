@@ -73,6 +73,9 @@
                         <tr>
                             <td class="item-description">
                                 <strong>{{ $item->product ? $item->product->name : 'Product Unavailable' }}</strong>
+                                @if($item->variant_label)
+                                    <br><small class="text-muted">{{ $item->variant_label }}</small>
+                                @endif
                                 @if($item->product && $item->product->description)
                                     <br><small class="text-muted">{{ Str::limit($item->product->description, 80) }}</small>
                                 @endif

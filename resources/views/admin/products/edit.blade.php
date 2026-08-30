@@ -149,6 +149,8 @@
                                 @enderror
                             </div>
 
+                            @include('admin.products._variants')
+
                             <div class="col-12 mb-4">
                                 <label for="images" class="form-label">Product Images (Gallery)</label>
                                 <input type="file" class="form-control @error('images.*') is-invalid @enderror"
@@ -156,7 +158,7 @@
                                 @error('images.*')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Uploading new images will append them to the existing gallery. Supported formats: JPEG, PNG, JPG, GIF</div>
+                                <div class="form-text">Uploading new images will append them to the existing gallery. Supported formats: JPEG, PNG, JPG, GIF, WEBP, AVIF, BMP, HEIC. No file size limit.</div>
                             </div>
 
                             @if($product->images && $product->images->count() > 0)
@@ -444,6 +446,9 @@
 @endpush
 
 @push('scripts')
+{{-- Resizes images in the browser before upload, so a full-resolution shoot
+     file does not have to travel over the wire. --}}
+<script src="{{ asset('js/image-compressor.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.querySelector('form[enctype="multipart/form-data"]');

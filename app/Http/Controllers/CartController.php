@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\ProductSize;
 use App\Models\PromoCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
@@ -62,42 +62,90 @@ class CartController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'size_label' => 'nullable|string',
+            'color_name' => 'nullable|string',
+        ], [
+            'product_id.required' => 'No product was submitted. Please reload the page and try again.',
+            'product_id.exists' => 'That product is no longer in the store.',
+            'quantity.min' => 'Please choose a quantity of at least 1.',
+            'quantity.integer' => 'Quantity must be a whole number.',
         ]);
 
-        $product = Product::with('sizes')->findOrFail($request->product_id);
+        $product = Product::with(['sizes', 'colors'])->findOrFail($request->product_id);
 
         // Check if product is available
-        if (!$product->getAttribute('visible') || !$product->isAvailable()) {
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Product is not available.'], 400);
-            }
-            return back()->with('error', 'Product is not available.');
+        if (!$product->getAttribute('visible')) {
+            return $this->addFailed($request, sprintf('"%s" is no longer listed in the store.', $product->title));
+        }
+
+        if (!$product->isAvailable()) {
+            return $this->addFailed($request, sprintf('"%s" is sold out.', $product->title));
         }
 
         // Validate size for multi-size products
         if (!$product->is_one_of_a_kind && $product->sizes && $product->sizes->count() > 0) {
             if (!$request->size_label) {
-                if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Please select a size.'], 400);
-                }
-                return back()->with('error', 'Please select a size.');
+                $offered = $product->sizes->where('quantity', '>', 0)->pluck('size_label')->implode(', ');
+
+                return $this->addFailed($request, sprintf(
+                    'Please choose a size for "%s"%s.',
+                    $product->title,
+                    $offered !== '' ? ' (available: ' . $offered . ')' : ''
+                ));
             }
 
-            $productSize = $product->sizes()
-                ->where('size_label', $request->size_label)
-                ->first();
+            $productSize = $product->sizes->firstWhere('size_label', $request->size_label);
 
-            if (!$productSize || $productSize->quantity < $request->quantity) {
-                if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Selected size is not available in the requested quantity.'], 400);
-                }
-                return back()->with('error', 'Selected size is not available in the requested quantity.');
+            if (!$productSize) {
+                $offered = $product->sizes->where('quantity', '>', 0)->pluck('size_label')->implode(', ');
+
+                return $this->addFailed($request, sprintf(
+                    'Size "%s" is not offered for "%s"%s.',
+                    $request->size_label,
+                    $product->title,
+                    $offered !== '' ? '. Available sizes: ' . $offered : ''
+                ));
             }
+
+            if ($productSize->quantity < $request->quantity) {
+                return $this->addFailed($request, sprintf(
+                    'Only %d left of "%s" in size %s, but you asked for %d.',
+                    $productSize->quantity,
+                    $product->title,
+                    $request->size_label,
+                    $request->quantity
+                ));
+            }
+        }
+
+        // Validate colour for products that offer a choice
+        $availableColors = $product->available_colors;
+        $colorName = $request->color_name;
+
+        if ($availableColors->isNotEmpty()) {
+            if (!$colorName) {
+                return $this->addFailed($request, sprintf(
+                    'Please choose a colour for "%s" (available: %s).',
+                    $product->title,
+                    $availableColors->pluck('name')->implode(', ')
+                ));
+            }
+
+            if (!$availableColors->contains(fn ($color) => $color->name === $colorName)) {
+                return $this->addFailed($request, sprintf(
+                    'Colour "%s" is not available for "%s". Available colours: %s.',
+                    $colorName,
+                    $product->title,
+                    $availableColors->pluck('name')->implode(', ')
+                ));
+            }
+        } else {
+            // Product has no colour options, so ignore anything submitted.
+            $colorName = null;
         }
 
         // Add to cart
         $cart = session()->get('cart', []);
-        $cartKey = $product->id . '_' . ($request->size_label ?? 'one_size');
+        $cartKey = $this->cartKey($product->id, $request->size_label, $colorName);
 
         if (isset($cart[$cartKey])) {
             $cart[$cartKey]['quantity'] += $request->quantity;
@@ -106,7 +154,8 @@ class CartController extends Controller
                 'product_id' => $product->id,
                 'quantity' => $request->quantity,
                 'size_label' => $request->size_label,
-                'price' => $product->price,
+                'color_name' => $colorName,
+                'price' => $product->effective_price,
                 'title' => $product->title,
                 'image' => $product->main_image?->url,
             ];
@@ -121,6 +170,31 @@ class CartController extends Controller
         }
 
         return back()->with('success', 'Product added to cart!');
+    }
+
+    /**
+     * Build the session key that identifies one cart line. Size and colour are
+     * part of it so the same product in two variants stays two lines.
+     */
+    private function cartKey(int $productId, ?string $sizeLabel, ?string $colorName): string
+    {
+        return implode('_', [
+            $productId,
+            $sizeLabel ?: 'one_size',
+            $colorName ? Str::slug($colorName) : 'default',
+        ]);
+    }
+
+    /**
+     * Return an add-to-cart failure the same way for AJAX and form posts
+     */
+    private function addFailed(Request $request, string $message)
+    {
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => false, 'message' => $message], 422);
+        }
+
+        return back()->with('error', $message);
     }
 
     /**
@@ -141,14 +215,25 @@ class CartController extends Controller
         $request->validate([
             'cart_key' => 'required|string',
             'quantity' => 'required|integer|min:1',
+        ], [
+            'quantity.min' => 'Quantity must be at least 1. Use Remove to take the item out of your bag.',
+            'quantity.integer' => 'Quantity must be a whole number.',
         ]);
 
         $cart = session()->get('cart', []);
 
-        if (isset($cart[$request->cart_key])) {
-            $cart[$request->cart_key]['quantity'] = $request->quantity;
-            session()->put('cart', $cart);
+        if (!isset($cart[$request->cart_key])) {
+            $message = 'That item is no longer in your bag. Refresh the page to see the current contents.';
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 404);
+            }
+
+            return back()->with('error', $message);
         }
+
+        $cart[$request->cart_key]['quantity'] = $request->quantity;
+        session()->put('cart', $cart);
 
         if ($request->wantsJson() || $request->ajax()) {
             $cartCount = array_sum(array_column($cart, 'quantity'));
@@ -196,30 +281,51 @@ class CartController extends Controller
     }
 
     /**
-     * Get cart items with product details
+     * Get cart items with product details.
+     *
+     * Products are fetched in a single query rather than one per line, which
+     * is what made a busy cart page slow.
      */
     private function getCartItems()
     {
         $cart = session()->get('cart', []);
         $cartItems = collect();
 
-        foreach ($cart as $key => $item) {
-            $product = Product::with(['images'])->find($item['product_id']);
+        if (empty($cart)) {
+            return $cartItems;
+        }
 
-            if ($product) {
-                $cartItems->push([
-                    'cart_key' => $key,
-                    'product_id' => $product->id,
-                    'product' => $product,
-                    'quantity' => $item['quantity'],
-                    'size_label' => $item['size_label'],
-                    'price' => $product->price, // original numeric price stored on product
-                    'display_price' => $product->convertToCurrency(session('currency', 'EGP')),
-                    'formatted_price' => $product->formatted_price,
-                    'display_subtotal' => $product->convertToCurrency(session('currency', 'EGP')) * $item['quantity'],
-                    'subtotal' => $product->price * $item['quantity'], // original currency subtotal
-                ]);
+        $products = Product::with(['images', 'colors'])
+            ->whereIn('id', collect($cart)->pluck('product_id')->unique()->all())
+            ->get()
+            ->keyBy('id');
+
+        $currency = session('currency', 'EGP');
+
+        foreach ($cart as $key => $item) {
+            $product = $products->get($item['product_id']);
+
+            if (!$product) {
+                continue;
             }
+
+            $displayPrice = $product->convertToCurrency($currency);
+
+            $cartItems->push([
+                'cart_key' => $key,
+                'product_id' => $product->id,
+                'product' => $product,
+                'quantity' => $item['quantity'],
+                'size_label' => $item['size_label'] ?? null,
+                'color_name' => $item['color_name'] ?? null,
+                'price' => $product->effective_price, // original numeric price stored on product
+                'is_on_sale' => $product->isOnSale(),
+                'display_price' => $displayPrice,
+                'formatted_price' => $product->formatted_price,
+                'formatted_original_price' => $product->formatted_original_price,
+                'display_subtotal' => round($displayPrice * $item['quantity'], 2),
+                'subtotal' => round($product->effective_price * $item['quantity'], 2), // original currency subtotal
+            ]);
         }
 
         return $cartItems;
@@ -251,6 +357,8 @@ class CartController extends Controller
     {
         $request->validate([
             'promo_code' => 'required|string',
+        ], [
+            'promo_code.required' => 'Enter a promo code first.',
         ]);
 
         // Case-insensitive search
@@ -258,22 +366,35 @@ class CartController extends Controller
         $promo = PromoCode::whereRaw('UPPER(code) = ?', [$promoCode])->first();
 
         if (!$promo) {
-            return response()->json(['success' => false, 'message' => 'Promo code not found'], 400);
+            return response()->json(['success' => false, 'message' => 'No promo code matches "' . $promoCode . '". Check the spelling and try again.'], 422);
         }
 
         if (!$promo->active) {
-            return response()->json(['success' => false, 'message' => 'This promo code is not active'], 400);
+            return response()->json(['success' => false, 'message' => 'Promo code "' . $promo->code . '" is not active.'], 422);
         }
 
         if ($promo->isExpired()) {
-            return response()->json(['success' => false, 'message' => 'This promo code has expired'], 400);
+            $expiry = $promo->expires_at ? $promo->expires_at->format('j M Y') : null;
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Promo code "' . $promo->code . '" expired' . ($expiry ? ' on ' . $expiry : '') . '.',
+            ], 422);
         }
 
         if ($promo->max_uses !== null && $promo->usage_count >= $promo->max_uses) {
-            return response()->json(['success' => false, 'message' => 'This promo code has reached its maximum usage limit'], 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'Promo code "' . $promo->code . '" has reached its limit of ' . $promo->max_uses . ' uses.',
+            ], 422);
         }
 
         $cartItems = $this->getCartItems();
+
+        if ($cartItems->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Your bag is empty, so there is nothing to discount yet.'], 422);
+        }
+
         $total = $this->calculateTotal($cartItems);
 
         $discount = 0;

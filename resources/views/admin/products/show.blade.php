@@ -47,6 +47,34 @@
                                 <div class="detail-row">
                                     <label>Price:</label>
                                     <span class="product-price">{!! $product->formatted_price !!}</span>
+                                    @if($product->isOnSale())
+                                        <s class="text-muted ms-2">{!! $product->formatted_original_price !!}</s>
+                                        <span class="badge bg-danger ms-2">{{ $product->discount_percentage }}% off</span>
+                                        @if($product->sale_ends_at)
+                                            <small class="text-muted d-block">Sale ends {{ $product->sale_ends_at->format('j M Y, H:i') }}</small>
+                                        @endif
+                                    @elseif($product->sale_price)
+                                        <small class="text-muted d-block">
+                                            Sale price {{ number_format($product->sale_price, 2) }} {{ $product->currency }} is set but not active
+                                            @if($product->sale_starts_at && now()->lt($product->sale_starts_at))
+                                                (starts {{ $product->sale_starts_at->format('j M Y, H:i') }})
+                                            @elseif($product->sale_ends_at && now()->gt($product->sale_ends_at))
+                                                (ended {{ $product->sale_ends_at->format('j M Y, H:i') }})
+                                            @else
+                                                (it is not below the regular price)
+                                            @endif
+                                        </small>
+                                    @endif
+                                    @if($product->colors->isNotEmpty())
+                                        <div class="mt-2">
+                                            @foreach($product->colors as $color)
+                                                <span class="badge rounded-pill me-1 {{ $color->is_available ? 'bg-light text-dark border' : 'bg-secondary' }}">
+                                                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ $color->swatch_color }};border:1px solid rgba(0,0,0,.2);vertical-align:middle;"></span>
+                                                    {{ $color->name }}{{ $color->is_available ? '' : ' (hidden)' }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <div class="detail-row">

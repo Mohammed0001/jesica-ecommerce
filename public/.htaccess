@@ -1,4 +1,17 @@
+# ---------------------------------------------------------------------------
+# Core rewrite + request limits.
+#
+# LimitRequestBody 0 removes Apache's cap on request size. It is the Apache
+# half of the unlimited-upload setting; the PHP half lives in .user.ini
+# (post_max_size = 0, upload_max_filesize = 2048M). Both are needed.
+#
+# SetEnv nokeepalive 1 disables HTTP keep-alive. See the KEEP-ALIVE note at the
+# bottom of this file before leaving it in place.
+# ---------------------------------------------------------------------------
 <IfModule mod_rewrite.c>
+    SetEnv nokeepalive 1
+    LimitRequestBody 0
+
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
@@ -23,3 +36,104 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# ---------------------------------------------------------------------------
+# Performance: compression + client caching for static assets.
+#
+# Every block is wrapped in IfModule, so a host without the module skips it
+# rather than returning a 500. If anything below misbehaves, deleting from
+# here to the end of the file restores the original behaviour exactly.
+# ---------------------------------------------------------------------------
+
+# Some hosts ship an outdated mime.types and serve these as
+# application/octet-stream, which stops the caching and compression rules
+# below from matching them.
+<IfModule mod_mime.c>
+    AddType image/webp                  .webp
+    AddType image/avif                  .avif
+    AddType image/svg+xml               .svg
+    AddType font/woff2                  .woff2
+    AddType font/woff                   .woff
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/json application/xml application/rss+xml
+    AddOutputFilterByType DEFLATE image/svg+xml application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE font/ttf font/otf font/woff font/woff2
+
+    # Already-compressed formats: recompressing costs CPU and gains nothing.
+    <IfModule mod_setenvif.c>
+        SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp|avif|ico|zip|gz|pdf|mp4|woff2?)$ no-gzip dont-vary
+    </IfModule>
+</IfModule>
+
+# Only one of mod_brotli / mod_deflate ends up encoding a given response:
+# whichever runs first sets Content-Encoding and the other removes itself.
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/xml
+    AddOutputFilterByType BROTLI_COMPRESS text/javascript application/javascript
+    AddOutputFilterByType BROTLI_COMPRESS application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # Product photography and other uploads: long-lived, and they get a new
+    # filename when replaced (ImageService writes uniqid()_time().jpg).
+    ExpiresByType image/jpeg                "access plus 1 year"
+    ExpiresByType image/png                 "access plus 1 year"
+    ExpiresByType image/gif                 "access plus 1 year"
+    ExpiresByType image/webp                "access plus 1 year"
+    ExpiresByType image/avif                "access plus 1 year"
+    ExpiresByType image/svg+xml             "access plus 1 year"
+    ExpiresByType image/x-icon              "access plus 1 year"
+
+    ExpiresByType font/woff2                "access plus 1 year"
+    ExpiresByType font/woff                 "access plus 1 year"
+    ExpiresByType font/ttf                  "access plus 1 year"
+
+    # Vite writes content-hashed filenames into /build, so a new build is a
+    # new URL and a long cache is safe.
+    ExpiresByType text/css                  "access plus 1 month"
+    ExpiresByType text/javascript           "access plus 1 month"
+    ExpiresByType application/javascript    "access plus 1 month"
+
+    # HTML must stay fresh: prices, stock and sale badges change.
+    ExpiresByType text/html                 "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|woff2?|ttf|otf|eot)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|avif|svg|ico)$">
+        Header set Cache-Control "public, max-age=31536000"
+    </FilesMatch>
+
+    # Every page is served through index.php, and pages are personalised (cart
+    # count, account menu), so no shared proxy may keep a copy.
+    <FilesMatch "index\.php$">
+        Header set Cache-Control "no-cache, private"
+    </FilesMatch>
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# KEEP-ALIVE NOTE
+#
+# `SetEnv nokeepalive 1` at the top of this file closes the TCP connection
+# after every single response. A product page pulls one HTML document plus
+# stylesheets, scripts and a dozen or more images, and each of those then pays
+# a fresh TCP handshake and TLS negotiation instead of reusing the open
+# connection. On a high-latency mobile connection that is the difference
+# between one round trip and thirty, and it is a strong candidate for the
+# slowness customers are reporting.
+#
+# It is left switched on here because it is what production currently runs and
+# it may have been added deliberately (it is an old workaround for uploads
+# stalling behind certain proxies). To test removing it, comment out that one
+# line, reload a product page, and confirm large image uploads still complete.
+# Revert if uploads regress.
+# ---------------------------------------------------------------------------

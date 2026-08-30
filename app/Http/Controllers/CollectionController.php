@@ -40,6 +40,7 @@ class CollectionController extends Controller
                     $query->orderBy('order')->limit(1);
                 },
                 'sizes',
+                'colors',
             ]);
 
         // Apply sorting

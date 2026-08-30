@@ -73,11 +73,42 @@
 
                         {{-- Price --}}
                         <div class="mq-product__price">
-                            {!! $product->formatted_price !!}
-                            @if($product->compare_price && $product->compare_price > $product->price)
-                                <s class="mq-price--compare">{{ number_format($product->compare_price, 0) }}</s>
+                            @if($product->isOnSale())
+                                <span class="mq-price--sale">{!! $product->formatted_price !!}</span>
+                                <s class="mq-price--compare">{!! $product->formatted_original_price !!}</s>
+                                <span class="mq-price__badge">{{ $product->discount_percentage }}% off</span>
+                            @else
+                                {!! $product->formatted_price !!}
                             @endif
                         </div>
+
+                        @if($product->isOnSale() && $product->sale_ends_at)
+                            <p class="mq-sale-note">Sale ends {{ $product->sale_ends_at->format('j M Y') }}</p>
+                        @endif
+
+                        {{-- Colour --}}
+                        @php $productColors = $product->available_colors; @endphp
+                        @if($productColors->isNotEmpty())
+                            <div class="mq-option-row">
+                                <span class="mq-option-label">
+                                    Colour<span class="mq-chosen-color" id="chosenColor"></span>
+                                </span>
+                                <div class="mq-swatches" role="radiogroup" aria-label="Colour">
+                                    @foreach($productColors as $index => $color)
+                                        <button type="button"
+                                            class="mq-swatch {{ $productColors->count() === 1 ? 'is-selected' : '' }} {{ $color->is_light ? 'is-light' : '' }}"
+                                            style="--swatch: {{ $color->swatch_color }}"
+                                            data-color="{{ $color->name }}"
+                                            role="radio"
+                                            aria-checked="{{ $productColors->count() === 1 ? 'true' : 'false' }}"
+                                            aria-label="{{ $color->name }}"
+                                            title="{{ $color->name }}">
+                                            <span class="mq-swatch__chip"></span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
 
                         {{-- Size --}}
                         <div class="mq-option-row">
@@ -119,6 +150,10 @@
                                 <input type="hidden" name="quantity" value="1">
                                 <input type="hidden" name="size_label" id="size_label"
                                     value="{{ $availableSizes->count() === 1 ? $availableSizes->first()->size_label : '' }}">
+                                {{-- Pre-filled when there is only one colour, so a
+                                     single-colour product still adds in one click. --}}
+                                <input type="hidden" name="color_name" id="color_name"
+                                    value="{{ $productColors->count() === 1 ? $productColors->first()->name : '' }}">
 
                                 <button type="submit" class="mq-btn mq-btn--primary">
                                     {{ $needsSizeSelection ? 'SELECT A SIZE' : 'ADD TO CART' }}
@@ -594,6 +629,77 @@
         .mq-product__price {
             font-size: 14px;
             margin-bottom: 24px;
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .mq-price--sale { color: #b02a37; }
+
+        .mq-price--compare {
+            color: #8a8a8a;
+            font-size: 12px;
+        }
+
+        .mq-price__badge {
+            background: #b02a37;
+            color: #fff;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+        }
+
+        .mq-sale-note {
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            color: #8a8a8a;
+            margin: -16px 0 20px;
+        }
+
+        /* Colour swatches */
+        .mq-swatches {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mq-swatch {
+            background: none;
+            border: 0;
+            padding: 2px;
+            cursor: pointer;
+            border-radius: 50%;
+            line-height: 0;
+            box-shadow: inset 0 0 0 1px transparent;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .mq-swatch__chip {
+            display: block;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--swatch);
+        }
+
+        /* Pale colours need an outline or they vanish against the page */
+        .mq-swatch.is-light .mq-swatch__chip {
+            box-shadow: inset 0 0 0 1px var(--mq-border);
+        }
+
+        .mq-swatch:hover { box-shadow: inset 0 0 0 1px #bbb; }
+
+        .mq-swatch.is-selected,
+        .mq-swatch:focus-visible {
+            box-shadow: inset 0 0 0 1px #000;
+        }
+
+        .mq-chosen-color {
+            font-weight: 300;
+            text-transform: none;
+            letter-spacing: 0.02em;
         }
 
         /* Option rows, buttons, accordions... (keeping your existing styles for these) */
@@ -968,27 +1074,80 @@
                 });
             }
 
+            /* ── Colour swatches ── */
+            const colorInput = document.getElementById('color_name');
+            const swatches = Array.from(document.querySelectorAll('.mq-swatch'));
+            const chosenColorLabel = document.getElementById('chosenColor');
+
+            function setChosenColour(name) {
+                if (colorInput) colorInput.value = name;
+                if (chosenColorLabel) chosenColorLabel.textContent = name ? ': ' + name : '';
+            }
+
+            swatches.forEach((swatch) => {
+                swatch.addEventListener('click', () => {
+                    swatches.forEach((other) => {
+                        other.classList.toggle('is-selected', other === swatch);
+                        other.setAttribute('aria-checked', other === swatch ? 'true' : 'false');
+                    });
+                    setChosenColour(swatch.dataset.color);
+                });
+            });
+
+            // A product with a single colour is pre-selected server side; mirror
+            // that in the label so the customer sees what they are buying.
+            if (colorInput && colorInput.value) {
+                setChosenColour(colorInput.value);
+            }
+
             /* ── Add to cart ── */
             const form = document.getElementById('addToCartForm');
             if (form) {
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
+
                     if (sizeSelect && !document.getElementById('size_label').value) {
-                        showNotification('Please select a size', 'error');
+                        showNotification('Please choose a size before adding this piece to your bag.', 'error');
                         sizeSelect.focus();
                         return;
                     }
+
+                    if (swatches.length && colorInput && !colorInput.value) {
+                        const names = swatches.map((s) => s.dataset.color).join(', ');
+                        showNotification('Please choose a colour before adding this piece to your bag (' + names + ').', 'error');
+                        swatches[0].focus();
+                        return;
+                    }
+
                     fetch(form.action, {
                         method: 'POST',
                         body: new FormData(form),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
                     })
-                        .then(r => r.json())
-                        .then(data => {
-                            showNotification(data.message || (data.success ? 'Added to cart' : 'Error'), data.success ? 'success' : 'error');
-                            if (data.success && data.cartCount !== undefined) updateCartBadge(data.cartCount);
+                        .then(async (r) => {
+                            // Error bodies carry the reason, so parse either way.
+                            const data = await r.json().catch(() => ({}));
+                            return { ok: r.ok, status: r.status, data };
                         })
-                        .catch(() => showNotification('Error adding to cart', 'error'));
+                        .then(({ ok, status, data }) => {
+                            if (ok && data.success) {
+                                showNotification(data.message || 'Added to your bag.', 'success');
+                                if (data.cartCount !== undefined) updateCartBadge(data.cartCount);
+                                return;
+                            }
+
+                            if (status === 419) {
+                                showNotification('Your session expired. Reload the page and try again — nothing was added.', 'error');
+                            } else if (data.errors) {
+                                showNotification(Object.values(data.errors).flat().join(' '), 'error');
+                            } else {
+                                showNotification(data.message || 'This piece could not be added to your bag right now.', 'error');
+                            }
+                        })
+                        .catch(() => showNotification('Could not reach the store. Check your connection and try again.', 'error'));
                 });
             }
 

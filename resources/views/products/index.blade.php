@@ -77,21 +77,21 @@
                     @foreach($products as $product)
                     <div class="product-card">
                         <div class="product-image">
-                            <a href="{{ route('products.show', $product->slug) }}">
-                                @if(optional($product->main_image)->url)
-                                    <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
-                                         alt="{{ $product->name }}"
-                                         class="product-thumbnail"
-                                         loading="lazy">
-                                @else
-                                    <div class="placeholder-image">
-                                        <i class="fas fa-image"></i>
-                                    </div>
-                                @endif
-                            </a>
+                            @if(optional($product->main_image)->url)
+                                <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
+                                     alt="{{ $product->name }}"
+                                     class="product-thumbnail"
+                                     loading="lazy"
+                                     decoding="async"
+                                     width="600" height="600">
+                            @else
+                                <div class="placeholder-image">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            @endif
 
-                            @if($product->sale_price)
-                                <span class="sale-badge">Sale</span>
+                            @if($product->isOnSale())
+                                <span class="sale-badge">{{ $product->discount_percentage }}% Off</span>
                             @endif
 
                             @if($product->isSoldOut())
@@ -99,7 +99,10 @@
                             @else
                                 <div class="product-overlay">
                                     <button class="btn btn-primary btn-sm add-to-cart"
-                                            data-product-id="{{ $product->id }}">
+                                            data-product-id="{{ $product->id }}"
+                                            data-product-url="{{ route('products.show', $product->slug) }}"
+                                            data-product-name="{{ $product->name }}"
+                                            data-needs-options="{{ ($product->sizes->where('quantity', '>', 0)->count() > 1 || $product->available_colors->isNotEmpty()) ? '1' : '0' }}">
                                         Add to Cart
                                     </button>
                                 </div>
@@ -107,13 +110,18 @@
                         </div>
 
                         <div class="product-info">
-                            <div class="product-collection">
-                                <a href="{{ route('collections.show', $product->collection->slug) }}">
-                                    {{ $product->collection->title }}
-                                </a>
-                            </div>
+                            @if($product->collection)
+                                <div class="product-collection">
+                                    <a href="{{ route('collections.show', $product->collection->slug) }}">
+                                        {{ $product->collection->title }}
+                                    </a>
+                                </div>
+                            @endif
                             <h3 class="product-name">
-                                <a href="{{ route('products.show', $product->slug) }}">
+                                {{-- Stretched link: covers the whole card so a click
+                                     anywhere opens the product, while the Add to Cart
+                                     button and collection link stay above it. --}}
+                                <a href="{{ route('products.show', $product->slug) }}" class="product-card-link">
                                     {{ $product->name }}
                                 </a>
                             </h3>
@@ -121,9 +129,9 @@
                                 {{ Str::limit($product->description, 80) }}
                             </p>
                             <div class="product-price">
-                                @if($product->sale_price)
-                                 <span class="sale-price">${{ number_format($product->sale_price, 2) }}</span>
-                                 <span class="original-price">{!! $product->formatted_price !!}</span>
+                                @if($product->isOnSale())
+                                 <span class="sale-price">{!! $product->formatted_price !!}</span>
+                                 <span class="original-price">{!! $product->formatted_original_price !!}</span>
                                 @else
                                  <span class="current-price">{!! $product->formatted_price !!}</span>
                                 @endif
@@ -260,6 +268,27 @@
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
+    /* Anchor for the stretched product link below */
+    position: relative;
+}
+
+/* Makes the product name link cover the entire card. Everything that must
+   stay independently clickable is lifted above it with z-index. */
+.product-card-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.product-card:focus-within {
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.product-collection,
+.product-overlay {
+    position: relative;
+    z-index: 2;
 }
 
 .product-card:hover {
@@ -474,7 +503,10 @@
 
     .product-overlay {
         opacity: 1;
-        position: static;
+        /* relative, not static, so it keeps stacking above the stretched
+           card link and stays tappable on touch devices */
+        position: relative;
+        inset: auto;
         padding: 1rem;
         background: rgba(0, 0, 0, 0.05);
     }
@@ -496,14 +528,46 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Show a message in the same style as the server-rendered flash messages
+    // instead of a browser alert, so the wording the server sent is readable.
+    function notify(message, type) {
+        let stack = document.getElementById('flashStack');
+
+        if (!stack) {
+            stack = document.createElement('div');
+            stack.className = 'flash-stack';
+            stack.id = 'flashStack';
+            document.body.appendChild(stack);
+        }
+
+        const flash = document.createElement('div');
+        flash.className = 'flash flash--' + (type || 'error');
+        flash.innerHTML = '<div class="flash__body"></div>'
+            + '<button type="button" class="flash__close" aria-label="Dismiss">&times;</button>';
+        flash.querySelector('.flash__body').textContent = message;
+        flash.querySelector('.flash__close').addEventListener('click', () => flash.remove());
+
+        stack.appendChild(flash);
+        setTimeout(() => flash.remove(), 8000);
+    }
+
     // Add to cart functionality
     document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
-            const productId = this.dataset.productId;
+            e.stopPropagation();
+
             const btn = this;
+
+            // Products with a size or colour choice cannot be added blind:
+            // send the customer to the product page to pick one.
+            if (btn.dataset.needsOptions === '1') {
+                window.location.href = btn.dataset.productUrl;
+                return;
+            }
+
             const formData = new FormData();
-            formData.append('product_id', productId);
+            formData.append('product_id', btn.dataset.productId);
             formData.append('quantity', 1);
             formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
@@ -515,24 +579,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData,
                 credentials: 'same-origin',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
+            .then(async response => {
+                // Read the body either way: failures carry the useful message.
+                const data = await response.json().catch(() => ({}));
+                return { ok: response.ok, status: response.status, data };
+            })
+            .then(({ ok, status, data }) => {
+                if (ok && data.success) {
                     btn.textContent = 'Added';
-                    // Update the cart count UI if present
+                    notify('"' + btn.dataset.productName + '" was added to your bag.', 'success');
+
                     const cartCount = document.querySelector('.cart-count');
                     if (cartCount && data.cartCount) cartCount.textContent = data.cartCount;
-                } else {
-                    alert(data.message || 'Failed to add to cart');
-                    btn.textContent = 'Add to Cart';
+                    return;
                 }
+
+                if (status === 419) {
+                    notify('Your session expired. Reload the page and try again.', 'error');
+                } else if (data.errors) {
+                    notify(Object.values(data.errors).flat().join(' '), 'error');
+                } else {
+                    notify(data.message || 'Could not add "' + btn.dataset.productName + '" to your bag.', 'error');
+                }
+
+                btn.textContent = 'Add to Cart';
             })
             .catch(err => {
                 console.error(err);
-                alert('An error occurred. Please try again.');
+                notify('Could not reach the store. Check your connection and try again.', 'error');
                 btn.textContent = 'Add to Cart';
             })
             .finally(() => {

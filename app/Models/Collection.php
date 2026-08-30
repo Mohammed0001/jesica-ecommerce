@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\CollectionImage;
@@ -11,6 +12,10 @@ use Illuminate\Support\Str;
 
 class Collection extends Model
 {
+    // database/factories/CollectionFactory.php exists but was unreachable
+    // without this trait.
+    use HasFactory;
+
     protected $fillable = [
         'title',
         'slug',
@@ -30,15 +35,43 @@ class Collection extends Model
     {
         static::creating(function (Collection $collection) {
             if (empty($collection->slug)) {
-                $collection->slug = Str::slug($collection->title);
+                $collection->slug = static::generateUniqueSlug($collection->title);
             }
         });
 
         static::updating(function (Collection $collection) {
-            if ($collection->isDirty('title') && empty($collection->slug)) {
-                $collection->slug = Str::slug($collection->title);
+            if (empty($collection->slug)) {
+                $collection->slug = static::generateUniqueSlug($collection->title, $collection->id);
             }
         });
+    }
+
+    /**
+     * Build a URL slug that is unique across the collections table.
+     *
+     * Same reasoning as products: two collections may share a title, and the
+     * slug column is uniquely indexed.
+     *
+     * @param  string    $title     Title to slugify.
+     * @param  int|null  $ignoreId  Collection to exclude (the one being updated).
+     */
+    public static function generateUniqueSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title) ?: 'collection';
+        $slug = $base;
+        $suffix = 2;
+
+        while (
+            static::query()
+                ->where('slug', $slug)
+                ->when($ignoreId, fn (Builder $q) => $q->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = $base . '-' . $suffix;
+            $suffix++;
+        }
+
+        return $slug;
     }
 
     /**

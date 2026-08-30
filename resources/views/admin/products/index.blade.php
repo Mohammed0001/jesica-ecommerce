@@ -76,6 +76,13 @@
                                             </td>
                                             <td>
                                                 <span class="price-value">{!! $product->formatted_price !!}</span>
+                                                @if($product->isOnSale())
+                                                    <s class="text-muted small d-block">{!! $product->formatted_original_price !!}</s>
+                                                    <span class="badge bg-danger">{{ $product->discount_percentage }}% off</span>
+                                                @elseif($product->sale_price)
+                                                    {{-- Configured but not live: scheduled, ended, or not below list price --}}
+                                                    <span class="badge bg-secondary" title="Sale price is set but not currently active">Sale scheduled</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">

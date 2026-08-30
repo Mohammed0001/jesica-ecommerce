@@ -148,6 +148,8 @@
                                 @enderror
                             </div>
 
+                            @include('admin.products._variants')
+
                             <div class="col-12 mb-4">
                                 <label for="images" class="form-label">Product Images</label>
                                 <input type="file" class="form-control @error('images.*') is-invalid @enderror"
@@ -155,7 +157,7 @@
                                 @error('image')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Supported formats: JPEG, PNG, JPG, GIF. Images are automatically compressed.</div>
+                                <div class="form-text">Supported formats: JPEG, PNG, JPG, GIF, WEBP, AVIF, BMP, HEIC. No file size limit &mdash; images are resized in your browser and compressed again on the server.</div>
                             </div>
 
                             <div class="col-12 mb-4">

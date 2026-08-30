@@ -121,14 +121,23 @@
                                     <div class="mb-6 overflow-hidden position-relative">
                                         <img src="{{ $product->main_image?->url ?? asset('images/placeholder.jpg') }}"
                                             class="w-100" style="height:520px; object-fit:cover;"
-                                            alt="{{ $product->name }}">
+                                            alt="{{ $product->name }}" loading="lazy" decoding="async">
                                         @if ($product->isSoldOut())
                                             <span class="sold-out-badge">Sold Out</span>
+                                        @elseif ($product->isOnSale())
+                                            <span class="sale-badge">{{ $product->discount_percentage }}% Off</span>
                                         @endif
                                     </div>
                                     <h3 class="h5 fw-medium text-uppercase tracking-wider mb-4">{{ $product->name }}</h3>
                                     <div class="d-flex justify-content-between align-items-end">
-                                        <div class="fw-bold fs-4">{!! $product->formatted_price !!}</div>
+                                        <div class="fw-bold fs-4">
+                                            @if ($product->isOnSale())
+                                                <span class="price-sale">{!! $product->formatted_price !!}</span>
+                                                <s class="price-original">{!! $product->formatted_original_price !!}</s>
+                                            @else
+                                                {!! $product->formatted_price !!}
+                                            @endif
+                                        </div>
                                         <span class="small text-uppercase tracking-widest text-muted">View →</span>
                                     </div>
                                 </a>

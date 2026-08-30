@@ -196,13 +196,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{shipment}/update-tracking', [ShipmentController::class, 'updateTracking'])->name('update-tracking');
         Route::post('/request-pickup', [ShipmentController::class, 'requestPickup'])->name('request-pickup');
     });
-}); Route::get('newsletter/send', [NewsletterController::class, 'showSendForm'])->name('newsletter.send.form');
-    Route::post('newsletter/send', [NewsletterController::class, 'send'])->name('newsletter.send');
-    // Admin newsletter logs viewer
-// Payment webhooks (Paymob)
-Route::post('/payments/webhook/paymob', [PaymentWebhookController::class, 'handlePaymob'])
-    ->name('payments.webhook.paymob')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+});
+
+// NOTE: a stray copy of the admin newsletter routes used to sit here, outside
+// the auth+admin group. Because it was registered later it also took over the
+// `newsletter.send*` route names, so admin links pointed at an unauthenticated
+// /newsletter/send URL. The canonical definitions live in the admin group above.
 
 // BOSTA webhooks
 Route::post('/webhooks/bosta', [ShipmentController::class, 'webhook'])

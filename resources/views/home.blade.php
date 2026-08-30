@@ -39,10 +39,11 @@
                         <div class="collection-card">
                             @if ($collection->images && $collection->images->count() > 0)
                                 <img src="{{ optional($collection->images->first())->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
-                                    class="collection-image" alt="{{ $collection->title }}">
+                                    class="collection-image" alt="{{ $collection->title }}" loading="lazy"
+                                    decoding="async">
                             @elseif($collection->image_path)
                                 <img src="{{ Storage::url($collection->image_path) }}" class="collection-image"
-                                    alt="{{ $collection->title }}">
+                                    alt="{{ $collection->title }}" loading="lazy" decoding="async">
                             @else
                                 <div class="collection-image placeholder">
                                     <span>{{ $collection->title }}</span>
@@ -72,11 +73,15 @@
 
                 <div class="products-grid">
                     @foreach ($featuredProducts as $product)
-                        <div class="product-card">
+                        {{-- The whole card is the link, so a click anywhere on
+                             the image, title or price opens the product. --}}
+                        <a href="{{ route('products.show', $product) }}" class="product-card"
+                            aria-label="View {{ $product->title }}">
                             <div class="product-image-wrap">
                                 @if ($product->main_image)
                                     <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
-                                        class="product-image" alt="{{ $product->title }}">
+                                        class="product-image" alt="{{ $product->title }}" loading="lazy"
+                                        decoding="async" width="600" height="800">
                                 @else
                                     <div class="product-image placeholder">
                                         <span>{{ $product->title }}</span>
@@ -84,16 +89,23 @@
                                 @endif
                                 @if ($product->isSoldOut())
                                     <span class="sold-out-badge">Sold Out</span>
+                                @elseif ($product->isOnSale())
+                                    <span class="sale-badge">{{ $product->discount_percentage }}% Off</span>
                                 @endif
                             </div>
                             <div class="product-content">
                                 <h3 class="product-title">{{ $product->title }}</h3>
-                                <p class="product-price">{!! $product->formatted_price !!}</p>
-                                <a href="{{ route('products.show', $product) }}" class="btn-outline">
-                                    View Details
-                                </a>
+                                <p class="product-price">
+                                    @if ($product->isOnSale())
+                                        <span class="price-sale">{!! $product->formatted_price !!}</span>
+                                        <s class="price-original">{!! $product->formatted_original_price !!}</s>
+                                    @else
+                                        {!! $product->formatted_price !!}
+                                    @endif
+                                </p>
+                                <span class="btn-outline">View Details</span>
                             </div>
-                        </div>
+                        </a>
                     @endforeach
                 </div>
             </div>
@@ -124,7 +136,8 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="about-image">
-                        <img src="{{ asset('images/about-hero.jpg') }}" alt="Jesica Riad at work" class="img-fluid">
+                        <img src="{{ asset('images/about-hero.jpg') }}" alt="Jesica Riad at work" class="img-fluid"
+                            loading="lazy" decoding="async">
 
                     </div>
                 </div>
@@ -139,6 +152,9 @@
         $heroImage = \App\Models\SiteSetting::get('hero_image');
         $heroUrl = $heroImage ? asset($heroImage) : asset('images/hero-background.jpg');
     @endphp
+    {{-- The hero is the largest paint on this page and it lives in CSS, so the
+         browser would not discover it until the stylesheet is parsed. --}}
+    <link rel="preload" as="image" href="{{ $heroUrl }}" fetchpriority="high">
     <style>
         .hero-background {
             background: url('{{ $heroUrl }}') no-repeat center center;

@@ -59,6 +59,9 @@
                                         <p class="item-description">{{ Str::limit($item->product->description, 100) }}</p>
                                     @endif
                                     <div class="item-meta">
+                                        @if($item->variant_label)
+                                            <span class="item-variant">{{ $item->variant_label }}</span>
+                                        @endif
                                         <span class="item-quantity">Quantity: {{ $item->quantity }}</span>
                                         <span class="item-price">Unit Price: {{ $item->formattedPrice }}</span>
                                     </div>

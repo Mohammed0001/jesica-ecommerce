@@ -30,12 +30,14 @@ class GuestCheckoutController extends Controller
         $cartItems = $this->getCartItems();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')
+                ->with('error', 'Your bag is empty, so there is nothing to check out. Add a piece and try again.');
         }
 
         $errors = $this->orderService->validateCartItems($cartItems);
         if (!empty($errors)) {
-            return redirect()->route('cart.index')->with('error', implode(', ', $errors));
+            return redirect()->route('cart.index')
+                ->with('error', 'Your bag needs attention before checkout: ' . implode(' ', $errors));
         }
 
         // Calculate totals
@@ -121,7 +123,17 @@ class GuestCheckoutController extends Controller
         $cartItems = $this->getCartItems();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')
+                ->with('error', 'Your bag is empty, so there is nothing to check out. Add a piece and try again.');
+        }
+
+        // Re-check stock, sizes and colours at the moment of purchase so the
+        // customer gets a specific reason rather than a generic failure.
+        $cartErrors = $this->orderService->validateCartItems($cartItems);
+
+        if (!empty($cartErrors)) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Your bag needs attention before checkout: ' . implode(' ', $cartErrors));
         }
 
         // Build address snapshot from form data
@@ -212,10 +224,26 @@ class GuestCheckoutController extends Controller
                 return back()->with('error', $result['message'])->withInput();
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Guest checkout failed: ' . $e->getMessage(), ['exception' => $e]);
-            return back()->with('error', 'An error occurred during checkout. Please try again.')->withInput();
+
+            // A short reference lets support tie the customer's report to the
+            // exact log line without exposing internals on screen.
+            $reference = strtoupper(\Illuminate\Support\Str::random(8));
+
+            Log::error('Guest checkout failed: ' . $e->getMessage(), [
+                'reference' => $reference,
+                'email' => $request->input('email'),
+                'payment_method' => $request->input('payment_method'),
+                'payment_type' => $request->input('payment_type'),
+                'exception' => $e,
+            ]);
+
+            return back()->withInput()->with('error', sprintf(
+                'We could not complete your order (%s). Your bag has been kept and you have not been charged. Quote reference %s if you contact us.',
+                config('app.debug') ? $e->getMessage() : 'payment could not be processed',
+                $reference
+            ));
         }
     }
 
@@ -256,36 +284,50 @@ class GuestCheckoutController extends Controller
      */
     private function getCartItems()
     {
-        $cart      = session()->get('cart', []);
+        $cart = session()->get('cart', []);
         $cartItems = collect();
 
+        if (empty($cart)) {
+            return $cartItems;
+        }
+
+        // One query for the whole bag rather than one per line.
+        $products = \App\Models\Product::with(['images', 'colors'])
+            ->whereIn('id', collect($cart)->pluck('product_id')->unique()->all())
+            ->get()
+            ->keyBy('id');
+
         foreach ($cart as $item) {
-            $product = \App\Models\Product::with('images')->find($item['product_id']);
+            $product = $products->get($item['product_id']);
 
             $productData = null;
             if ($product) {
-                $mainImage    = $product->main_image;
+                $mainImage = $product->main_image;
                 $displayPrice = $product->convertToCurrency(session('currency', $product->currency));
-                $productData  = [
-                    'id'                => $product->id,
-                    'sku'               => $product->sku,
-                    'title'             => $product->title,
-                    'description'       => $product->description,
-                    'price'             => (float) $product->price,
-                    'currency'          => $product->currency,
-                    'is_one_of_a_kind'  => (bool) $product->is_one_of_a_kind,
-                    'quantity_available'=> $product->quantity,
-                    'main_image_url'    => $mainImage?->url,
-                    'display_price'     => $displayPrice,
-                    'display_subtotal'  => round($displayPrice * $item['quantity'], 2),
+                $productData = [
+                    'id' => $product->id,
+                    'sku' => $product->sku,
+                    'title' => $product->title,
+                    'description' => $product->description,
+                    // Sale-aware: this is what the customer is charged.
+                    'price' => $product->effective_price,
+                    'original_price' => (float) $product->price,
+                    'is_on_sale' => $product->isOnSale(),
+                    'currency' => $product->currency,
+                    'is_one_of_a_kind' => (bool) $product->is_one_of_a_kind,
+                    'quantity_available' => $product->quantity,
+                    'main_image_url' => $mainImage?->url,
+                    'display_price' => $displayPrice,
+                    'display_subtotal' => round($displayPrice * $item['quantity'], 2),
                 ];
             }
 
             $cartItems->push([
                 'product_id' => $item['product_id'],
-                'quantity'   => $item['quantity'],
+                'quantity' => $item['quantity'],
                 'size_label' => $item['size_label'] ?? null,
-                'product'    => $productData,
+                'color_name' => $item['color_name'] ?? null,
+                'product' => $productData,
             ]);
         }
 

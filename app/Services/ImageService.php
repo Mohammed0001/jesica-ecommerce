@@ -5,14 +5,31 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
+use RuntimeException;
 
 class ImageService
 {
-    protected ImageManager $manager;
+    /**
+     * Built on first use rather than in the constructor: resolving this
+     * service must not fail on a request that never touches an image (saving
+     * a product with no new upload, for example).
+     */
+    protected ?ImageManager $manager = null;
 
-    public function __construct()
+    protected function manager(): ImageManager
     {
-        $this->manager = ImageManager::gd();
+        if ($this->manager === null) {
+            if (!extension_loaded('gd')) {
+                throw new RuntimeException(
+                    'Image uploads need the PHP GD extension, which is not enabled on this server. '
+                    . 'Enable extension=gd in php.ini and restart PHP.'
+                );
+            }
+
+            $this->manager = ImageManager::gd();
+        }
+
+        return $this->manager;
     }
 
     /**
@@ -30,7 +47,7 @@ class ImageService
         int $quality = 80,
         ?int $maxWidth = 2000,
     ): string {
-        $image = $this->manager->read($file->getRealPath());
+        $image = $this->manager()->read($file->getRealPath());
 
         // Scale down large images while preserving aspect ratio
         if ($maxWidth && $image->width() > $maxWidth) {

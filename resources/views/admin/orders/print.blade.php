@@ -59,7 +59,12 @@
                     @foreach($order->orderItems as $item)
                         <tr>
                             <td>{{ data_get($item->product_snapshot, 'sku') }}</td>
-                            <td>{{ data_get($item->product_snapshot, 'title') }}</td>
+                            <td>
+                                {{ data_get($item->product_snapshot, 'title') }}
+                                @if($item->variant_label)
+                                    <br><small>{{ $item->variant_label }}</small>
+                                @endif
+                            </td>
                             <td class="text-end">{{ $item->formattedPrice }}</td>
                             <td class="text-center">{{ $item->quantity }}</td>
                             <td class="text-end">{{ $item->formattedSubtotal }}</td>

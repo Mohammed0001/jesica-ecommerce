@@ -35,7 +35,17 @@ class CheckoutController extends Controller
         \Log::info('Checkout - Session Cart:', ['cart' => session()->get('cart', [])]);
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')
+                ->with('error', 'Your bag is empty, so there is nothing to check out. Add a piece and try again.');
+        }
+
+        // Re-check stock, sizes and colours at the moment of purchase so the
+        // customer gets a specific reason rather than a generic failure.
+        $cartErrors = $this->orderService->validateCartItems($cartItems);
+
+        if (!empty($cartErrors)) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Your bag needs attention before checkout: ' . implode(' ', $cartErrors));
         }
 
         // Get BOSTA cities for dropdown
@@ -192,7 +202,7 @@ class CheckoutController extends Controller
                 ->first();
 
             if (!$address) {
-                return back()->with('error', 'Invalid shipping address.');
+                return back()->withInput()->with('error', 'That delivery address is not on your account any more. Pick another saved address or enter a new one.');
             }
 
             $shippingAddressId = $address->id;
@@ -314,11 +324,26 @@ class CheckoutController extends Controller
                 return back()->with('error', $result['message']);
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            // Log exception for debugging
-            Log::error('Checkout process failed: ' . $e->getMessage(), ['exception' => $e]);
-            return back()->with('error', 'An error occurred during checkout. Please try again.');
+
+            // A short reference lets support tie the customer's report to the
+            // exact log line without exposing internals on screen.
+            $reference = strtoupper(\Illuminate\Support\Str::random(8));
+
+            Log::error('Checkout process failed: ' . $e->getMessage(), [
+                'reference' => $reference,
+                'user_id' => Auth::id(),
+                'payment_method' => $request->input('payment_method'),
+                'payment_type' => $request->input('payment_type'),
+                'exception' => $e,
+            ]);
+
+            return back()->withInput()->with('error', sprintf(
+                'We could not complete your order (%s). Your bag has been kept and you have not been charged. Quote reference %s if you contact us.',
+                config('app.debug') ? $e->getMessage() : 'payment could not be processed',
+                $reference
+            ));
         }
     }
 
@@ -351,8 +376,18 @@ class CheckoutController extends Controller
         $cart = session()->get('cart', []);
         $cartItems = collect();
 
+        if (empty($cart)) {
+            return $cartItems;
+        }
+
+        // One query for the whole bag rather than one per line.
+        $products = \App\Models\Product::with(['images', 'colors'])
+            ->whereIn('id', collect($cart)->pluck('product_id')->unique()->all())
+            ->get()
+            ->keyBy('id');
+
         foreach ($cart as $item) {
-            $product = \App\Models\Product::with('images')->find($item['product_id']);
+            $product = $products->get($item['product_id']);
 
             $productData = null;
             if ($product) {
@@ -363,7 +398,10 @@ class CheckoutController extends Controller
                     'sku' => $product->sku,
                     'title' => $product->title,
                     'description' => $product->description,
-                    'price' => (float) $product->price,
+                    // Sale-aware: this is what the customer is charged.
+                    'price' => $product->effective_price,
+                    'original_price' => (float) $product->price,
+                    'is_on_sale' => $product->isOnSale(),
                     'currency' => $product->currency,
                     'is_one_of_a_kind' => (bool) $product->is_one_of_a_kind,
                     'quantity_available' => $product->quantity,
@@ -377,6 +415,7 @@ class CheckoutController extends Controller
                 'product_id' => $item['product_id'],
                 'quantity' => $item['quantity'],
                 'size_label' => $item['size_label'] ?? null,
+                'color_name' => $item['color_name'] ?? null,
                 'product' => $productData,
             ]);
         }

@@ -170,8 +170,8 @@
             @endif
             <div class="confirm-item-name">
                 {{ $snap['title'] ?? 'Product' }}
-                @if($item->size_label)
-                    <div class="confirm-item-qty">Size: {{ $item->size_label }}</div>
+                @if($item->variant_label)
+                    <div class="confirm-item-qty">{{ $item->variant_label }}</div>
                 @endif
                 <div class="confirm-item-qty">Qty: {{ $item->quantity }}</div>
             </div>

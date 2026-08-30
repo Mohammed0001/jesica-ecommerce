@@ -98,6 +98,9 @@
                                         @if(data_get($item, 'size_label'))
                                             <small class="text-muted mt-1">Size: {{ data_get($item, 'size_label') }}</small>
                                         @endif
+                                        @if(data_get($item, 'color_name'))
+                                            <small class="text-muted mt-1">Colour: {{ data_get($item, 'color_name') }}</small>
+                                        @endif
                                     </div>
 
                                     <!-- Price -->
@@ -108,6 +111,9 @@
                                                 <br><small class="text-muted">(30% deposit)</small>
                                             @else
                                                 <span class="fw-bold">{!! data_get($item, 'formatted_price') !!}</span>
+                                                @if(data_get($item, 'is_on_sale'))
+                                                    <br><s class="text-muted small">{!! data_get($item, 'formatted_original_price') !!}</s>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>

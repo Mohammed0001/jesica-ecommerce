@@ -13,6 +13,7 @@ class OrderItem extends Model
         'price',
         'quantity',
         'size_label',
+        'color_name',
         'subtotal',
         'product_snapshot',
     ];
@@ -46,6 +47,25 @@ class OrderItem extends Model
     {
         $displayCurrency = session('currency', 'EGP');
         return number_format($this->price, 2) . ' ' . $displayCurrency;
+    }
+
+    /**
+     * Human-readable variant, e.g. "Size: M / Colour: Ivory". Empty string
+     * when the product has neither.
+     */
+    public function getVariantLabelAttribute(): string
+    {
+        $parts = [];
+
+        if ($this->size_label) {
+            $parts[] = 'Size: ' . $this->size_label;
+        }
+
+        if ($this->color_name) {
+            $parts[] = 'Colour: ' . $this->color_name;
+        }
+
+        return implode(' / ', $parts);
     }
 
     /**

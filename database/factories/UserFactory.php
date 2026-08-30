@@ -31,8 +31,16 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'date_of_birth' => fake()->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
             'phone' => fake()->phoneNumber(),
-            'region_id' => fake()->numberBetween(1, 10), // Will be created in seeder
-            'role_id' => 2, // Default to CLIENT role
+            // Create the related rows rather than assuming a seeder has run:
+            // hardcoded ids fail the foreign keys on a fresh database.
+            'region_id' => \App\Models\Region::firstOrCreate(
+                ['name' => 'Cairo'],
+                ['code' => 'CAI']
+            )->id,
+            'role_id' => \App\Models\Role::firstOrCreate(
+                ['name' => 'CLIENT'],
+                ['description' => 'Standard customer account']
+            )->id,
         ];
     }
 
@@ -52,7 +60,10 @@ class UserFactory extends Factory
     public function admin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role_id' => 1, // ADMIN role
+            'role_id' => \App\Models\Role::firstOrCreate(
+                ['name' => 'ADMIN'],
+                ['description' => 'Store administrator']
+            )->id,
         ]);
     }
 
@@ -62,7 +73,10 @@ class UserFactory extends Factory
     public function client(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role_id' => 2, // CLIENT role
+            'role_id' => \App\Models\Role::firstOrCreate(
+                ['name' => 'CLIENT'],
+                ['description' => 'Standard customer account']
+            )->id,
         ]);
     }
 }
