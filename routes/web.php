@@ -232,9 +232,25 @@ Route::prefix('dev/cmd')->middleware(['auth'])->group(function () {
         return 'Optimized successfully. <br> <a href="/">Go Home</a>';
     });
     
+    // Reports what actually happened. The previous version always claimed
+    // success, which hid both failures and a no-op "Nothing to migrate".
     Route::get('/migrate', function () {
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        return 'Migrated successfully. <br> <a href="/">Go Home</a>';
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            $output = \Illuminate\Support\Facades\Artisan::output();
+        } catch (\Throwable $e) {
+            return response('<h3>Migration failed</h3><pre>' . e($e->getMessage()) . '</pre>', 500);
+        }
+
+        return 'Migrate finished. <br><pre>' . e($output) . '</pre><a href="/">Go Home</a>';
+    });
+
+    // Shows which migrations have run and which are still pending, so a
+    // schema that is behind the deployed code is visible before it bites.
+    Route::get('/migrate-status', function () {
+        \Illuminate\Support\Facades\Artisan::call('migrate:status');
+
+        return '<pre>' . e(\Illuminate\Support\Facades\Artisan::output()) . '</pre><a href="/">Go Home</a>';
     });
     
     Route::get('/storage-link', function () {
