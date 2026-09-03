@@ -225,7 +225,7 @@ Route::get('/payments/status/{order}', [PaymentWebhookController::class, 'checkS
     ->middleware(['auth']);
 
 // --- Artisan Utility Routes (For Hosting Environments without SSH) ---
-Route::prefix('dev/cmd')->middleware(['auth'])->group(function () {
+Route::prefix('dev/cmd')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/optimize', function () {
         \Illuminate\Support\Facades\Artisan::call('optimize:clear');
         \Illuminate\Support\Facades\Artisan::call('optimize');
@@ -253,6 +253,86 @@ Route::prefix('dev/cmd')->middleware(['auth'])->group(function () {
         return '<pre>' . e(\Illuminate\Support\Facades\Artisan::output()) . '</pre><a href="/">Go Home</a>';
     });
     
+    // Reports what this server actually looks like: PHP limits, the extension
+    // image handling needs, pending migrations, and every table and column
+    // product creation touches -- ending in a dry run of the create itself
+    // that is always rolled back. Read-only; nothing is committed.
+    Route::get('/diagnose', function () {
+        $out = [];
+
+        $out['PHP'] = [
+            'version'             => PHP_VERSION,
+            'max_execution_time'  => ini_get('max_execution_time'),
+            'max_input_time'      => ini_get('max_input_time'),
+            'memory_limit'        => ini_get('memory_limit'),
+            'post_max_size'       => ini_get('post_max_size'),
+            'upload_max_filesize' => ini_get('upload_max_filesize'),
+            'gd_loaded'           => extension_loaded('gd') ? 'yes' : 'NO',
+        ];
+
+        try {
+            $out['DB'] = [
+                'connected' => 'yes',
+                'driver'    => \Illuminate\Support\Facades\DB::connection()->getDriverName(),
+                'database'  => \Illuminate\Support\Facades\DB::connection()->getDatabaseName(),
+            ];
+        } catch (\Throwable $e) {
+            $out['DB'] = ['connected' => 'NO -- ' . $e->getMessage()];
+        }
+
+        foreach (['products', 'product_colors', 'product_images', 'size_charts',
+                  'collections', 'sessions', 'cache'] as $table) {
+            $out['Tables'][$table] = \Illuminate\Support\Facades\Schema::hasTable($table) ? 'ok' : 'MISSING';
+        }
+
+        foreach (['sale_price', 'sale_starts_at', 'sale_ends_at', 'is_sold_out',
+                  'deleted_at', 'size_chart_id', 'story', 'currency', 'quantity'] as $column) {
+            $out['products columns'][$column] =
+                \Illuminate\Support\Facades\Schema::hasColumn('products', $column) ? 'ok' : 'MISSING';
+        }
+
+        \Illuminate\Support\Facades\Artisan::call('migrate:status');
+        $out['Migrations'] = \Illuminate\Support\Facades\Artisan::output();
+
+        $collectionId = \App\Models\Collection::value('id');
+        $out['Collections exist'] = $collectionId ? 'yes' : 'NO -- create a collection first';
+
+        // Exactly what store() does, then forced to roll back.
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($collectionId) {
+                $product = \App\Models\Product::create([
+                    'collection_id'     => $collectionId,
+                    'title'             => '__diagnose__ ' . uniqid(),
+                    'description'       => 'diagnostic dry run',
+                    'price'             => 1,
+                    'sale_price'        => null,
+                    'sale_starts_at'    => null,
+                    'sale_ends_at'      => null,
+                    'currency'          => array_key_first((array) config('currencies.rates')),
+                    'quantity'          => 1,
+                    'visible'           => false,
+                    'is_one_of_a_kind'  => false,
+                    'is_sold_out'       => false,
+                ]);
+
+                \App\Models\ProductColor::where('product_id', $product->id)
+                    ->whereNotIn('id', [0])
+                    ->delete();
+                $product->load('colors');
+
+                throw new \RuntimeException('__ROLLBACK__');
+            });
+        } catch (\Throwable $e) {
+            $out['Dry-run create'] = $e->getMessage() === '__ROLLBACK__'
+                ? 'PASSED -- rolled back cleanly'
+                : 'FAILED -- ' . get_class($e) . ': ' . $e->getMessage();
+        }
+
+        $out['storage/logs writable'] = is_writable(storage_path('logs')) ? 'yes' : 'NO';
+
+        return '<pre>' . e(print_r($out, true)) . '</pre>';
+    });
+
     Route::get('/storage-link', function () {
         \Illuminate\Support\Facades\Artisan::call('storage:link');
         return 'Storage linked successfully. <br> <a href="/">Go Home</a>';
