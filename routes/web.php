@@ -333,6 +333,31 @@ Route::prefix('dev/cmd')->middleware(['auth', 'admin'])->group(function () {
         return '<pre>' . e(print_r($out, true)) . '</pre>';
     });
 
+    // Tail the application log. Without SSH this is the only way to read a
+    // stack trace off the live server. ?lines=N to widen the window.
+    Route::get('/log', function (\Illuminate\Http\Request $request) {
+        $path = storage_path('logs/laravel.log');
+
+        if (!is_file($path)) {
+            return '<pre>No log file at ' . e($path) . '</pre>';
+        }
+
+        $lines = max(1, min(2000, (int) $request->query('lines', 200)));
+        $file  = new \SplFileObject($path, 'r');
+        $file->seek(PHP_INT_MAX);
+        $start = max(0, $file->key() - $lines);
+
+        $tail = '';
+        $file->seek($start);
+        while (!$file->eof()) {
+            $tail .= $file->fgets();
+        }
+
+        return '<p>Last ' . $lines . ' lines of ' . e($path)
+            . ' (' . number_format(filesize($path) / 1048576, 1) . ' MB)</p><pre>'
+            . e($tail) . '</pre>';
+    });
+
     Route::get('/storage-link', function () {
         \Illuminate\Support\Facades\Artisan::call('storage:link');
         return 'Storage linked successfully. <br> <a href="/">Go Home</a>';

@@ -329,7 +329,7 @@
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/image-compressor.js') }}"></script>
+<script src="{{ asset('js/image-compressor.js') }}?v={{ @filemtime(public_path('js/image-compressor.js')) }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.querySelector('form[enctype="multipart/form-data"]');

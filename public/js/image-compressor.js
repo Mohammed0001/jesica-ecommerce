@@ -3,6 +3,14 @@
  *
  * Resizes large images in the browser BEFORE uploading, drastically
  * cutting upload time. Uses the Canvas API — no dependencies.
+ *
+ * Every wait here is bounded. FileReader, Image decoding and canvas.toBlob
+ * can all fail by simply never invoking their callback — common on iOS
+ * Safari and low-memory Android with large photos. An unbounded Promise.all
+ * over those never settles, so neither .then() nor .catch() runs, the form
+ * is never submitted, and the page sits on the overlay forever with no
+ * error. Anything that overruns its deadline falls back to the original
+ * file and the form still submits.
  */
 (function () {
     'use strict';
@@ -12,11 +20,44 @@
     const QUALITY    = 0.80;   // JPEG quality 0-1
     const OUTPUT_TYPE = 'image/jpeg';
 
+    const PER_FILE_TIMEOUT = 20000;  // one photo
+    const TOTAL_TIMEOUT    = 45000;  // the whole compression phase
+
+    /**
+     * Resolve with `fallback` if `promise` has not settled within `ms`.
+     */
+    function withTimeout(promise, ms, fallback) {
+        return new Promise(function (resolve) {
+            var settled = false;
+
+            var timer = setTimeout(function () {
+                if (!settled) {
+                    settled = true;
+                    resolve(fallback);
+                }
+            }, ms);
+
+            promise.then(function (value) {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(value);
+                }
+            }, function () {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(fallback);
+                }
+            });
+        });
+    }
+
     /**
      * Compress a single File via canvas and return a new File.
      */
     function compressImage(file) {
-        return new Promise(function (resolve) {
+        var work = new Promise(function (resolve) {
             // Skip non-image files (e.g. PDFs)
             if (!file.type.startsWith('image/')) {
                 return resolve(file);
@@ -41,6 +82,10 @@
                     canvas.height = height;
 
                     var ctx = canvas.getContext('2d');
+                    if (!ctx || typeof canvas.toBlob !== 'function') {
+                        return resolve(file);
+                    }
+
                     ctx.drawImage(img, 0, 0, width, height);
 
                     canvas.toBlob(function (blob) {
@@ -65,6 +110,10 @@
             reader.onerror = function () { resolve(file); };
             reader.readAsDataURL(file);
         });
+
+        // A photo that cannot be re-encoded is uploaded as-is rather than
+        // stalling the submit.
+        return withTimeout(work, PER_FILE_TIMEOUT, file);
     }
 
     /**
@@ -94,29 +143,30 @@
             if (form.dataset.compressed === 'true') return;
             e.preventDefault();
 
+            var submitted = false;
+            var submitOnce = function () {
+                if (submitted) return;
+                submitted = true;
+
+                form.dataset.compressed = 'true';
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            };
+
             var imageInputs = Array.from(
                 form.querySelectorAll('input[type="file"][accept*="image"]')
             );
 
-            // Compress all image file inputs in parallel
-            Promise.all(imageInputs.map(compressInputFiles))
-                .then(function () {
-                    form.dataset.compressed = 'true';
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                    } else {
-                        form.submit();
-                    }
-                })
-                .catch(function () {
-                    // On error, submit with original files
-                    form.dataset.compressed = 'true';
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                    } else {
-                        form.submit();
-                    }
-                });
+            // Compress all image file inputs in parallel, but never let the
+            // submit itself depend on that finishing.
+            withTimeout(
+                Promise.all(imageInputs.map(compressInputFiles)),
+                TOTAL_TIMEOUT,
+                null
+            ).then(submitOnce, submitOnce);
         });
     });
 })();

@@ -448,7 +448,7 @@
 @push('scripts')
 {{-- Resizes images in the browser before upload, so a full-resolution shoot
      file does not have to travel over the wire. --}}
-<script src="{{ asset('js/image-compressor.js') }}"></script>
+<script src="{{ asset('js/image-compressor.js') }}?v={{ @filemtime(public_path('js/image-compressor.js')) }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.querySelector('form[enctype="multipart/form-data"]');
