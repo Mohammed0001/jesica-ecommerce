@@ -141,6 +141,24 @@
         form.addEventListener('submit', function (e) {
             // Prevent default only if we haven't already compressed
             if (form.dataset.compressed === 'true') return;
+
+            var imageInputs = Array.from(
+                form.querySelectorAll('input[type="file"][accept*="image"]')
+            );
+
+            var hasFiles = imageInputs.some(function (input) {
+                return input.files && input.files.length > 0;
+            });
+
+            // Nothing to compress: do not intercept at all. With no file the
+            // work resolved in a microtask, so the re-submit could still land
+            // inside the original submit dispatch -- and the HTML spec says a
+            // submit fired while the form's "firing submission events" flag is
+            // set is silently dropped. That is why saving with no image hung
+            // on the overlay while saving with one worked: a real file defers
+            // resolution to a macrotask, safely outside that window.
+            if (!hasFiles) return;
+
             e.preventDefault();
 
             var submitted = false;
@@ -149,16 +167,16 @@
                 submitted = true;
 
                 form.dataset.compressed = 'true';
-                if (typeof form.requestSubmit === 'function') {
-                    form.requestSubmit();
-                } else {
-                    form.submit();
-                }
+                // setTimeout rather than a microtask, so the submit is always
+                // dispatched from a fresh task and never dropped.
+                setTimeout(function () {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                }, 0);
             };
-
-            var imageInputs = Array.from(
-                form.querySelectorAll('input[type="file"][accept*="image"]')
-            );
 
             // Compress all image file inputs in parallel, but never let the
             // submit itself depend on that finishing.
