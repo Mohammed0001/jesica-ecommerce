@@ -36,6 +36,32 @@ return Application::configure(basePath: dirname(__DIR__))
             'user_id' => Auth::id(),
         ]);
 
+        // A POST body bigger than post_max_size is discarded by PHP before
+        // Laravel sees it, so the CSRF token goes missing and the admin gets a
+        // bare "419 Page Expired" after a long upload -- with no hint that the
+        // upload size was the problem. Say so, and say what to do about it.
+        $exceptions->render(function (TokenMismatchException $e, Request $request) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return null;
+            }
+
+            $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+            $bodyWasDropped = $contentLength > 0 && empty($_POST) && empty($_FILES);
+
+            $message = $bodyWasDropped
+                ? sprintf(
+                    'The upload was too large for this server and was rejected before it could be saved '
+                    . '(%s sent; the limit is %s per request). Nothing was saved. Upload fewer or smaller '
+                    . 'images at a time, or raise post_max_size and upload_max_filesize on the server.',
+                    round($contentLength / 1048576, 1) . ' MB',
+                    ini_get('post_max_size') ?: 'unknown'
+                )
+                : 'Your session expired before this was submitted, so nothing was saved. '
+                    . 'Go back, reload the page and submit again -- your login is still valid.';
+
+            return back()->withInput()->with('error', $message);
+        });
+
         // Callers expecting JSON (the add-to-cart button, the promo form, the
         // search box) get the actual reason instead of a bare status code.
         $exceptions->render(function (\Throwable $e, Request $request) {

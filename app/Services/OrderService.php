@@ -269,21 +269,23 @@ class OrderService
     }
 
     /**
-     * Keep the manual is_sold_out flag in sync with actual stock levels.
-     * Auto-marks a product sold out when its stock hits zero, and clears
-     * the flag again once it's restocked (order cancelled/refunded).
+     * Clear the manual sold-out flag once a product is back in stock.
+     *
+     * This deliberately only ever clears the flag, never sets it. `is_sold_out`
+     * is the admin's manual override ("Mark as Sold Out" in the product form);
+     * running out of stock is already reflected by Product::isAvailable(), so
+     * writing the flag on every order both duplicated that logic and silently
+     * overwrote the admin's choice. Worse, it used to read stock as "has a
+     * ProductSize row with quantity > 0", so every product without size rows
+     * got permanently flagged sold out in the database the first time it was
+     * ordered -- which then had to be undone by hand.
      */
     private function syncSoldOutStatus(Product $product): void
     {
         $product->refresh();
+        $product->load('sizes');
 
-        $hasStock = $product->is_one_of_a_kind
-            ? $product->quantity > 0
-            : $product->sizes()->where('quantity', '>', 0)->exists();
-
-        if (!$hasStock && !$product->is_sold_out) {
-            $product->update(['is_sold_out' => true]);
-        } elseif ($hasStock && $product->is_sold_out) {
+        if ($product->is_sold_out && $product->hasStock()) {
             $product->update(['is_sold_out' => false]);
         }
     }

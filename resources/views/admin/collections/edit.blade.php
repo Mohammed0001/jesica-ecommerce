@@ -124,6 +124,9 @@
 
                             <div class="col-12 mb-4">
                                 <div class="form-check">
+                                    {{-- Unticked checkboxes are simply absent from the POST, so an
+                                         explicit 0 is needed for "unpublish" to reach the server. --}}
+                                    <input type="hidden" name="visible" value="0">
                                     <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
                                            {{ old('visible', $collection->visible) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="visible">

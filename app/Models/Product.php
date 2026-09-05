@@ -177,18 +177,53 @@ class Product extends Model
     public function scopeAvailable(Builder $query): void
     {
         $query->where('is_sold_out', false)->where(function (Builder $q) {
+            // One of a kind: stock lives on the product's own quantity column.
             $q->where(function (Builder $q2) {
                 $q2->where('is_one_of_a_kind', true)->where('quantity', '>', 0);
-            })->orWhere(function (Builder $q2) {
+            })
+            // Sized product: stock lives on the ProductSize rows.
+            ->orWhere(function (Builder $q2) {
                 $q2->where('is_one_of_a_kind', false)
                     ->whereHas('sizes', fn (Builder $sq) => $sq->where('quantity', '>', 0));
+            })
+            // No size breakdown recorded at all: fall back to the product's
+            // own quantity. Without this, every product that has never had
+            // sizes entered reads as sold out no matter what stock says.
+            ->orWhere(function (Builder $q2) {
+                $q2->where('is_one_of_a_kind', false)
+                    ->whereDoesntHave('sizes')
+                    ->where('quantity', '>', 0);
             });
         });
     }
 
     /**
-     * Check if product is available. For multi-size products, stock lives on
-     * ProductSize rows rather than the product's own quantity column.
+     * Does this product have stock on hand, ignoring the manual sold-out flag?
+     *
+     * Stock lives in one of two places. One-of-a-kind products carry it on
+     * their own `quantity` column; sized products carry it on their
+     * ProductSize rows. A sized product with no size rows recorded yet falls
+     * back to `quantity` -- treating "no sizes entered" as "no stock" is what
+     * silently marked the whole catalogue sold out.
+     */
+    public function hasStock(): bool
+    {
+        if ($this->is_one_of_a_kind) {
+            return $this->quantity > 0;
+        }
+
+        $sizes = $this->relationLoaded('sizes') ? $this->sizes : $this->sizes()->get();
+
+        if ($sizes->isEmpty()) {
+            return $this->quantity > 0;
+        }
+
+        return $sizes->contains(fn (ProductSize $size) => $size->quantity > 0);
+    }
+
+    /**
+     * Check if product is available: not manually flagged sold out, and
+     * actually in stock.
      */
     public function isAvailable(): bool
     {
@@ -196,12 +231,7 @@ class Product extends Model
             return false;
         }
 
-        if ($this->is_one_of_a_kind) {
-            return $this->quantity > 0;
-        }
-
-        $sizes = $this->relationLoaded('sizes') ? $this->sizes : $this->sizes()->get();
-        return $sizes->contains(fn (ProductSize $size) => $size->quantity > 0);
+        return $this->hasStock();
     }
 
     /**

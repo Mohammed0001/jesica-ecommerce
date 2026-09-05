@@ -70,10 +70,10 @@
                             </div>
 
                             <div class="col-md-6 mb-4">
-                                <label for="collection_id" class="form-label">Collection</label>
+                                <label for="collection_id" class="form-label">Collection <span class="text-danger">*</span></label>
                                 <select class="form-select @error('collection_id') is-invalid @enderror"
-                                        id="collection_id" name="collection_id">
-                                    <option value="">Select a collection (optional)</option>
+                                        id="collection_id" name="collection_id" required>
+                                    <option value="">Select a collection</option>
                                     @foreach($collections as $collection)
                                         <option value="{{ $collection->id }}"
                                                 {{ old('collection_id', $product->collection_id) == $collection->id ? 'selected' : '' }}>
@@ -102,6 +102,10 @@
                                 @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">
+                                    Units in stock. Used only when the product has no sizes listed below,
+                                    or when it is one of a kind. At 0 the product shows as sold out.
+                                </div>
                             </div>
 
                             <div class="col-md-6 mb-4">
@@ -186,6 +190,9 @@
 
                             <div class="col-12 mb-4">
                                 <div class="form-check">
+                                    {{-- Unticked checkboxes are simply absent from the POST, so an
+                                         explicit 0 is needed for "unpublish" to reach the server. --}}
+                                    <input type="hidden" name="visible" value="0">
                                     <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
                                            {{ old('visible', $product->visible) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="visible">

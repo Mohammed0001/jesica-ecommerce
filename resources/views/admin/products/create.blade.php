@@ -98,6 +98,10 @@
                                 @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">
+                                    Units in stock. Used only when the product has no sizes listed below,
+                                    or when it is one of a kind. At 0 the product shows as sold out.
+                                </div>
                             </div>
 
                             <div class="col-md-6 mb-4">
@@ -162,6 +166,9 @@
 
                             <div class="col-12 mb-4">
                                 <div class="form-check">
+                                    {{-- Unticked checkboxes are simply absent from the POST, so an
+                                         explicit 0 is needed for "unpublish" to reach the server. --}}
+                                    <input type="hidden" name="visible" value="0">
                                     <input class="form-check-input" type="checkbox" id="visible" name="visible" value="1"
                                            {{ old('visible', true) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="visible">
