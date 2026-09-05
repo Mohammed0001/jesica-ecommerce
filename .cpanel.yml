@@ -1,0 +1,61 @@
+---
+# cPanel Git Version Control deployment.
+#
+# Runs when you press "Deploy HEAD Commit" in cPanel, or on push if automatic
+# deployment is enabled. Tasks execute in order, in one shell, starting from
+# the repository clone at /home/iv5qjo3z8vrg/repositories/jesica-ecommerce.
+#
+# Nothing here touches .env, storage/app (uploaded product and collection
+# images), or public/storage. Those live only on the server and must survive
+# every deploy.
+
+deployment:
+  tasks:
+    # ---------------------------------------------------------------- paths
+    # DEPLOYPATH is the only line most changes need. It must be the directory
+    # that holds the Laravel root -- the parent of public/ -- because
+    # public/index.php loads ../vendor/autoload.php. The domain's document
+    # root has to point at $DEPLOYPATH/public.
+    - export DEPLOYPATH=/home/iv5qjo3z8vrg/public_html
+    # Set these to the binaries this account actually has. `which php` and
+    # `which composer` over SSH will tell you; on cPanel the PHP 8.2 binary is
+    # often /opt/cpanel/ea-php82/root/usr/bin/php and Composer is usually at
+    # /opt/cpanel/composer/bin/composer.
+    - export PHP=/usr/local/bin/php
+    - export COMPOSER=/opt/cpanel/composer/bin/composer
+
+    - /bin/mkdir -p "$DEPLOYPATH"
+
+    # ----------------------------------------------------------- application
+    # cp -R merges into directories that already exist, so these overwrite
+    # changed files and leave everything else in place.
+    - /bin/cp -R app bootstrap config database public resources routes "$DEPLOYPATH/"
+    - /bin/cp artisan composer.json composer.lock .user.ini "$DEPLOYPATH/"
+
+    # storage/ is deliberately absent from the copy above: storage/app/public
+    # holds every uploaded image, and copying the repo's empty version over it
+    # would delete the lot. Only ensure the scaffolding exists.
+    - /bin/mkdir -p "$DEPLOYPATH/storage/app/public"
+    - /bin/mkdir -p "$DEPLOYPATH/storage/framework/cache/data"
+    - /bin/mkdir -p "$DEPLOYPATH/storage/framework/sessions"
+    - /bin/mkdir -p "$DEPLOYPATH/storage/framework/views"
+    - /bin/mkdir -p "$DEPLOYPATH/storage/logs"
+    - /bin/mkdir -p "$DEPLOYPATH/bootstrap/cache"
+    - /bin/chmod -R 775 "$DEPLOYPATH/storage" "$DEPLOYPATH/bootstrap/cache"
+
+    # ------------------------------------------------------------ dependencies
+    # vendor/ is gitignored, so this is not optional -- without it the site is
+    # a fatal error. --no-dev skips PHPUnit and friends.
+    - cd "$DEPLOYPATH" && $COMPOSER install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+    # ----------------------------------------------------------------- laravel
+    # Recreate public/storage -> storage/app/public. Without it every product
+    # and collection image 404s.
+    - cd "$DEPLOYPATH" && $PHP artisan storage:link
+
+    - cd "$DEPLOYPATH" && $PHP artisan migrate --force --no-interaction
+
+    # Drop the caches compiled from the previous release. Skipping this serves
+    # the old compiled Blade templates and old config after a deploy, which
+    # looks exactly like "my changes did not go live".
+    - cd "$DEPLOYPATH" && $PHP artisan optimize:clear
