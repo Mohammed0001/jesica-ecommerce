@@ -5,19 +5,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PromoCode;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 
 class AdminPromoCodeController extends Controller
 {
     public function index()
     {
-        $promoCodes = PromoCode::latest()->paginate(20);
+        $promoCodes = PromoCode::with('owner')->latest()->paginate(20);
         return view('admin.promo_codes.index', compact('promoCodes'));
     }
 
     public function create()
     {
-        return view('admin.promo_codes.create');
+        $affiliates = $this->affiliateOptions();
+        return view('admin.promo_codes.create', compact('affiliates'));
     }
 
     public function store(Request $request)
@@ -30,6 +32,7 @@ class AdminPromoCodeController extends Controller
             'max_uses' => 'nullable|integer|min:1',
             'expires_at' => 'nullable|date',
             'active' => 'boolean',
+            'owner_user_id' => 'nullable|exists:users,id',
         ]);
 
         $data['active'] = $request->boolean('active', true);
@@ -42,7 +45,8 @@ class AdminPromoCodeController extends Controller
 
     public function edit(PromoCode $promoCode)
     {
-        return view('admin.promo_codes.edit', compact('promoCode'));
+        $affiliates = $this->affiliateOptions();
+        return view('admin.promo_codes.edit', compact('promoCode', 'affiliates'));
     }
 
     public function update(Request $request, PromoCode $promoCode)
@@ -55,6 +59,7 @@ class AdminPromoCodeController extends Controller
             'max_uses' => 'nullable|integer|min:1',
             'expires_at' => 'nullable|date',
             'active' => 'boolean',
+            'owner_user_id' => 'nullable|exists:users,id',
         ]);
 
         $data['active'] = $request->boolean('active', true);
@@ -63,6 +68,16 @@ class AdminPromoCodeController extends Controller
         $promoCode->update($data);
 
         return redirect()->route('admin.promo-codes.index')->with('success', 'Promocode updated.');
+    }
+
+    /**
+     * Users with the AFFILIATE role, for the owner picker
+     */
+    private function affiliateOptions()
+    {
+        return User::whereHas('role', fn ($q) => $q->where('name', 'AFFILIATE'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
     }
 
     public function destroy(PromoCode $promoCode)

@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 class PromoCode extends Model
 {
     protected $fillable = [
+        'owner_user_id',
         'code',
         'description',
         'type',
@@ -23,6 +26,22 @@ class PromoCode extends Model
         'value' => 'decimal:2',
         'expires_at' => 'datetime',
     ];
+
+    /**
+     * The affiliate this promo code is assigned to, if any
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_user_id');
+    }
+
+    /**
+     * Orders placed using this promo code
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 
     public function isExpired(): bool
     {

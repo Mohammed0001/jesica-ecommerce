@@ -111,6 +111,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is an affiliate
+     */
+    public function isAffiliate(): bool
+    {
+        return $this->role && $this->role->name === 'AFFILIATE';
+    }
+
+    /**
+     * Get the promo codes owned by this affiliate
+     */
+    public function promoCodes(): HasMany
+    {
+        return $this->hasMany(PromoCode::class, 'owner_user_id');
+    }
+
+    /**
      * Get user's age from date of birth
      */
     public function getAgeAttribute(): ?int

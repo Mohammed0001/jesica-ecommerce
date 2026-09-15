@@ -25,6 +25,12 @@ class RoleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name' => 'AFFILIATE',
+                'description' => 'Affiliate who can track promo codes and referred orders',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ];
 
         foreach ($roles as $roleData) {

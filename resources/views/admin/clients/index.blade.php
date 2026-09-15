@@ -86,7 +86,7 @@
                                                 <span class="orders-count">{{ $client->orders_count }} orders</span>
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $client->role && $client->role->name === 'ADMIN' ? 'danger' : 'primary' }}">
+                                                <span class="badge bg-{{ $client->isAdmin() ? 'danger' : ($client->isAffiliate() ? 'success' : 'primary') }}">
                                                     {{ $client->role ? $client->role->name : 'CLIENT' }}
                                                 </span>
                                             </td>
@@ -108,6 +108,16 @@
                                                        class="btn btn-sm btn-outline-secondary" title="Send Email">
                                                         <i class="fas fa-envelope"></i>
                                                     </a>
+                                                    @unless($client->isAdmin())
+                                                        <form action="{{ route('admin.clients.toggle-affiliate', $client) }}" method="POST" class="d-inline"
+                                                              onsubmit="return confirm('{{ $client->isAffiliate() ? 'Remove affiliate access for' : 'Make' }} {{ $client->name }} {{ $client->isAffiliate() ? '?' : 'an affiliate?' }}')">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-outline-{{ $client->isAffiliate() ? 'warning' : 'success' }}"
+                                                                    title="{{ $client->isAffiliate() ? 'Remove affiliate access' : 'Make affiliate' }}">
+                                                                <i class="fas fa-handshake"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endunless
                                                 </div>
                                             </td>
                                         </tr>

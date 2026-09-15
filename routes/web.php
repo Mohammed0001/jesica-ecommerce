@@ -165,6 +165,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Client management
     Route::resource('clients', AdminClientController::class)->only(['index', 'show', 'update']);
+    Route::post('clients/{client}/toggle-affiliate', [AdminClientController::class, 'toggleAffiliate'])->name('clients.toggle-affiliate');
 
     // Promo codes management
     Route::resource('promo-codes', AdminPromoCodeController::class)->except(['show']);
@@ -210,6 +211,10 @@ Route::post('/webhooks/bosta', [ShipmentController::class, 'webhook'])
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Affiliate area - promo codes and the orders placed with them
+Route::get('/affiliate', [\App\Http\Controllers\AffiliateController::class, 'index'])
+    ->name('affiliate.dashboard');
 
 // Auth routes
 require __DIR__.'/auth.php';

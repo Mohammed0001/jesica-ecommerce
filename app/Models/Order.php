@@ -33,6 +33,7 @@ class Order extends Model
         'total_amount',
         'subtotal',
         'discount_amount',
+        'promo_code_id',
         'shipping_amount',
         'service_fee',
         'tax_amount',
@@ -81,6 +82,14 @@ class Order extends Model
     public function shippingAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'shipping_address_id');
+    }
+
+    /**
+     * Get the promo code used on this order, if any
+     */
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
     }
 
     /**

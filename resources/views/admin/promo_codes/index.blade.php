@@ -18,6 +18,7 @@
                         <th>Type</th>
                         <th>Value</th>
                         <th>Uses</th>
+                        <th>Affiliate</th>
                         <th>Expires At</th>
                         <th>Active</th>
                         <th>Actions</th>
@@ -30,6 +31,7 @@
                         <td>{{ ucfirst($promo->type) }}</td>
                         <td>{{ $promo->value }}</td>
                         <td>{{ $promo->usage_count }}{{ $promo->max_uses ? ' / ' . $promo->max_uses : '' }}</td>
+                        <td>{{ $promo->owner?->name ?? '-' }}</td>
                         <td>{{ $promo->expires_at?->format('M d, Y') ?? '-' }}</td>
                         <td>{{ $promo->active ? 'Yes' : 'No' }}</td>
                         <td>

@@ -34,6 +34,18 @@
                     <input type="number" name="max_uses" value="{{ $promoCode->max_uses }}" class="form-control">
                 </div>
                 <div class="mb-3">
+                    <label class="form-label">Affiliate (owner)</label>
+                    <select name="owner_user_id" class="form-select">
+                        <option value="">— None —</option>
+                        @foreach($affiliates as $affiliate)
+                            <option value="{{ $affiliate->id }}" {{ (int) $promoCode->owner_user_id === $affiliate->id ? 'selected' : '' }}>
+                                {{ $affiliate->name }} ({{ $affiliate->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">If set, this affiliate can see orders placed with this code in their dashboard.</div>
+                </div>
+                <div class="mb-3">
                     <label class="form-label">Expires At</label>
                     <input type="date" name="expires_at" value="{{ optional($promoCode->expires_at)->format('Y-m-d') }}" class="form-control">
                 </div>

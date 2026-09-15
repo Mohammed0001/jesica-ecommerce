@@ -89,6 +89,9 @@
                             <x-nav-link :href="route('special-orders.index')">Special Orders</x-nav-link>
                             <x-nav-link :href="route('orders.index')">Orders</x-nav-link>
                             <x-nav-link :href="route('cart.index')">Cart</x-nav-link>
+                            @if (Auth::user()->isAffiliate())
+                                <x-nav-link :href="route('affiliate.dashboard')">Affiliate Dashboard</x-nav-link>
+                            @endif
                         @else
                             <x-nav-link :href="route('login')">Login</x-nav-link>
                             <x-nav-link :href="route('register')">Register</x-nav-link>

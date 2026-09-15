@@ -51,6 +51,7 @@ class OrderService
             'guest_phone' => $guestData['phone'] ?? null,
             'subtotal' => $subtotal,
             'discount_amount' => $discountAmount,
+            'promo_code_id' => $appliedPromo['promo_id'] ?? null,
             'shipping_amount' => $shippingAmount,
             'service_fee' => $serviceFee,
             'tax_amount' => $taxAmount,
