@@ -855,7 +855,7 @@
         .mq-product-card__img-wrap {
             aspect-ratio: 3/4;
             overflow: hidden;
-            background: #f8f9fa;
+            background: var(--mq-white);
         }
 
         .mq-product-card__img-wrap img {

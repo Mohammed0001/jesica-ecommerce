@@ -306,7 +306,10 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background-color: #f8f9fa;
+    /* Match the white card behind it, so the letterboxing an
+       object-fit: contain image leaves does not read as a visible grey
+       box on top of the card. */
+    background-color: #ffffff;
     transition: transform 0.3s ease;
     border-radius: 8px;
     box-shadow: 0 12px 24px rgba(0,0,0,0.06);

@@ -219,14 +219,14 @@
                     height: auto;
                     aspect-ratio: 4 / 5;
                     object-fit: contain;
-                    background-color: #f8f9fa;
+                    background-color: #fff;
                 }
 
                 .collection-product-img {
                     height: auto;
                     aspect-ratio: 3 / 4;
                     object-fit: contain;
-                    background-color: #f8f9fa;
+                    background-color: #fff;
                 }
             }
 

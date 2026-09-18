@@ -397,7 +397,10 @@
             width: 100%;
             height: 350px;
             object-fit: contain;
-            background-color: #f8f9fa;
+            /* Match the white card behind it, so the letterboxing an
+               object-fit: contain image leaves does not read as a visible
+               grey box on top of the card. */
+            background-color: var(--secondary-color);
             display: block;
         }
 
@@ -531,7 +534,7 @@
                 height: auto;
                 aspect-ratio: 3 / 4;
                 object-fit: contain;
-                background-color: #f8f9fa;
+                background-color: var(--secondary-color);
             }
         }
 
