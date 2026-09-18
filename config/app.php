@@ -69,6 +69,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Store Timezone
+    |--------------------------------------------------------------------------
+    |
+    | The timezone the business actually operates in. Dates and times entered
+    | by admins (e.g. a sale's start/end schedule) and shown to customers are
+    | assumed to be in this timezone, then converted to/from UTC for storage
+    | and comparison against now(), which always runs in the timezone above.
+    |
+    */
+
+    'store_timezone' => env('STORE_TIMEZONE', 'Africa/Cairo'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

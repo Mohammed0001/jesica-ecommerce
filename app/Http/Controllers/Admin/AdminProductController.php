@@ -8,6 +8,7 @@ use App\Models\ProductColor;
 use App\Models\ProductSize;
 use App\Models\Collection;
 use App\Services\ImageService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -367,8 +368,13 @@ class AdminProductController extends Controller
         // An empty sale price clears the sale entirely rather than storing 0.
         $salePrice = $request->input('sale_price');
         $data['sale_price'] = ($salePrice === null || $salePrice === '') ? null : $salePrice;
-        $data['sale_starts_at'] = $data['sale_price'] === null ? null : ($request->input('sale_starts_at') ?: null);
-        $data['sale_ends_at'] = $data['sale_price'] === null ? null : ($request->input('sale_ends_at') ?: null);
+        // The datetime-local inputs carry the admin's wall-clock time in the
+        // store's own timezone, not UTC. Convert here so it lines up with
+        // now(), which runs in config('app.timezone') (UTC) -- otherwise a
+        // sale scheduled for "9am" goes live/ends hours off from what was
+        // actually picked.
+        $data['sale_starts_at'] = $data['sale_price'] === null ? null : $this->parseStoreDateTime($request->input('sale_starts_at'));
+        $data['sale_ends_at'] = $data['sale_price'] === null ? null : $this->parseStoreDateTime($request->input('sale_ends_at'));
 
         // An empty SKU has to become NULL. The column is uniquely indexed and
         // MySQL treats '' as a real value, so a second product saved with a
@@ -389,6 +395,20 @@ class AdminProductController extends Controller
         $data['is_sold_out'] = $request->boolean('is_sold_out');
 
         return $data;
+    }
+
+    /**
+     * Parse a `datetime-local` value as wall-clock time in the store's own
+     * timezone and convert it to UTC for storage, so it lines up with the
+     * UTC now() the "is this sale live" checks run against.
+     */
+    private function parseStoreDateTime(?string $value): ?Carbon
+    {
+        if (!$value) {
+            return null;
+        }
+
+        return Carbon::parse($value, config('app.store_timezone'))->utc();
     }
 
     /**

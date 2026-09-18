@@ -25,8 +25,8 @@
 
                         <!-- Main Image -->
                         <div class="mb-8 position-relative">
-                            <img id="mainImg" src="{{ $first }}" alt="{{ $collection->title }}" class="w-100"
-                                style="height:720px; object-fit:cover;">
+                            <img id="mainImg" src="{{ $first }}" alt="{{ $collection->title }}"
+                                class="w-100 collection-hero-img">
                             @if ($images->count() > 1)
                                 <div id="imageCounter"
                                     class="position-absolute bottom-0 end-0 mb-5 me-5 bg-white px-4 py-2 small fw-medium tracking-widest">
@@ -120,7 +120,7 @@
                                     class="text-decoration-none text-black d-block">
                                     <div class="mb-6 overflow-hidden position-relative">
                                         <img src="{{ $product->main_image?->url ?? asset('images/placeholder.jpg') }}"
-                                            class="w-100" style="height:520px; object-fit:cover;"
+                                            class="w-100 collection-product-img"
                                             alt="{{ $product->name }}" loading="lazy" decoding="async">
                                         @if ($product->isSoldOut())
                                             <span class="sold-out-badge">Sold Out</span>
@@ -200,6 +200,34 @@
 
             img {
                 image-rendering: -webkit-optimize-contrast;
+            }
+
+            .collection-hero-img {
+                height: 720px;
+                object-fit: cover;
+            }
+
+            .collection-product-img {
+                height: 520px;
+                object-fit: cover;
+            }
+
+            /* Fixed pixel heights + cover crop hard on narrow screens, which
+               reads as the image being zoomed in; let it fit on mobile. */
+            @media (max-width: 768px) {
+                .collection-hero-img {
+                    height: auto;
+                    aspect-ratio: 4 / 5;
+                    object-fit: contain;
+                    background-color: #f8f9fa;
+                }
+
+                .collection-product-img {
+                    height: auto;
+                    aspect-ratio: 3 / 4;
+                    object-fit: contain;
+                    background-color: #f8f9fa;
+                }
             }
 
             .thumbnail {

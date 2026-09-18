@@ -51,15 +51,15 @@
                                         <s class="text-muted ms-2">{!! $product->formatted_original_price !!}</s>
                                         <span class="badge bg-danger ms-2">{{ $product->discount_percentage }}% off</span>
                                         @if($product->sale_ends_at)
-                                            <small class="text-muted d-block">Sale ends {{ $product->sale_ends_at->format('j M Y, H:i') }}</small>
+                                            <small class="text-muted d-block">Sale ends {{ $product->sale_ends_at->clone()->setTimezone(config('app.store_timezone'))->format('j M Y, H:i') }}</small>
                                         @endif
                                     @elseif($product->sale_price)
                                         <small class="text-muted d-block">
                                             Sale price {{ number_format($product->sale_price, 2) }} {{ $product->currency }} is set but not active
                                             @if($product->sale_starts_at && now()->lt($product->sale_starts_at))
-                                                (starts {{ $product->sale_starts_at->format('j M Y, H:i') }})
+                                                (starts {{ $product->sale_starts_at->clone()->setTimezone(config('app.store_timezone'))->format('j M Y, H:i') }})
                                             @elseif($product->sale_ends_at && now()->gt($product->sale_ends_at))
-                                                (ended {{ $product->sale_ends_at->format('j M Y, H:i') }})
+                                                (ended {{ $product->sale_ends_at->clone()->setTimezone(config('app.store_timezone'))->format('j M Y, H:i') }})
                                             @else
                                                 (it is not below the regular price)
                                             @endif

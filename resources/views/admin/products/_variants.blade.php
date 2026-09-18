@@ -71,11 +71,11 @@
     <input type="datetime-local"
            class="form-control @error('sale_starts_at') is-invalid @enderror"
            id="sale_starts_at" name="sale_starts_at"
-           value="{{ old('sale_starts_at', $editing && $product->sale_starts_at ? $product->sale_starts_at->format('Y-m-d\TH:i') : null) }}">
+           value="{{ old('sale_starts_at', $editing && $product->sale_starts_at ? $product->sale_starts_at->clone()->setTimezone(config('app.store_timezone'))->format('Y-m-d\TH:i') : null) }}">
     @error('sale_starts_at')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
-    <div class="form-text">Optional. Empty means the sale is live immediately.</div>
+    <div class="form-text">Optional. Empty means the sale is live immediately. Store time (Cairo).</div>
 </div>
 
 <div class="col-md-4 mb-4">
@@ -83,11 +83,11 @@
     <input type="datetime-local"
            class="form-control @error('sale_ends_at') is-invalid @enderror"
            id="sale_ends_at" name="sale_ends_at"
-           value="{{ old('sale_ends_at', $editing && $product->sale_ends_at ? $product->sale_ends_at->format('Y-m-d\TH:i') : null) }}">
+           value="{{ old('sale_ends_at', $editing && $product->sale_ends_at ? $product->sale_ends_at->clone()->setTimezone(config('app.store_timezone'))->format('Y-m-d\TH:i') : null) }}">
     @error('sale_ends_at')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
-    <div class="form-text">Optional. Empty means the sale runs until you remove it.</div>
+    <div class="form-text">Optional. Empty means the sale runs until you remove it. Store time (Cairo).</div>
 </div>
 
 <div class="col-12 mb-4">

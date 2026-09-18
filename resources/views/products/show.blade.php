@@ -83,7 +83,7 @@
                         </div>
 
                         @if($product->isOnSale() && $product->sale_ends_at)
-                            <p class="mq-sale-note">Sale ends {{ $product->sale_ends_at->format('j M Y') }}</p>
+                            <p class="mq-sale-note">Sale ends {{ $product->sale_ends_at->clone()->setTimezone(config('app.store_timezone'))->format('j M Y') }}</p>
                         @endif
 
                         {{-- Colour --}}
@@ -724,6 +724,17 @@
             border-radius: 0;
         }
 
+        .mq-select-caret {
+            position: absolute;
+            top: 50%;
+            right: 14px;
+            width: 10px;
+            height: 7px;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--mq-text);
+        }
+
         .mq-cta-group {
             display: flex;
             gap: 8px;
@@ -787,6 +798,54 @@
             border-top: 1px solid var(--mq-border);
         }
 
+        .mq-similar__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .mq-similar__title {
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .mq-similar__arrows {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mq-arrow {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--mq-border);
+            background: var(--mq-white);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            color: var(--mq-text);
+        }
+
+        .mq-arrow:hover {
+            border-color: var(--mq-black);
+        }
+
+        .mq-similar__track-wrap {
+            overflow: hidden;
+        }
+
+        .mq-similar__track {
+            display: flex;
+            gap: 16px;
+            transition: transform 0.3s ease;
+        }
+
         .mq-product-card {
             flex: 0 0 calc(25% - 12px);
             text-decoration: none;
@@ -796,12 +855,30 @@
         .mq-product-card__img-wrap {
             aspect-ratio: 3/4;
             overflow: hidden;
+            background: #f8f9fa;
         }
 
         .mq-product-card__img-wrap img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+        }
+
+        .mq-product-card__body {
+            padding-top: 10px;
+        }
+
+        .mq-product-card__name {
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 0 0 4px;
+            color: var(--mq-text);
+        }
+
+        .mq-product-card__price {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
         }
 
         /* Sticky Bar */

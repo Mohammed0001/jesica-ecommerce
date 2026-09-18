@@ -524,6 +524,15 @@
             .container {
                 padding: 0 var(--spacing-sm);
             }
+
+            /* Fixed-height cover crops too tightly on narrow screens, making
+               the image look zoomed in; let it fit within the card instead. */
+            .collection-image {
+                height: auto;
+                aspect-ratio: 3 / 4;
+                object-fit: contain;
+                background-color: #f8f9fa;
+            }
         }
 
         /* Image Placeholder */
