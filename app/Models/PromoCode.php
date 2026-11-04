@@ -17,6 +17,8 @@ class PromoCode extends Model
         'value',
         'usage_count',
         'max_uses',
+        'buy_quantity',
+        'get_quantity',
         'active',
         'expires_at',
     ];
@@ -47,23 +49,27 @@ class PromoCode extends Model
      * Discount for a promo of the given type/value.
      *
      * `$lines` is a list of [unit price, quantity] pairs; it is only needed for
-     * 'bogo' (buy 1 get 1), where units are paired from the most expensive down
-     * and the cheaper unit of every pair is discounted by `$value` percent
-     * (100 = free).
+     * 'bogo' (buy X get Y). Units are grouped from the most expensive down in
+     * sets of X+Y, and the Y cheapest units of every complete set are
+     * discounted by `$value` percent (100 = free).
      */
-    public static function discountAmount(string $type, float $value, float $subtotal, array $lines = []): float
+    public static function discountAmount(string $type, float $value, float $subtotal, array $lines = [], int $buy = 1, int $get = 1): float
     {
         $discount = match ($type) {
             'percentage' => $subtotal * ($value / 100),
-            'bogo' => self::bogoDiscount($value, $lines),
+            'bogo' => self::bogoDiscount($value, $lines, $buy, $get),
             default => $value,
         };
 
         return round(min($subtotal, max(0, $discount)), 2);
     }
 
-    private static function bogoDiscount(float $percentOff, array $lines): float
+    private static function bogoDiscount(float $percentOff, array $lines, int $buy, int $get): float
     {
+        $buy = max(1, $buy);
+        $get = max(1, $get);
+        $group = $buy + $get;
+
         $units = [];
         foreach ($lines as [$price, $quantity]) {
             $units = array_merge($units, array_fill(0, max(0, (int) $quantity), (float) $price));
@@ -71,11 +77,18 @@ class PromoCode extends Model
         rsort($units);
 
         $discount = 0.0;
-        for ($i = 1; $i < count($units); $i += 2) {
-            $discount += $units[$i] * ($percentOff / 100);
+        for ($start = 0; $start + $group <= count($units); $start += $group) {
+            for ($i = $start + $buy; $i < $start + $group; $i++) {
+                $discount += $units[$i] * ($percentOff / 100);
+            }
         }
 
         return $discount;
+    }
+
+    public function bogoLabel(): string
+    {
+        return 'Buy ' . ($this->buy_quantity ?? 1) . ' Get ' . ($this->get_quantity ?? 1);
     }
 
     public function isExpired(): bool

@@ -22,12 +22,22 @@
                     <select name="type" class="form-select">
                         <option value="percentage">Percentage</option>
                         <option value="fixed">Fixed</option>
-                        <option value="bogo">Buy 1 Get 1 (value = % off the cheaper item, 100 = free)</option>
+                        <option value="bogo">Buy X Get Y (value = % off the cheapest items, 100 = free)</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Value</label>
                     <input type="number" step="0.01" name="value" class="form-control" required>
+                </div>
+                <div class="mb-3" id="bogo-fields" style="display:none">
+                    <label class="form-label">Buy / Get quantities</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <span>Buy</span>
+                        <input type="number" min="1" max="20" name="buy_quantity" class="form-control" style="width:90px" value="1">
+                        <span>Get</span>
+                        <input type="number" min="1" max="20" name="get_quantity" class="form-control" style="width:90px" value="1">
+                    </div>
+                    <div class="form-text">e.g. Buy 2 Get 1: in every 3 items, the cheapest is discounted by the Value % (100 = free).</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Max Uses</label>
@@ -63,4 +73,15 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+(function () {
+    var type = document.querySelector('select[name="type"]');
+    var box = document.getElementById('bogo-fields');
+    function sync() { box.style.display = type.value === 'bogo' ? '' : 'none'; }
+    type.addEventListener('change', sync);
+    sync();
+})();
+</script>
+@endpush
 @endsection

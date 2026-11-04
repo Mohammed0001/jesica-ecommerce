@@ -35,7 +35,9 @@ class OrderService
                 $appliedPromo['type'],
                 (float) $appliedPromo['value'],
                 (float) $subtotal,
-                $lines
+                $lines,
+                (int) ($appliedPromo['buy_quantity'] ?? 1),
+                (int) ($appliedPromo['get_quantity'] ?? 1)
             );
         }
 

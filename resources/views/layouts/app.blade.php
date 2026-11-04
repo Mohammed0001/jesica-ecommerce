@@ -800,7 +800,28 @@
                 img.src = urls[1];
             }
 
+            var lastTouch = 0;
+
+            // Finger down on a card plays the slideshow; lifting it stops it.
+            document.addEventListener('touchstart', function (e) {
+                lastTouch = Date.now();
+                var card = e.target.closest('.product-card, .col-lg-4');
+                if (!card) return;
+                stop();
+                var img = card.querySelector('img[data-gallery]');
+                if (img) start(card, img);
+            }, { passive: true });
+            ['touchend', 'touchcancel'].forEach(function (name) {
+                document.addEventListener(name, function () { lastTouch = Date.now(); stop(); }, { passive: true });
+            });
+            // Don't let a long-press open the image menu while the slideshow plays.
+            document.addEventListener('contextmenu', function (e) {
+                if (e.target.closest && e.target.closest('img[data-gallery]')) e.preventDefault();
+            });
+
             document.addEventListener('mouseover', function (e) {
+                // Touch browsers fire emulated mouse events after a tap; ignore them.
+                if (Date.now() - lastTouch < 800) return;
                 var card = e.target.closest('.product-card, .col-lg-4');
                 if (active && active.card === card) return;
                 stop();

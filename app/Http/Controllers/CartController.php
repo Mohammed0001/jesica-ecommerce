@@ -25,7 +25,9 @@ class CartController extends Controller
                 $appliedPromo['type'],
                 (float) $appliedPromo['value'],
                 (float) $displaySubtotal,
-                collect($cartItems)->map(fn ($i) => [$i['display_price'], $i['quantity']])->all()
+                collect($cartItems)->map(fn ($i) => [$i['display_price'], $i['quantity']])->all(),
+                (int) ($appliedPromo['buy_quantity'] ?? 1),
+                (int) ($appliedPromo['get_quantity'] ?? 1)
             );
         }
         $finalTotal = max(0, $displaySubtotal - $discountAmount);
@@ -402,11 +404,13 @@ class CartController extends Controller
             $promo->type,
             (float) $promo->value,
             (float) $total,
-            $cartItems->map(fn ($i) => [$i['price'], $i['quantity']])->all()
+            $cartItems->map(fn ($i) => [$i['price'], $i['quantity']])->all(),
+            (int) $promo->buy_quantity,
+            (int) $promo->get_quantity
         );
 
         if ($promo->type === 'bogo' && $discount <= 0) {
-            return response()->json(['success' => false, 'message' => 'Promo code "' . $promo->code . '" is buy 1 get 1: add at least two items to your bag to use it.'], 422);
+            return response()->json(['success' => false, 'message' => 'Promo code "' . $promo->code . '" is ' . $promo->bogoLabel() . ': add at least ' . ((int) $promo->buy_quantity + (int) $promo->get_quantity) . ' items to your bag to use it.'], 422);
         }
 
         session()->put('applied_promo', [
@@ -414,6 +418,8 @@ class CartController extends Controller
             'code' => $promo->code,
             'type' => $promo->type,
             'value' => (float) $promo->value,
+            'buy_quantity' => (int) $promo->buy_quantity,
+            'get_quantity' => (int) $promo->get_quantity,
             'discount' => (float) $discount,
         ]);
 

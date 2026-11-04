@@ -30,11 +30,15 @@ class AdminPromoCodeController extends Controller
             'type' => 'required|in:percentage,fixed,bogo',
             'value' => 'required|numeric|min:0',
             'max_uses' => 'nullable|integer|min:1',
+            'buy_quantity' => 'nullable|integer|min:1|max:20',
+            'get_quantity' => 'nullable|integer|min:1|max:20',
             'expires_at' => 'nullable|date',
             'active' => 'boolean',
             'owner_user_id' => 'nullable|exists:users,id',
         ]);
 
+        $data['buy_quantity'] = $data['buy_quantity'] ?? 1;
+        $data['get_quantity'] = $data['get_quantity'] ?? 1;
         $data['active'] = $request->boolean('active', true);
         $data['expires_at'] = $data['expires_at'] ? Carbon::parse($data['expires_at']) : null;
 
@@ -57,11 +61,15 @@ class AdminPromoCodeController extends Controller
             'type' => 'required|in:percentage,fixed,bogo',
             'value' => 'required|numeric|min:0',
             'max_uses' => 'nullable|integer|min:1',
+            'buy_quantity' => 'nullable|integer|min:1|max:20',
+            'get_quantity' => 'nullable|integer|min:1|max:20',
             'expires_at' => 'nullable|date',
             'active' => 'boolean',
             'owner_user_id' => 'nullable|exists:users,id',
         ]);
 
+        $data['buy_quantity'] = $data['buy_quantity'] ?? 1;
+        $data['get_quantity'] = $data['get_quantity'] ?? 1;
         $data['active'] = $request->boolean('active', true);
         $data['expires_at'] = $data['expires_at'] ? Carbon::parse($data['expires_at']) : null;
 

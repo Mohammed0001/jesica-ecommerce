@@ -89,7 +89,9 @@ class CheckoutController extends Controller
                 $appliedPromo['type'],
                 (float) $appliedPromo['value'],
                 (float) $displaySubtotal,
-                collect($cartItems)->map(fn ($i) => [data_get($i, 'product.display_price', 0), $i['quantity']])->all()
+                collect($cartItems)->map(fn ($i) => [data_get($i, 'product.display_price', 0), $i['quantity']])->all(),
+                (int) ($appliedPromo['buy_quantity'] ?? 1),
+                (int) ($appliedPromo['get_quantity'] ?? 1)
             );
         }
 
