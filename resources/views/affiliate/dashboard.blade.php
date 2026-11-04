@@ -52,7 +52,7 @@
                             </span>
                         </div>
                         <div class="code-details">
-                            <span>{{ $code->type === 'percentage' ? $code->value . '% off' : number_format($code->value, 2) . ' ' . session('currency', 'EGP') . ' off' }}</span>
+                            <span>{{ match ($code->type) { 'percentage' => $code->value . '% off', 'bogo' => 'Buy 1 Get 1', default => number_format($code->value, 2) . ' ' . session('currency', 'EGP') . ' off' } }}</span>
                             <span>{{ $code->orders_count }} order{{ $code->orders_count === 1 ? '' : 's' }}</span>
                             <span>{{ $code->usage_count }} use{{ $code->usage_count === 1 ? '' : 's' }}{{ $code->max_uses ? ' / ' . $code->max_uses : '' }}</span>
                             @if($code->expires_at)

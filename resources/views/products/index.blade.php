@@ -81,6 +81,7 @@
                                 <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
                                      alt="{{ $product->name }}"
                                      class="product-thumbnail"
+                                     data-gallery='@json($product->gallery_urls)'
                                      loading="lazy"
                                      decoding="async"
                                      width="600" height="600">

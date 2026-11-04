@@ -22,6 +22,7 @@
                     <select name="type" class="form-select">
                         <option value="percentage">Percentage</option>
                         <option value="fixed">Fixed</option>
+                        <option value="bogo">Buy 1 Get 1 (value = % off the cheaper item, 100 = free)</option>
                     </select>
                 </div>
                 <div class="mb-3">

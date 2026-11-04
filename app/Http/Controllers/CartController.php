@@ -21,11 +21,12 @@ class CartController extends Controller
         $appliedPromo = session()->get('applied_promo', null);
         $discountAmount = 0;
         if ($appliedPromo) {
-            if ($appliedPromo['type'] === 'percentage') {
-                $discountAmount = ($displaySubtotal * ($appliedPromo['value'] / 100));
-            } else {
-                $discountAmount = $appliedPromo['value'];
-            }
+            $discountAmount = PromoCode::discountAmount(
+                $appliedPromo['type'],
+                (float) $appliedPromo['value'],
+                (float) $displaySubtotal,
+                collect($cartItems)->map(fn ($i) => [$i['display_price'], $i['quantity']])->all()
+            );
         }
         $finalTotal = max(0, $displaySubtotal - $discountAmount);
 
@@ -397,11 +398,15 @@ class CartController extends Controller
 
         $total = $this->calculateTotal($cartItems);
 
-        $discount = 0;
-        if ($promo->type === 'percentage') {
-            $discount = ($total * ($promo->value / 100));
-        } else {
-            $discount = min($total, $promo->value);
+        $discount = PromoCode::discountAmount(
+            $promo->type,
+            (float) $promo->value,
+            (float) $total,
+            $cartItems->map(fn ($i) => [$i['price'], $i['quantity']])->all()
+        );
+
+        if ($promo->type === 'bogo' && $discount <= 0) {
+            return response()->json(['success' => false, 'message' => 'Promo code "' . $promo->code . '" is buy 1 get 1: add at least two items to your bag to use it.'], 422);
         }
 
         session()->put('applied_promo', [

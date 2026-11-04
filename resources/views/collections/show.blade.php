@@ -121,6 +121,7 @@
                                     <div class="mb-6 overflow-hidden position-relative">
                                         <img src="{{ $product->main_image?->url ?? asset('images/placeholder.jpg') }}"
                                             class="w-100 collection-product-img"
+                                            data-gallery='@json($product->gallery_urls)'
                                             alt="{{ $product->name }}" loading="lazy" decoding="async">
                                         @if ($product->isSoldOut())
                                             <span class="sold-out-badge">Sold Out</span>

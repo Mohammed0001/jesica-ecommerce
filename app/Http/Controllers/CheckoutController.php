@@ -85,11 +85,12 @@ class CheckoutController extends Controller
         $appliedPromo = session()->get('applied_promo', null);
         $discountAmount = 0;
         if ($appliedPromo) {
-            if ($appliedPromo['type'] === 'percentage') {
-                $discountAmount = ($displaySubtotal * ($appliedPromo['value'] / 100));
-            } else {
-                $discountAmount = $appliedPromo['value'];
-            }
+            $discountAmount = \App\Models\PromoCode::discountAmount(
+                $appliedPromo['type'],
+                (float) $appliedPromo['value'],
+                (float) $displaySubtotal,
+                collect($cartItems)->map(fn ($i) => [data_get($i, 'product.display_price', 0), $i['quantity']])->all()
+            );
         }
 
         $finalTotal = max(0, $displaySubtotal - $discountAmount);

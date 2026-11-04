@@ -169,6 +169,8 @@
                                     <strong>{{ $appliedPromo['code'] }}</strong> applied
                                     @if($appliedPromo['type'] === 'percentage')
                                         <span class="small">({{ number_format($appliedPromo['value'], 0) }}% off)</span>
+                                    @elseif($appliedPromo['type'] === 'bogo')
+                                        <span class="small">(Buy 1 Get 1)</span>
                                     @endif
                                 </div>
                                 <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removePromo()" title="Remove promo code">

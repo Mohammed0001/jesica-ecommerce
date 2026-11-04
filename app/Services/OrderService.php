@@ -25,11 +25,18 @@ class OrderService
         $appliedPromo = session()->get('applied_promo', null);
         $discountAmount = 0;
         if ($appliedPromo) {
-            if ($appliedPromo['type'] === 'percentage') {
-                $discountAmount = ($subtotal * ($appliedPromo['value'] / 100));
-            } else {
-                $discountAmount = $appliedPromo['value'];
-            }
+            $products = $this->resolveProducts($cartItems);
+            $lines = $cartItems->map(fn ($i) => [
+                optional($products->get($i['product_id']))->effective_price ?? 0,
+                $i['quantity'],
+            ])->all();
+
+            $discountAmount = \App\Models\PromoCode::discountAmount(
+                $appliedPromo['type'],
+                (float) $appliedPromo['value'],
+                (float) $subtotal,
+                $lines
+            );
         }
 
         // Per-area delivery fee (falls back to global site setting for unknown cities)

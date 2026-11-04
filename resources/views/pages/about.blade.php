@@ -27,7 +27,7 @@
                 <div class="row">
                     <div class="col-lg-8 mx-auto">
                         <div class="story-content">
-                            <h2 class="section-title">My Story</h2>
+                            <h2 class="section-title">Designer Story</h2>
                             <div class="story-text">
                                 {{-- <p>
                                 Welcome to my world of handcrafted artistry. I'm Jesica Riad, and my journey into the realm of
@@ -62,45 +62,26 @@
                 <div class="row align-items-center">
                     <div class="col-lg-6">
                         <div class="philosophy-image">
-                            <img src="{{ asset('images/philosophy.jpg') }}" alt="Craftsmanship philosophy"
+                            <img src="{{ asset('images/brand_philosophy.jpeg') }}" alt="Craftsmanship philosophy"
                                 class="img-fluid">
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="philosophy-content">
-                            <h2 class="section-title">My Philosophy</h2>
+                            <h2 class="section-title">Brand Philosophy</h2>
                             <div class="philosophy-points">
                                 <div class="philosophy-point">
-                                    <div class="point-icon">
-                                        <i class="fas fa-heart"></i>
-                                    </div>
                                     <div class="point-content">
-                                        <h4>Passion-Driven Creation</h4>
-                                        <p>Every piece is crafted with genuine love and dedication, ensuring that the
-                                            passion
-                                            behind the creation translates into the final product.</p>
+                                        <p>At Jessica Riad, we believe fashion is a form of artistic expression, where
+                                            imagination, individuality, and curiosity come together. Inspired by nature,
+                                            textures, cultures, and unexpected details of everyday life, we transform
+                                            experiences into sculptural, wearable art. Through experimental materials,
+                                            unconventional shapes, and the beauty of controlled chaos, every creation tells
+                                            its own story, challenges the ordinary, and celebrates the freedom to express
+                                            who you are.</p>
                                     </div>
                                 </div>
-                                <div class="philosophy-point">
-                                    <div class="point-icon">
-                                        <i class="fas fa-leaf"></i>
-                                    </div>
-                                    <div class="point-content">
-                                        <h4>Sustainable Practices</h4>
-                                        <p>I believe in responsible creation, using sustainable materials and methods that
-                                            honor both the craft and our environment.</p>
-                                    </div>
-                                </div>
-                                <div class="philosophy-point">
-                                    <div class="point-icon">
-                                        <i class="fas fa-gem"></i>
-                                    </div>
-                                    <div class="point-content">
-                                        <h4>Timeless Quality</h4>
-                                        <p>Each creation is built to last, combining traditional craftsmanship with modern
-                                            durability to create heirloom-quality pieces.</p>
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
                     </div>

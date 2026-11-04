@@ -27,7 +27,7 @@ class AdminPromoCodeController extends Controller
         $data = $request->validate([
             'code' => 'required|string|unique:promo_codes,code',
             'description' => 'nullable|string',
-            'type' => 'required|in:percentage,fixed',
+            'type' => 'required|in:percentage,fixed,bogo',
             'value' => 'required|numeric|min:0',
             'max_uses' => 'nullable|integer|min:1',
             'expires_at' => 'nullable|date',
@@ -54,7 +54,7 @@ class AdminPromoCodeController extends Controller
         $data = $request->validate([
             'code' => 'required|string|unique:promo_codes,code,' . $promoCode->id,
             'description' => 'nullable|string',
-            'type' => 'required|in:percentage,fixed',
+            'type' => 'required|in:percentage,fixed,bogo',
             'value' => 'required|numeric|min:0',
             'max_uses' => 'nullable|integer|min:1',
             'expires_at' => 'nullable|date',

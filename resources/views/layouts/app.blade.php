@@ -764,6 +764,53 @@
                 setTimeout(function () { flash.remove(); }, 6000);
             });
         })();
+
+        // Product cards: hovering a card slideshows that product's images.
+        (function () {
+            var INTERVAL = 900;
+            var active = null; // { card, img, original, timer }
+
+            function stop() {
+                if (!active) return;
+                clearInterval(active.timer);
+                active.img.src = active.original;
+                active = null;
+            }
+
+            function start(card, img) {
+                var urls;
+                try { urls = JSON.parse(img.getAttribute('data-gallery') || '[]'); } catch (e) { return; }
+                if (urls.length < 2) return;
+
+                urls.forEach(function (url) { new Image().src = url; });
+
+                var original = img.src;
+                var index = 0;
+                active = {
+                    card: card,
+                    img: img,
+                    original: original,
+                    timer: setInterval(function () {
+                        index = (index + 1) % urls.length;
+                        img.src = urls[index];
+                    }, INTERVAL)
+                };
+                // Show the second image right away instead of waiting a full interval.
+                index = 1;
+                img.src = urls[1];
+            }
+
+            document.addEventListener('mouseover', function (e) {
+                var card = e.target.closest('.product-card, .col-lg-4');
+                if (active && active.card === card) return;
+                stop();
+                if (!card) return;
+                var img = card.querySelector('img[data-gallery]');
+                if (img) start(card, img);
+            });
+
+            document.documentElement.addEventListener('mouseleave', stop);
+        })();
     </script>
     @stack('scripts')
 </body>

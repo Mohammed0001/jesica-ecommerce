@@ -306,6 +306,14 @@ class Product extends Model
     }
 
     /**
+     * All image URLs, in display order, for the hover slideshow on product cards
+     */
+    public function getGalleryUrlsAttribute(): array
+    {
+        return $this->images->map(fn ($image) => $image->url)->values()->all();
+    }
+
+    /**
      * Get formatted price: the amount actually charged (sale price when on sale)
      */
     public function getFormattedPriceAttribute(): string

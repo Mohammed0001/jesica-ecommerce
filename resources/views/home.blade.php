@@ -80,7 +80,8 @@
                             <div class="product-image-wrap">
                                 @if ($product->main_image)
                                     <img src="{{ optional($product->main_image)->url ?? asset('images/picsum/600x800-1-0.jpg') }}"
-                                        class="product-image" alt="{{ $product->title }}" loading="lazy"
+                                        class="product-image" data-gallery='@json($product->gallery_urls)'
+                                        alt="{{ $product->title }}" loading="lazy"
                                         decoding="async" width="600" height="800">
                                 @else
                                     <div class="product-image placeholder">

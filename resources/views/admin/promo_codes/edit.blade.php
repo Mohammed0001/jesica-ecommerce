@@ -23,6 +23,7 @@
                     <select name="type" class="form-select">
                         <option value="percentage" {{ $promoCode->type === 'percentage' ? 'selected' : '' }}>Percentage</option>
                         <option value="fixed" {{ $promoCode->type === 'fixed' ? 'selected' : '' }}>Fixed</option>
+                        <option value="bogo" {{ $promoCode->type === 'bogo' ? 'selected' : '' }}>Buy 1 Get 1 (value = % off the cheaper item, 100 = free)</option>
                     </select>
                 </div>
                 <div class="mb-3">

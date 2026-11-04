@@ -28,7 +28,7 @@
                     @foreach($promoCodes as $promo)
                     <tr>
                         <td>{{ $promo->code }}</td>
-                        <td>{{ ucfirst($promo->type) }}</td>
+                        <td>{{ $promo->type === 'bogo' ? 'Buy 1 Get 1' : ucfirst($promo->type) }}</td>
                         <td>{{ $promo->value }}</td>
                         <td>{{ $promo->usage_count }}{{ $promo->max_uses ? ' / ' . $promo->max_uses : '' }}</td>
                         <td>{{ $promo->owner?->name ?? '-' }}</td>
