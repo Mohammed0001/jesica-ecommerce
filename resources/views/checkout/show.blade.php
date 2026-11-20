@@ -144,6 +144,16 @@
             </div>
 
             <div class="mb-3">
+                <label for="phone">Phone number <span class="text-danger">*</span></label>
+                <input type="tel" name="phone" id="phone"
+                       class="form-control @error('phone') is-invalid @enderror"
+                       value="{{ old('phone', auth()->user()->phone) }}"
+                       placeholder="e.g. 01012345678" required>
+                @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <small class="text-muted">We use this to contact you about your delivery.</small>
+            </div>
+
+            <div class="mb-3">
                 <label for="payment_type">Payment Type</label>
                 <select name="payment_type" id="payment_type" class="form-select">
                     <option value="full" {{ old('payment_type') === 'full' ? 'selected' : '' }}>Full</option>

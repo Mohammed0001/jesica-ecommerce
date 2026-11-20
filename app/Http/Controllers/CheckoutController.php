@@ -157,6 +157,7 @@ class CheckoutController extends Controller
         $rules = [
             'payment_type' => 'required|in:full,deposit',
             'payment_method' => 'required|string',
+            'phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]{7,}$/'],
             // Allow either an existing shipping_address_id or full address fields
             'shipping_address_id' => 'nullable|exists:addresses,id',
             'save_address' => 'sometimes|boolean',
@@ -188,6 +189,13 @@ class CheckoutController extends Controller
 
         $request->validate($rules);
 
+        $phone = trim($request->input('phone'));
+
+        // Keep the profile phone up to date with what the customer confirmed
+        if (Auth::user()->phone !== $phone) {
+            \App\Models\User::whereKey(Auth::id())->update(['phone' => $phone]);
+        }
+
         $cartItems = $this->getCartItems();
 
         if ($cartItems->isEmpty()) {
@@ -211,7 +219,7 @@ class CheckoutController extends Controller
             $shippingAddressId = $address->id;
             $addressSnapshot = $address->toArray();
             // Add user's phone to snapshot for shipping providers
-            $addressSnapshot['phone'] = Auth::user()->phone;
+            $addressSnapshot['phone'] = $phone;
         } else {
             // Build snapshot from provided fields (no first/last name fields)
             $addressData = [
@@ -225,7 +233,7 @@ class CheckoutController extends Controller
                 'postal_code' => $request->postal_code,
                 'country' => $request->country,
                 'is_default' => false,
-                'phone' => Auth::user()->phone, // Add user's phone for shipping
+                'phone' => $phone, // Phone confirmed at checkout, used for shipping
             ];
 
             // Optionally save address to user's profile
