@@ -74,10 +74,6 @@
                 <div class="metric-content">
                     <h3 class="metric-value">{{ $analytics['total_orders'] ?? 0 }}</h3>
                     <p class="metric-label">Total Orders</p>
-                    <div class="metric-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        {{-- <span>+12% from last period</span> --}}
-                    </div>
                 </div>
             </div>
         </div>
@@ -88,12 +84,8 @@
                     <i class="fas fa-dollar-sign"></i>
                 </div>
                 <div class="metric-content">
-                    <h3 class="metric-value">EGP{{ number_format($analytics['total_revenue'] ?? 0, 2) }}</h3>
+                    <h3 class="metric-value">EGP {{ number_format($analytics['total_revenue'] ?? 0, 2) }}</h3>
                     <p class="metric-label">Total Revenue</p>
-                    <div class="metric-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        {{-- <span>+8% from last period</span> --}}
-                    </div>
                 </div>
             </div>
         </div>
@@ -106,10 +98,6 @@
                 <div class="metric-content">
                     <h3 class="metric-value">{{ $analytics['total_products'] ?? 0 }}</h3>
                     <p class="metric-label">Active Products</p>
-                    <div class="metric-change neutral">
-                        <i class="fas fa-minus"></i>
-                        <span>No change</span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -122,10 +110,6 @@
                 <div class="metric-content">
                     <h3 class="metric-value">{{ $analytics['total_customers'] ?? 0 }}</h3>
                     <p class="metric-label">Customers</p>
-                    <div class="metric-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+5% from last period</span>
-                    </div>
                 </div>
             </div>
         </div>
