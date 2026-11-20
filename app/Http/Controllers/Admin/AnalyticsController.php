@@ -49,7 +49,51 @@ class AnalyticsController extends Controller
         $avg_order_value = $total_orders > 0 ? round($total_revenue / $total_orders, 2) : 0;
         $completion_rate = $total_orders > 0 ? (Order::where('status', 'completed')->count() / $total_orders) * 100 : 0;
 
+        // ── Storefront funnel (from analytics_events) ──
+        $days = in_array((int) $request->query('days'), [1, 7, 30, 90, 365]) ? (int) $request->query('days') : 30;
+        $since = now()->subDays($days);
+        $events = \App\Models\AnalyticsEvent::where('created_at', '>=', $since);
+
+        $countVisitors = fn (string $type) => (clone $events)->where('type', $type)->distinct()->count('visitor_id');
+
+        $visitors = $countVisitors('visit');
+        $cartVisitors = $countVisitors('add_to_cart');
+        $checkoutVisitors = $countVisitors('checkout_started');
+        $orderVisitors = $countVisitors('order_placed');
+        $totalAddsToCart = (int) (clone $events)->where('type', 'add_to_cart')->sum('quantity');
+
+        // Visitors who added to cart but never placed an order
+        $buyers = (clone $events)->where('type', 'order_placed')->select('visitor_id');
+        $abandonedVisitors = (clone $events)->where('type', 'add_to_cart')
+            ->whereNotIn('visitor_id', $buyers)
+            ->distinct()->count('visitor_id');
+
+        $mostAdded = \App\Models\AnalyticsEvent::where('analytics_events.created_at', '>=', $since)
+            ->where('type', 'add_to_cart')
+            ->whereNotNull('product_id')
+            ->select('product_id', DB::raw('SUM(quantity) as units'), DB::raw('COUNT(DISTINCT visitor_id) as visitors'))
+            ->groupBy('product_id')
+            ->orderByDesc('units')
+            ->with('product')
+            ->take(10)
+            ->get();
+
+        $funnel = [
+            'days' => $days,
+            'visitors' => $visitors,
+            'cart_visitors' => $cartVisitors,
+            'total_adds' => $totalAddsToCart,
+            'checkout_visitors' => $checkoutVisitors,
+            'completed' => $orderVisitors,
+            'abandoned' => $abandonedVisitors,
+            'cart_rate' => $visitors > 0 ? round($cartVisitors / $visitors * 100, 1) : 0,
+            'completion_rate' => $cartVisitors > 0 ? round($orderVisitors / $cartVisitors * 100, 1) : 0,
+            'abandon_rate' => $cartVisitors > 0 ? round($abandonedVisitors / $cartVisitors * 100, 1) : 0,
+            'most_added' => $mostAdded,
+        ];
+
         $analytics = [
+            'funnel' => $funnel,
             'total_orders' => $total_orders,
             'total_revenue' => $total_revenue,
             'total_products' => $total_products,

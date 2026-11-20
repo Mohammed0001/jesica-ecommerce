@@ -40,6 +40,8 @@ class GuestCheckoutController extends Controller
                 ->with('error', 'Your bag needs attention before checkout: ' . implode(' ', $errors));
         }
 
+        \App\Support\Analytics::recordOnce(\App\Support\Analytics::CHECKOUT_STARTED);
+
         // Calculate totals
         $displaySubtotal = collect($cartItems)->sum(function ($it) {
             return (float) (data_get($it, 'product.display_subtotal') ?? 0);

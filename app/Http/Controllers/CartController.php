@@ -166,6 +166,8 @@ class CartController extends Controller
 
         session()->put('cart', $cart);
 
+        \App\Support\Analytics::record(\App\Support\Analytics::ADD_TO_CART, $product->id, null, (int) $request->quantity);
+
         // If it's an AJAX request, return JSON with success and updated cart count
         if ($request->wantsJson() || $request->ajax()) {
             $cartCount = array_sum(array_column($cart, 'quantity'));

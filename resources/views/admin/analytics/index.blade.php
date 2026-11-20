@@ -22,6 +22,48 @@
         </div>
     </div>
 
+    <!-- Storefront Funnel -->
+    @php($f = $analytics['funnel'])
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Storefront Funnel</h5>
+            <div class="btn-group btn-group-sm">
+                @foreach([1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days', 365 => 'Year'] as $d => $label)
+                    <a href="{{ request()->fullUrlWithQuery(['days' => $d]) }}"
+                       class="btn {{ $f['days'] === $d ? 'btn-dark' : 'btn-outline-secondary' }}">{{ $label }}</a>
+                @endforeach
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row text-center g-3 mb-4">
+                <div class="col-6 col-lg-2"><div class="h3 mb-0">{{ number_format($f['visitors']) }}</div><div class="text-muted small">Visitors</div></div>
+                <div class="col-6 col-lg-2"><div class="h3 mb-0">{{ number_format($f['cart_visitors']) }}</div><div class="text-muted small">Added to cart ({{ $f['cart_rate'] }}%)</div></div>
+                <div class="col-6 col-lg-2"><div class="h3 mb-0">{{ number_format($f['total_adds']) }}</div><div class="text-muted small">Items added</div></div>
+                <div class="col-6 col-lg-2"><div class="h3 mb-0">{{ number_format($f['checkout_visitors']) }}</div><div class="text-muted small">Reached checkout</div></div>
+                <div class="col-6 col-lg-2"><div class="h3 mb-0 text-success">{{ number_format($f['completed']) }}</div><div class="text-muted small">Completed order ({{ $f['completion_rate'] }}%)</div></div>
+                <div class="col-6 col-lg-2"><div class="h3 mb-0 text-danger">{{ number_format($f['abandoned']) }}</div><div class="text-muted small">Did not complete ({{ $f['abandon_rate'] }}%)</div></div>
+            </div>
+            <h6>Most added to cart</h6>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Product</th><th class="text-end">Units added</th><th class="text-end">Unique visitors</th></tr></thead>
+                    <tbody>
+                    @forelse($f['most_added'] as $row)
+                        <tr>
+                            <td>{{ $row->product->title ?? 'Deleted product #' . $row->product_id }}</td>
+                            <td class="text-end">{{ $row->units }}</td>
+                            <td class="text-end">{{ $row->visitors }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="3" class="text-muted text-center">No add-to-cart data yet for this period.</td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted small mt-3 mb-0">Counts are per browser session. Tracking started when this feature was deployed.</p>
+        </div>
+    </div>
+
     <!-- Key Metrics -->
     <div class="row mb-4">
         <div class="col-lg-3 col-md-6 mb-3">

@@ -48,6 +48,8 @@ class CheckoutController extends Controller
                 ->with('error', 'Your bag needs attention before checkout: ' . implode(' ', $cartErrors));
         }
 
+        \App\Support\Analytics::recordOnce(\App\Support\Analytics::CHECKOUT_STARTED);
+
         // Get BOSTA cities for dropdown
         $bostaCities = \App\Models\BostaCity::dropOffAvailable()
             ->orderBy('name')

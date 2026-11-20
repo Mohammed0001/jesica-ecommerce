@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->appendToGroup('web', \App\Http\Middleware\TrackVisit::class);
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'affiliate' => \App\Http\Middleware\AffiliateMiddleware::class,

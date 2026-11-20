@@ -112,6 +112,8 @@ class OrderService
             ]);
         }
 
+        \App\Support\Analytics::record(\App\Support\Analytics::ORDER_PLACED, null, $order->id);
+
         return $order->load('items.product', 'shippingAddress');
     }
 
