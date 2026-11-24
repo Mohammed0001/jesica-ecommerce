@@ -416,13 +416,6 @@
                            value="{{ old('address_line_1') }}" placeholder="Address" required>
                 </div>
 
-                <div class="checkout-field">
-                    <label for="address_line_2">Apartment, suite, etc. (optional)</label>
-                    <input type="text" name="address_line_2" id="address_line_2"
-                           class="checkout-input"
-                           value="{{ old('address_line_2') }}" placeholder="Apartment, suite, etc. (optional)">
-                </div>
-
                 <div class="checkout-row">
                     <div class="checkout-field">
                         <label for="building_number">Building</label>

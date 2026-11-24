@@ -119,7 +119,10 @@
                                         class="mq-size-guide">Size guide</a>
                                 @endif
                             </div>
-                            @if(!$product->isSoldOut() && $product->sizes && $product->sizes->where('quantity', '>', 0)->count() > 0)
+                            @php $hasSizeRows = $product->sizes && $product->sizes->count() > 0; @endphp
+                            @if(!$hasSizeRows && $product->isAvailable())
+                                {{-- No sizes entered: stock is tracked on the product itself. --}}
+                            @elseif(!$product->isSoldOut() && $product->sizes && $product->sizes->where('quantity', '>', 0)->count() > 0)
                                 <div class="mq-select-wrap">
                                     <select id="size-select" class="mq-select" required>
                                         <option value="">Select a size</option>
@@ -1005,6 +1008,9 @@
 
             .mq-btn--primary {
                 width: 100%;
+                flex: none;
+                height: 52px;
+                font-size: 13px;
             }
 
             .mq-sticky-bar__actions .mq-btn {
