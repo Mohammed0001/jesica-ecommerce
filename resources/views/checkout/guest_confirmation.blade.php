@@ -225,6 +225,9 @@
             {{ trim(($addr['first_name'] ?? '') . ' ' . ($addr['last_name'] ?? '')) }}<br>
             {{ $addr['address_line_1'] ?? '' }}
             @if(!empty($addr['address_line_2'])), {{ $addr['address_line_2'] }}@endif<br>
+            @if(!empty($addr['building_number']) || !empty($addr['floor']) || !empty($addr['apartment']))
+                Building {{ $addr['building_number'] ?? '-' }}, Floor {{ $addr['floor'] ?? '-' }}, Apartment {{ $addr['apartment'] ?? '-' }}<br>
+            @endif
             {{ $addr['city'] ?? '' }}{{ !empty($addr['state_province']) ? ', ' . $addr['state_province'] : '' }}
             {{ !empty($addr['postal_code']) ? ' ' . $addr['postal_code'] : '' }}<br>
             {{ $addr['country'] ?? '' }}

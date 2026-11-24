@@ -70,6 +70,9 @@ class ProfileController extends Controller
             'company' => 'nullable|string|max:255',
             'address_line_1' => 'required|string|max:255',
             'address_line_2' => 'nullable|string|max:255',
+            'building_number' => 'required|string|max:50',
+            'floor' => 'required|string|max:50',
+            'apartment' => 'required|string|max:50',
             'city' => 'required|string|max:100',
             'state_province' => 'required|string|min:3|max:100',
             'postal_code' => 'nullable|string|max:20',
@@ -90,7 +93,7 @@ class ProfileController extends Controller
         $lastName = $nameParts[1] ?? '';
 
         $address = Address::create(array_merge($request->only([
-            'type','company','address_line_1','address_line_2','city','state_province','postal_code','country'
+            'type','company','address_line_1','address_line_2','building_number','floor','apartment','city','state_province','postal_code','country'
         ]), [
             'user_id' => $user->id,
             'first_name' => $firstName,

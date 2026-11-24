@@ -423,6 +423,27 @@
                            value="{{ old('address_line_2') }}" placeholder="Apartment, suite, etc. (optional)">
                 </div>
 
+                <div class="checkout-row">
+                    <div class="checkout-field">
+                        <label for="building_number">Building</label>
+                        <input type="text" name="building_number" id="building_number"
+                               class="checkout-input @error('building_number') is-invalid @enderror"
+                               value="{{ old('building_number') }}" placeholder="Building" required>
+                    </div>
+                    <div class="checkout-field">
+                        <label for="floor">Floor</label>
+                        <input type="text" name="floor" id="floor"
+                               class="checkout-input @error('floor') is-invalid @enderror"
+                               value="{{ old('floor') }}" placeholder="Floor" required>
+                    </div>
+                    <div class="checkout-field">
+                        <label for="apartment">Apartment</label>
+                        <input type="text" name="apartment" id="apartment"
+                               class="checkout-input @error('apartment') is-invalid @enderror"
+                               value="{{ old('apartment') }}" placeholder="Apartment" required>
+                    </div>
+                </div>
+
                 {{-- City + Governorate row --}}
                 <div class="checkout-row">
                     <div class="checkout-field">

@@ -100,7 +100,7 @@ class GuestCheckoutController extends Controller
     public function process(Request $request)
     {
         // Collapse any accidentally duplicated array inputs
-        $collapseFields = ['first_name','last_name','email','phone','company','address_line_1','address_line_2','city','state_province','postal_code','country'];
+        $collapseFields = ['first_name','last_name','email','phone','company','address_line_1','address_line_2','building_number','floor','apartment','city','state_province','postal_code','country'];
         foreach ($collapseFields as $f) {
             if ($request->has($f) && is_array($request->input($f))) {
                 $val = $request->input($f);
@@ -117,6 +117,9 @@ class GuestCheckoutController extends Controller
             'last_name'      => 'required|string|max:100',
             'address_line_1' => 'required|string|max:255',
             'address_line_2' => 'nullable|string|max:255',
+            'building_number' => 'required|string|max:50',
+            'floor'          => 'required|string|max:50',
+            'apartment'      => 'required|string|max:50',
             'city'           => 'required|string|max:100',
             'state_province' => 'required|string|max:100',
             'postal_code'    => 'nullable|string|max:20',
@@ -151,6 +154,9 @@ class GuestCheckoutController extends Controller
             'company'        => $request->company,
             'address_line_1' => $request->address_line_1,
             'address_line_2' => $request->address_line_2,
+            'building_number' => $request->building_number,
+            'floor'          => $request->floor,
+            'apartment'      => $request->apartment,
             'city'           => $request->city,
             'state_province' => $request->state_province,
             'postal_code'    => $request->postal_code,

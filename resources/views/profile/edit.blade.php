@@ -101,6 +101,20 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 mb-2">
+                                        <label class="form-label">Building <span class="text-danger">*</span></label>
+                                        <input name="building_number" class="form-control" required value="{{ old('building_number') }}">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">Floor <span class="text-danger">*</span></label>
+                                        <input name="floor" class="form-control" required value="{{ old('floor') }}">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">Apartment <span class="text-danger">*</span></label>
+                                        <input name="apartment" class="form-control" required value="{{ old('apartment') }}">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
                                         <label class="form-label">City <span class="text-danger">*</span></label>
                                         <select name="city" class="form-control" required>
                                             <option value="">Select city...</option>

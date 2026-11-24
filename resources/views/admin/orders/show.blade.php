@@ -32,6 +32,9 @@
                         @php $a = $order->shipping_address_snapshot; @endphp
                         <div>{{ $a['company'] ?? '' }}</div>
                         <div>{{ $a['address_line_1'] ?? '' }} {{ $a['address_line_2'] ?? '' }}</div>
+                        @if(!empty($a['building_number']) || !empty($a['floor']) || !empty($a['apartment']))
+                            <div>Building {{ $a['building_number'] ?? '-' }}, Floor {{ $a['floor'] ?? '-' }}, Apartment {{ $a['apartment'] ?? '-' }}</div>
+                        @endif
                         <div>{{ $a['city'] ?? '' }} {{ $a['state_province'] ?? '' }} {{ $a['postal_code'] ?? '' }}</div>
                         <div>{{ $a['country'] ?? '' }}</div>
                     @else

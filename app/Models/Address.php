@@ -19,6 +19,9 @@ class Address extends Model
         'company',
         'address_line_1',
         'address_line_2',
+        'building_number',
+        'floor',
+        'apartment',
         'city',
         'state_province',
         'postal_code',
@@ -69,6 +72,15 @@ class Address extends Model
 
         if ($this->address_line_2) {
             $address .= ', ' . $this->address_line_2;
+        }
+
+        $unit = array_filter([
+            $this->building_number ? 'Bldg ' . $this->building_number : null,
+            $this->floor ? 'Floor ' . $this->floor : null,
+            $this->apartment ? 'Apt ' . $this->apartment : null,
+        ]);
+        if ($unit) {
+            $address .= ', ' . implode(', ', $unit);
         }
 
         $address .= ', ' . $this->city . ', ' . $this->state_province . ' ' . $this->postal_code;

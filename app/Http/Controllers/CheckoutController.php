@@ -146,7 +146,7 @@ class CheckoutController extends Controller
     public function process(Request $request)
     {
         // Normalize common address fields in case the client submitted arrays (e.g., duplicate inputs)
-        $addressFields = ['company','address_line_1','address_line_2','city','state_province','postal_code','country','save_address','is_default'];
+        $addressFields = ['company','address_line_1','address_line_2','building_number','floor','apartment','city','state_province','postal_code','country','save_address','is_default'];
         foreach ($addressFields as $f) {
             if ($request->has($f) && is_array($request->input($f))) {
                 // Collapse to first element to allow string validation to proceed
@@ -171,6 +171,9 @@ class CheckoutController extends Controller
                 'company' => 'nullable|string|max:255',
                 'address_line_1' => 'nullable|string|max:255',
                 'address_line_2' => 'nullable|string|max:255',
+                'building_number' => 'nullable|string|max:50',
+                'floor' => 'nullable|string|max:50',
+                'apartment' => 'nullable|string|max:50',
                 'city' => 'nullable|string|max:100',
                 'state_province' => 'nullable|string|max:100|min:3',
                 'postal_code' => 'nullable|string|max:20',
@@ -182,6 +185,9 @@ class CheckoutController extends Controller
                 'company' => 'nullable|string|max:255',
                 'address_line_1' => 'required|string|max:255',
                 'address_line_2' => 'nullable|string|max:255',
+                'building_number' => 'required|string|max:50',
+                'floor' => 'required|string|max:50',
+                'apartment' => 'required|string|max:50',
                 'city' => 'required|string|max:100',
                 'state_province' => 'required|string|max:100|min:3',
                 'postal_code' => 'required|string|max:20',
@@ -229,6 +235,9 @@ class CheckoutController extends Controller
                 'company' => $request->company,
                 'address_line_1' => $request->address_line_1,
                 'address_line_2' => $request->address_line_2,
+                'building_number' => $request->building_number,
+                'floor' => $request->floor,
+                'apartment' => $request->apartment,
                 'city' => $request->city,
                 'state_province' => $request->state_province ?? $request->city, // Fallback to city
                 'district' => $request->district, // Add district field for BOSTA

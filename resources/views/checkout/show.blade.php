@@ -100,6 +100,20 @@
                         <label for="address_line_2">Address line 2 (optional)</label>
                         <input type="text" name="address_line_2" id="address_line_2" class="form-control" value="{{ old('address_line_2') }}">
                     </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4 mb-2 mb-md-0">
+                            <label for="building_number">Building <span class="text-danger">*</span></label>
+                            <input type="text" name="building_number" id="building_number" class="form-control" value="{{ old('building_number') }}" required>
+                        </div>
+                        <div class="col-md-4 mb-2 mb-md-0">
+                            <label for="floor">Floor <span class="text-danger">*</span></label>
+                            <input type="text" name="floor" id="floor" class="form-control" value="{{ old('floor') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="apartment">Apartment <span class="text-danger">*</span></label>
+                            <input type="text" name="apartment" id="apartment" class="form-control" value="{{ old('apartment') }}" required>
+                        </div>
+                    </div>
 
                     {{-- Smart cascading location picker --}}
                     @include('checkout._location_picker', [
