@@ -92,7 +92,37 @@ class AnalyticsController extends Controller
             'most_added' => $mostAdded,
         ];
 
+        // ── Revenue trend: one point per day across the selected range ──
+        $revenueByDay = Order::where('created_at', '>=', $since->copy()->startOfDay())
+            ->selectRaw('DATE(created_at) as day, SUM(total_amount) as total')
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
+        $revenueLabels = [];
+        $revenueData = [];
+        // Cap points so a 365-day range stays readable
+        $step = $days > 90 ? 7 : 1;
+        for ($i = $days; $i >= 0; $i -= $step) {
+            $date = now()->subDays($i);
+            $revenueLabels[] = $date->format('M j');
+            $sum = 0;
+            for ($j = 0; $j < $step; $j++) {
+                $sum += (float) ($revenueByDay[$date->copy()->addDays($j)->toDateString()] ?? 0);
+            }
+            $revenueData[] = round($sum, 2);
+        }
+
+        // ── Order status distribution ──
+        $statusCounts = Order::selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
         $analytics = [
+            'revenue_chart' => ['labels' => $revenueLabels, 'data' => $revenueData],
+            'status_chart' => [
+                'labels' => $statusCounts->keys()->map(fn ($s) => ucfirst((string) $s))->values()->all(),
+                'data' => $statusCounts->values()->map(fn ($c) => (int) $c)->all(),
+            ],
             'funnel' => $funnel,
             'total_orders' => $total_orders,
             'total_revenue' => $total_revenue,

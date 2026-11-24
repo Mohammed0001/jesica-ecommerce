@@ -10,10 +10,11 @@
             <h1 class="page-title">Analytics Dashboard</h1>
             <div class="d-flex gap-2">
                 <select class="form-select" id="dateRange" style="width: auto;">
-                    <option value="7">Last 7 days</option>
-                    <option value="30" selected>Last 30 days</option>
-                    <option value="90">Last 90 days</option>
-                    <option value="365">Last year</option>
+                    @php $selDays = $analytics['funnel']['days'] ?? 30; @endphp
+                    <option value="7" @selected($selDays == 7)>Last 7 days</option>
+                    <option value="30" @selected($selDays == 30)>Last 30 days</option>
+                    <option value="90" @selected($selDays == 90)>Last 90 days</option>
+                    <option value="365" @selected($selDays == 365)>Last year</option>
                 </select>
                 <button class="btn btn-outline-secondary" onclick="refreshAnalytics()">
                     <i class="fas fa-sync-alt me-2"></i>Refresh
