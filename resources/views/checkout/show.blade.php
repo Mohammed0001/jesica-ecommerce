@@ -218,7 +218,7 @@
         function recalcTotals(shippingFee) {
             const finalAfterDiscount = Math.max(0, displaySubtotal - discountAmount);
             const freeThreshold = feeConfig.threshold;
-            const shipping = finalAfterDiscount >= freeThreshold ? 0 : shippingFee;
+            const shipping = (freeThreshold > 0 && finalAfterDiscount >= freeThreshold) ? 0 : shippingFee;
             const serviceFee = Math.round(finalAfterDiscount * (feeConfig.servicePct / 100) * 100) / 100;
             const tax = Math.round((finalAfterDiscount + serviceFee + shipping) * (feeConfig.taxPercentage / 100) * 100) / 100;
             const total = Math.max(0, finalAfterDiscount + serviceFee + shipping + tax);

@@ -702,7 +702,7 @@
     // ── Recalculate totals ──
     function recalcTotals(shippingFee) {
         const after   = Math.max(0, subTotal - discount);
-        const free    = after >= feeConfig.threshold;
+        const free    = feeConfig.threshold > 0 && after >= feeConfig.threshold;
         const ship    = free ? 0 : shippingFee;
         const svc     = Math.round(after * (servicePct / 100) * 100) / 100;
         const tax     = Math.round((after + svc + ship) * (feeConfig.taxPercentage / 100) * 100) / 100;

@@ -39,7 +39,7 @@ class CartController extends Controller
         $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);
 
         // Delivery calculation
-        $shipping = $finalTotal >= $deliveryThreshold ? 0 : $deliveryFee;
+        $shipping = ($deliveryThreshold > 0 && $finalTotal >= $deliveryThreshold) ? 0 : $deliveryFee;
 
         // Service fee applied as percentage of subtotal after discount
         $serviceFee = round($finalTotal * ($serviceFeePercentage / 100), 2);

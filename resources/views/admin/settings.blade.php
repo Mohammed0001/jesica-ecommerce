@@ -48,6 +48,7 @@
                             <input name="delivery_threshold" type="number" step="0.01" min="0"
                                    class="form-control" required value="{{ old('delivery_threshold', $delivery_threshold) }}">
                         </div>
+                        <div class="form-text">Set to 0 to disable free delivery.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Tax Percentage</label>

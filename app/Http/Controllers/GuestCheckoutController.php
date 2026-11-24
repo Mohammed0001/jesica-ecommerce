@@ -67,7 +67,7 @@ class GuestCheckoutController extends Controller
         }
 
         $finalTotal  = max(0, $displaySubtotal - $discountAmount);
-        $shipping    = $finalTotal >= $deliveryThreshold ? 0 : $deliveryFee;
+        $shipping    = ($deliveryThreshold > 0 && $finalTotal >= $deliveryThreshold) ? 0 : $deliveryFee;
         $serviceFee  = round($finalTotal * ($serviceFeePercentage / 100), 2);
         $tax         = round(($finalTotal + $serviceFee + $shipping) * ($taxPercentage / 100), 2);
         $total       = round(max(0, $finalTotal + $serviceFee + $shipping + $tax), 2);

@@ -48,7 +48,7 @@ class OrderService
         $serviceFeePercentage = (float) \App\Models\SiteSetting::get('service_fee_percentage', 0);
 
         $finalAfterDiscount = max(0, $subtotal - $discountAmount);
-        $shippingAmount = $finalAfterDiscount >= $deliveryThreshold ? 0 : $deliveryFee;
+        $shippingAmount = ($deliveryThreshold > 0 && $finalAfterDiscount >= $deliveryThreshold) ? 0 : $deliveryFee;
         $serviceFee = round($finalAfterDiscount * ($serviceFeePercentage / 100), 2);
         $taxAmount = round(($finalAfterDiscount + $serviceFee + $shippingAmount) * ($taxPercentage / 100), 2);
         $totalAmount = round(max(0, $finalAfterDiscount + $serviceFee + $shippingAmount + $taxAmount), 2);
