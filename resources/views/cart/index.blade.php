@@ -69,7 +69,7 @@
                                     </div>
 
                                     <!-- Product Details -->
-                                    <div class="col-md-4 col-sm-5">
+                                    <div class="col-md-3 col-sm-5">
                                         <h6 class="mb-1">
                                             <a href="{{ route('products.show', data_get($item, 'product.slug')) }}"
                                                class="text-decoration-none text-dark">
@@ -104,7 +104,7 @@
                                     </div>
 
                                     <!-- Price -->
-                                    <div class="col-md-2 col-sm-2 text-center">
+                                    <div class="col-md-2 col-sm-2 text-center text-nowrap">
                                             <div class="price">
                                             @if(data_get($item, 'is_deposit'))
                                                 <span class="fw-bold">{!! data_get($item, 'formatted_price') !!}</span>
@@ -119,7 +119,7 @@
                                     </div>
 
                                     <!-- Total -->
-                                    <div class="col-md-1 col-sm-2 text-center">
+                                    <div class="col-md-2 col-sm-2 text-center text-nowrap">
                                         <div class="total fw-bold">
                                             {!! config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') !!} {{ number_format(data_get($item, 'display_subtotal', 0), 2) }}
                                         </div>
@@ -154,7 +154,7 @@
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-light">
-                        <h5 class="mb-0">Order Summary</h5>
+                        <h5 class="mb-0 py-2" style="background: transparent;">Order Summary</h5>
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-3">
@@ -201,10 +201,14 @@
                         </div>
 
                         @php $deliveryThreshold = (float) \App\Models\SiteSetting::get('delivery_threshold', 200); @endphp
-                        @if($displaySubtotal < $deliveryThreshold)
+                        @if($deliveryThreshold > 0 && $displaySubtotal < $deliveryThreshold)
+                            @php $thresholdPct = min(100, max(0, round($displaySubtotal / $deliveryThreshold * 100))); @endphp
                             <div class="alert alert-info py-2 px-3 small">
                                 <i class="fas fa-truck me-1"></i>
                                 Add {{ config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') }} {{ number_format($deliveryThreshold - $displaySubtotal, 2) }} more for free shipping!
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-dark" style="width: {{ $thresholdPct }}%"></div>
+                                </div>
                             </div>
                         @endif
 
