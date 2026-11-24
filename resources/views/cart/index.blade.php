@@ -54,7 +54,7 @@
                             <div class="cart-item p-4 {{ $index > 0 ? 'border-top' : '' }}" data-item-id="{{ $cartKey ?? $cartProductId }}">
                                 <div class="row align-items-center">
                                     <!-- Product Image -->
-                                    <div class="col-md-2 col-sm-3">
+                                    <div class="col-md-2 col-sm-3 ci-img">
                                         @if(data_get($item, 'product.main_image.url'))
                                             <img src="{{ data_get($item, 'product.main_image.url') ?? asset('images/picsum/600x800-1-0.jpg') }}"
                                                  class="img-fluid rounded"
@@ -69,7 +69,7 @@
                                     </div>
 
                                     <!-- Product Details -->
-                                    <div class="col-md-3 col-sm-5">
+                                    <div class="col-md-3 col-sm-5 ci-info">
                                         <h6 class="mb-1">
                                             <a href="{{ route('products.show', data_get($item, 'product.slug')) }}"
                                                class="text-decoration-none text-dark">
@@ -85,7 +85,7 @@
                                     </div>
 
                                     <!-- Quantity Display -->
-                                    <div class="col-md-2 col-sm-2 text-center d-flex flex-column align-items-center">
+                                    <div class="col-md-2 col-sm-2 text-center d-flex flex-column align-items-center ci-qty">
                                         <div class="input-group input-group-sm mb-1" style="max-width: 100px;">
                                             <button class="btn btn-outline-secondary px-2" type="button" onclick="updateQuantity('{{ $cartKey ?? $cartProductId }}', {{ data_get($item, 'quantity') - 1 }})">
                                                 <i class="fas fa-minus" style="font-size: 0.75rem;"></i>
@@ -104,7 +104,7 @@
                                     </div>
 
                                     <!-- Price -->
-                                    <div class="col-md-2 col-sm-2 text-center text-nowrap">
+                                    <div class="col-md-2 col-sm-2 text-center text-nowrap ci-price">
                                             <div class="price">
                                             @if(data_get($item, 'is_deposit'))
                                                 <span class="fw-bold">{!! data_get($item, 'formatted_price') !!}</span>
@@ -119,14 +119,14 @@
                                     </div>
 
                                     <!-- Total -->
-                                    <div class="col-md-2 col-sm-2 text-center text-nowrap">
+                                    <div class="col-md-2 col-sm-2 text-center text-nowrap ci-total">
                                         <div class="total fw-bold">
                                             {!! config('currencies.symbols')[session('currency', 'EGP')] ?? session('currency', 'EGP') !!} {{ number_format(data_get($item, 'display_subtotal', 0), 2) }}
                                         </div>
                                     </div>
 
                                     <!-- Remove Button -->
-                                    <div class="col-md-1 text-end">
+                                    <div class="col-md-1 text-end ci-remove">
                     <button type="button" class="btn btn-outline-danger btn-sm"
                                                 onclick="removeFromCart('{{ $cartKey ?? $cartProductId }}')"
                                                 title="Remove from cart">
@@ -151,7 +151,7 @@
             </div>
 
             <!-- Order Summary -->
-            <div class="col-lg-4">
+            <div class="col-lg-4 mt-4 mt-lg-0">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-light">
                         <h5 class="mb-0 py-2" style="background: transparent;">Order Summary</h5>
@@ -324,6 +324,31 @@
         </div>
     @endif
 </div>
+
+<style>
+@media (max-width: 767.98px) {
+    .cart-item { padding: 1rem !important; }
+    .cart-item > .row {
+        display: grid;
+        grid-template-columns: 80px 1fr auto;
+        grid-template-areas: "img info remove" "img qty total";
+        column-gap: 14px;
+        row-gap: 10px;
+        margin: 0;
+        --bs-gutter-x: 0;
+    }
+    .cart-item > .row > [class*="col-"] { width: auto; max-width: none; padding: 0; margin: 0; }
+    .cart-item .ci-img { grid-area: img; }
+    .cart-item .ci-info { grid-area: info; }
+    .cart-item .ci-info h6 { font-size: 1rem; }
+    .cart-item .ci-qty { grid-area: qty; align-items: flex-start !important; text-align: left !important; }
+    .cart-item .ci-qty small { line-height: 1.4; }
+    .cart-item .ci-price { display: none; }
+    .cart-item .ci-total { grid-area: total; align-self: start; text-align: right !important; }
+    .cart-item .ci-remove { grid-area: remove; text-align: right; }
+    .cart-item .ci-qty .btn, .cart-item .ci-remove .btn { min-width: 38px; min-height: 38px; }
+}
+</style>
 
 <script>
 function updateQuantity(cartKey, newQuantity) {
