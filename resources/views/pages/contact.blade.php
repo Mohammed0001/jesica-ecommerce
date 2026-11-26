@@ -121,7 +121,7 @@
                             </div>
                         </div>
 
-                        <div class="contact-item">
+                        {{-- <div class="contact-item">
                             <div class="contact-icon">
                                 <i class="fas fa-phone"></i>
                             </div>
@@ -129,7 +129,7 @@
                                 <h4>Phone</h4>
                                 <p><a href="tel:+1234567890">+1 (234) 567-890</a></p>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="contact-item">
                             <div class="contact-icon">

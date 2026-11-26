@@ -33,7 +33,7 @@
                 <div class="footer-card">
                     <h6 class="footer-heading">FOLLOW</h6>
                     <ul class="list-unstyled footer-links">
-                        <li><a href="#">Instagram</a></li>
+                        <li><a href="https://www.instagram.com/jessica.riad/">Instagram</a></li>
                     </ul>
                     <div class="social-icons">
                         <a href="https://www.instagram.com/jessica.riad/" target="_blank"
