@@ -157,18 +157,10 @@
                         <div class="social-media">
                             <h4>Follow My Work</h4>
                             <div class="social-links">
-                                <a href="#" target="_blank" rel="noopener" aria-label="Instagram">
+                                <a href="https://www.instagram.com/jessica.riad/" target="_blank" rel="noopener" aria-label="Instagram">
                                     <i class="fab fa-instagram"></i>
                                 </a>
-                                <a href="#" target="_blank" rel="noopener" aria-label="Pinterest">
-                                    <i class="fab fa-pinterest"></i>
-                                </a>
-                                <a href="#" target="_blank" rel="noopener" aria-label="Facebook">
-                                    <i class="fab fa-facebook"></i>
-                                </a>
-                                <a href="#" target="_blank" rel="noopener" aria-label="LinkedIn">
-                                    <i class="fab fa-linkedin"></i>
-                                </a>
+
                             </div>
                         </div>
                     </div>
